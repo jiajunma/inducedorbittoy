@@ -1,10 +1,29 @@
 # Claudian session state
 .claudian/
 
-# Obsidian per-user state
-.obsidian/workspace.json
-.obsidian/workspace-mobile.json
-.obsidian/cache
+# Obsidian / canvas per-user state
+.obsidian/
+*.canvas
 
 # OS
 .DS_Store
+
+# Vendored Rethlas local runtime artifacts
+Rethlas/.git/
+Rethlas/**/.venv/
+Rethlas/**/__pycache__/
+Rethlas/agents/generation/logs/
+Rethlas/agents/generation/memory/
+Rethlas/agents/verification/memory/
+Rethlas/agents/generation/data/induced_orbit_toy_problem_p1.md
+
+# Keep only the final successful proof artifacts
+Rethlas/agents/generation/results/*
+!Rethlas/agents/generation/results/induced_orbit_toy_problem/
+Rethlas/agents/generation/results/induced_orbit_toy_problem/*
+!Rethlas/agents/generation/results/induced_orbit_toy_problem/blueprint_verified.md
+
+Rethlas/agents/verification/results/*
+!Rethlas/agents/verification/results/20260426T174942Z_a70d7d2c17ac/
+Rethlas/agents/verification/results/20260426T174942Z_a70d7d2c17ac/*
+!Rethlas/agents/verification/results/20260426T174942Z_a70d7d2c17ac/verification.json
