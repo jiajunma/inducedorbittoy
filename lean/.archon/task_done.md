@@ -229,3 +229,93 @@ after both halves landed in parallel.
 - All public theorems re-audited: `#print axioms` shows only
   `[propext, Classical.choice, Quot.sound]` (plus `sorryAx` on still-open
   declarations). **No custom axioms.**
+
+## Prover Round 4 (session 6 — Tier S #2 + Tier S #3 + Tier D close)
+
+Net: 7 → 6 declaration-use `sorry`. `lake build` ✅ at end of round;
+0 custom axioms. Three files coupled (Basic.lean, Slice.lean, Orbits.lean).
+
+### `InducedOrbitToy/Basic.lean` — Tier S #2 + Tier S #3 (structural)
+
+- **`UnipotentRadical` (Tier S #2):** added 4th conjunct
+  `IsSkewAdjoint S.ambientForm f` to the carrier predicate. Closure
+  proofs `zero_mem'`, `add_mem'`, `smul_mem'` updated to the 4-tuple
+  shape; new conjuncts discharged via `simp` (zero), `linear_combination
+  hf + hg` (add), `linear_combination c * hf` (smul). Docstring rewritten
+  to the "𝔲 = 𝔭 ∩ 𝔤" framing.
+- **`SliceSetup` (Tier S #3):** replaced single `L0_isotropic :
+  IsIsotropic L0 L0'` field with the Lagrangian quartet:
+  - `L0_paired : IsPaired paired.pairing L0 L0'`,
+  - `L1_isotropic_L0' : IsIsotropic paired.pairing L1 L0'`,
+  - `L0_isotropic_L1' : IsIsotropic paired.pairing L0 L1'`.
+  Audit (`grep L0_isotropic`) confirmed the old field had no live
+  consumers — only stale comments in `NormalForm.lean` lines 344, 357
+  (left for the Round 6 prover to refresh).
+- **`c_eq_finrank_quotient`** (only theorem in the file) unchanged and
+  still compiles.
+
+### `InducedOrbitToy/Slice.lean` — Tier D close (1 → 0 sorries)
+
+- **`parametrizeX0PlusU_existence` (line 232):** both internal scoped
+  sorries closed.
+  - **IsSkewB sorry (line 256):** `hSkewY (0,0,u) (0,0,v)` + `simp only
+    [SliceSetup.ambientForm, LinearMap.mk₂_apply, map_zero,
+    LinearMap.zero_apply, mul_zero, add_zero, zero_add]` to collapse all
+    zero terms in the ambient form, leaving the goal definitionally.
+  - **E-component sorry (line 294):** new auxiliary
+    `hY_v_E_eq : (Y (0, v, 0)).1 = Cdual S (projV0 ∘ₗ Y ∘ₗ inE') v` proved
+    by left-injectivity of the perfect pairing (`S.paired.isPerfect.1`):
+    pair both sides with each `e''`, use `Cdual_pairing_eq` on the RHS
+    and `hSkewY (0, v, 0) (0, 0, e'')` on the LHS.
+- **`parametrizeX0PlusU_mem` (line 184) cascade:** added the new
+  `IsSkewAdjoint S.ambientForm (XCB S C B - X0Lift S)` conjunct via
+  destructure → `XCB_sub_X0Lift_apply` × 2 → `simp only` → `Cdual_pairing_eq`
+  × 2 → `linear_combination hskewB - S.eps * hSym - S.formV0 (C e₁') v₂ * hε2`.
+- **New helper `XCB_sub_X0Lift_apply`:** pointwise formula for
+  `(XCB S C B - X0Lift S) (e, v, e') = (Cdual S C v + B e', C e', 0)`.
+
+### `InducedOrbitToy/Orbits.lean` — Tier S #2 cascade (1 → 1 sorries; line 324 stays)
+
+- **`XCB_sub_X0Lift_mem_unipotent` (line 168):** added explicit hypothesis
+  `(hskew : IsSkewAdjoint S.ambientForm (XCB S C B - X0Lift S))`. Existing
+  3 flag-stability conjuncts unchanged; 4th conjunct discharged by passing
+  `hskew` directly into the `refine` block (Option A per plan-agent).
+- **`XST_sub_X0Lift_mem_unipotent` (line 244):** new signature
+  `(hNondeg : S.formV0.Nondegenerate) (Sₕ : ...) {T : ...} (hT : IsSkewT T)`.
+  Body proves `IsSkewAdjoint` of `XST - X0Lift` via `XCB_apply,
+  X0Lift_apply, sub_apply, ext <;> simp` to get the pointwise formula,
+  then `Cdual_pairing_eq` + `linear_combination hSkewB + (-S.eps) * hSym
+  + (-(S.formV0 ((CST S Sₕ) e₁') v₂)) * hε2`.
+- **`XST_mem_O0PlusU` / `inducedOrbits` / `main`:** signature updates to
+  thread `hNondeg` and `hT : IsSkewT T` through (use `_hT.1` from
+  `T ∈ Tset_circ` to extract). `_hT → hT`, `_hNondeg → hNondeg` renames.
+- **3 new helpers (private):**
+  - `BST_apply` — pointwise formula for `BST T u`.
+  - `projL1'_add_projL0'_eq` — `↑(projL1' v) + ↑(projL0' v) = v` via
+    `Submodule.IsCompl.projection_add_projection_eq_self` + `projection_apply`.
+  - `lambda_L0_eq_lambda_L0_projL0'` — for `x : L0`, `λ(↑x, v) = λ(↑x,
+    ↑(projL0' v))` via the new `S.L0_isotropic_L1'` field. Used `conv_lhs`
+    to keep the rewrite from also touching the `projL0'` argument.
+  - `IsSkewB_BST` — `IsSkewT T → IsSkewB (BST T)` via the previous helper.
+
+### Cross-cutting wins (session 6 / Round 4)
+
+- **Closure-proof template for `IsSkewAdjoint` over generic fields:** for
+  `add_mem'` / `smul_mem'`, use `linear_combination hf + hg` (add) or
+  `linear_combination c * hf` (smul). Confirmed dead end:
+  **never use `linarith` over `[Field F]` without an order** (linarith
+  requires `LinearOrderedField`).
+- **`Submodule.IsCompl.projection_add_projection_eq_self`** (not the
+  search-suggested `linearProjOfIsCompl_add_…` which **does not exist**)
+  — combined with `projection_apply` to get the
+  `linearProjOfIsCompl`-coerced form needed for `projL1'`+`projL0'` ops.
+- **`conv_lhs => rw [...]`** to scope a rewrite to the LHS only when bare
+  `rw [← h]` would over-rewrite (e.g. rewriting `v` while `projL0' v`
+  appears as a sub-expression).
+- **Cross-file 4-tuple cascade pattern:** Tier S #2's tightening of
+  `UnipotentRadical` from 3 to 4 conjuncts forced parallel updates in 3
+  files; harness scheduled them in parallel with mid-round build breakage
+  expected. End-of-round build was green after all three landed.
+- All public theorems re-audited: `#print axioms` shows only `[propext,
+  Classical.choice, Quot.sound]` (plus `sorryAx` on the 6 still-open
+  declarations). **No custom axioms.**

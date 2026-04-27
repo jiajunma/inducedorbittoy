@@ -1,82 +1,184 @@
-# InducedOrbitToy/NormalForm.lean
+# InducedOrbitToy/NormalForm.lean — Round 5
 
-## Status: NO WORK THIS ROUND (Round 4)
+## Summary
 
-Per `PROGRESS.md` (Round 4 plan, lines 56–66 and 488–507): `NormalForm.lean`
-is **not assigned** this round. Round 4's three objectives are restricted to
-`Basic.lean` (Tier S #2 + Tier S #3), `Slice.lean`
-(`parametrizeX0PlusU_existence`), and `Orbits.lean` (cascade for the
-tightened `UnipotentRadical`). All 5 remaining sorries in this file are
-blocked on later rounds:
+All three Round 5 objectives **RESOLVED**:
 
-| Theorem (line) | Tier | Blocker | Round |
-|---|---|---|---|
-| `pNormalForm_witnesses` (195) | A | Levi-action machinery (additive in `Slice.lean`) | 6 |
-| `residual_levi_extract` (319/330) | A | Levi/unipotent decomposition lemma `parabolic_decompose` | 6 |
-| `residual_levi_build` (348/363) | A + S #3 | Lagrangian fields (S #3) + Levi machinery | 6 |
-| `kernelImage_ker` (495, 2 internal sorries lines 537/543) | C + S #3 + S #4 | `Sₕ : LinearEquiv` retype (S #4) + `λ(L1, L0') = 0` (S #3) | 5 |
-| `kernelImage_im` (590) | C + S #3 | `λ(L1, L0') = 0` (S #3) + `sDual_restrict_ker_isIso` (already done) | 5 |
+1. **Tier S #4** — `kernelImage_ker` retyped: `Sₕ : S.L1' ≃ₗ[F] S.Vplus`
+   (was `S.L1' →ₗ[F] S.Vplus`). Underscore-prefixed `_hNondeg`/`_hT`
+   replaced with `hNondeg`/`hT` (now used).
+2. **`kernelImage_ker`** sorry-free (was 2 sorries at lines 537, 543).
+3. **`kernelImage_im`** sorry-free (was 1 sorry at line 595).
 
-The Round 4 changes that touch `Basic.lean`'s `SliceSetup` are described
-as "purely additive" (Tier S #3, `task_pending.md` lines 71–73): new
-fields `L0_paired`, `L1_isotropic_L0'`, `L0_isotropic_L1'` are added but
-no field that `NormalForm.lean` currently consumes is removed or
-retyped. The `UnipotentRadical` tightening (Tier S #2) is consumed only
-by `Slice.lean :: parametrizeX0PlusU_existence` and
-`Orbits.lean :: XCB_sub_X0Lift_mem_unipotent` /
-`XST_sub_X0Lift_mem_unipotent`; `NormalForm.lean` does not construct or
-destructure any `UnipotentRadical` members in the current code, so it
-should be insulated from that cascade as well.
+`kernelImage_dim` call site updated to pass `Sₕ` directly without explicit
+`LinearMap` coercion.
+
+`lake build` is green; only 4 sorry warnings remain (3 in NormalForm.lean
+for Round 6's Levi machinery, 1 in Orbits.lean for Round 7).
+
+`#print axioms` for `kernelImage_ker`, `kernelImage_im`, `kernelImage_dim`
+returns only `[propext, Classical.choice, Quot.sound]` — no custom axioms
+or `sorryAx`.
+
+## New helpers added (in NormalForm.lean)
+
+| Helper | Purpose | Lines |
+|---|---|---|
+| `Cdual_CST_mem_L1` | For any `v : V0`, `Cdual S (CST S Sₕ) v ∈ L1`. | 472–516 |
+| `kernelImage_DTD` | Packages `Cdual S (CST S Sₕ)` as a `DualTransposeData` for `sDual_restrict_ker_isIso`. | 518–544 |
+| `lambda_isPerfPair_local` | Re-derives `S.lambda.IsPerfPair` from `S.paired.isPerfect`. (`Slice.lean`'s `lambda_isPerfPair` is private to that file.) | 546–562 |
+
+## Proof outlines
+
+### `Cdual_CST_mem_L1`
+1. For each `l' ∈ L0'`, `λ(Cdual(CST Sₕ) v, l') = -formV0 v ((CST Sₕ) l')
+   = 0` (using `Cdual_pairing_eq` + `(CST Sₕ) l' = 0` since `projL1' l' = 0`).
+2. Decompose `Cdual(CST Sₕ) v = a + b` with `a ∈ L1`, `b ∈ L0` via
+   `IsCompl L1 L0`'s `codisjoint`.
+3. By `L1_isotropic_L0'`, `λ(a, l') = 0` for `l' ∈ L0'`. So
+   `λ(b, l') = 0` for `l' ∈ L0'`.
+4. By `L0_paired.2.1` (left injectivity of perfect pairing on `L0 × L0'`),
+   `b = 0`. Hence `Cdual(CST Sₕ) v = a ∈ L1`.
+
+### `kernelImage_ker` (reverse inclusion)
+- The existing prefix gives `hX0v_zero`, `hSh_zero`, `hv_in_kerX0`.
+- New: `Sₕ.injective` + `Subtype.ext` (Vplus.subtype injectivity) push
+  `hSh_zero` to `projL1' e' = 0`.
+- New: `Cdual_CST_mem_L1` + `(T (projL0' e')).2 ∈ L0` + `IsCompl L1 L0`
+  give `Cdual(CST Sₕ) v = 0` and `(T (projL0' e') : E) = 0`.
+- New: `sDual_restrict_ker_isIso S.toX0Setup hNondeg S.lambda
+  (lambda_isPerfPair_local S) S.L1 S.L1' hL1'_eq_c Sₕ
+  (kernelImage_DTD ...)` produces `φ : ker X0 ≃ L1`. Apply `φ` to
+  `⟨v, hv_in_kerX0⟩`; combined with `Cdual(CST Sₕ) v = 0` and
+  `φ.injective`, conclude `v = 0`.
+- Goal `e' ∈ map L0'.subtype (ker T)`: witness is `projL0' S e'`. Use
+  `Submodule.IsCompl.projection_add_projection_eq_self` +
+  `Submodule.IsCompl.projection_apply` to get
+  `(projL1' e' : E') + (projL0' e' : E') = e'`, then
+  `(projL1' e' : E') = 0` from `projL1' e' = 0` to conclude
+  `(projL0' e' : E') = e'`.
+
+### `kernelImage_im`
+**Forward (`range XST ⊆ imXST_submod`):** Direct from `XST_apply` +
+`Cdual_CST_mem_L1` + `Submodule.mem_sup_left/right` for the L1 ⊕ image-T
+split.
+
+**Reverse (`imXST_submod ⊆ range XST`):** Constructive preimage:
+- Decompose `a = a_L1 + a_T_e` via `Submodule.mem_sup`. Get `l : L0'`
+  with `(T l : E) = a_T_e`.
+- Decompose `b = b_V + r` via `IsCompl Vplus (range X0)`. Get
+  `v_X0 : V0` with `X0 v_X0 = r`.
+- Set `l1' := Sₕ.symm ⟨b_V, hb_V⟩` and `e' := (l1' : E') + (l : E')`.
+- Build `φ : ker X0 ≃ L1` via `sDual_restrict_ker_isIso`. Set
+  `target := ⟨a_L1 - Cdual(CST Sₕ) v_X0, _⟩ : L1`. Take
+  `w_a := φ.symm target`; this gives
+  `Cdual(CST Sₕ) (w_a : V0) = a_L1 - Cdual(CST Sₕ) v_X0`.
+- Preimage triple: `(0, (w_a : V0) + v_X0, e')`.
+- Verify components via `XST_apply` + `map_add` + the precomputed
+  identities. The E-component closes via an explicit `abel` step
+  (cancelling the `Cdual(CST Sₕ) v_X0` terms).
+
+## `kernelImage_dim` call-site update
+
+Line 783–784 (was 611):
+```lean
+-- Before:
+rw [kernelImage_ker S _hNondeg (Sₕ : S.L1' →ₗ[F] S.Vplus) T _hT]
+-- After (Tier S #4):
+rw [kernelImage_ker S _hNondeg Sₕ T _hT]
+```
+
+## Mathlib lemmas used
+
+- `Submodule.linearProjOfIsCompl_apply_left/_right/_right'` — kill
+  `projL1'`/`projL0'` of L0'/L1' inputs.
+- `Submodule.IsCompl.projection_add_projection_eq_self` and
+  `Submodule.IsCompl.projection_apply` — bridge between
+  `IsCompl.projection` and `linearProjOfIsCompl` for the
+  `projL1' e' + projL0' e' = e'` identity.
+- `Submodule.mem_sup`, `Submodule.mem_sup_left`, `Submodule.mem_sup_right`
+  — element decomposition along `IsCompl`.
+- `Submodule.mem_map`, `LinearMap.mem_range` — unpack `map L0.subtype
+  (range T)`.
+- `LinearEquiv.finrank_eq` (`Sₕ.finrank_eq`) and `finrank_Vplus_eq_c`
+  to derive `finrank L1' = c S`.
+- `LinearMap.injective_iff_surjective_of_finrank_eq_finrank`,
+  `Subspace.dual_finrank_eq`, `LinearMap.IsPerfPair.mk` — replicating
+  `lambda_isPerfPair`.
+- `LinearEquiv.apply_symm_apply` — for `Sₕ (Sₕ.symm _) = _`.
+
+## Failed approaches / dead-ends
+
+- `Submodule.linearProjOfIsCompl_add_linearProjOfIsCompl_eq_self`
+  (the name leansearch initially returned) **does not exist**. The
+  correct name is `Submodule.IsCompl.projection_add_projection_eq_self`.
+- `linarith` does not work over generic `Field F` (needs
+  `LinearOrderedField`); fail-fast lesson reinforced — use
+  `linear_combination`/`abel` for module identities.
+- `linear_combination` does not work directly on Module elements
+  (needs `CommSemiring/CommRing`). For E/V0 component identities,
+  prefer explicit rewrites + `abel` (already a known gotcha in
+  `PROGRESS.md`).
+- A `kerSDualEquiv` helper that returned a `Subtype` wrapping the iso
+  + property fails because `Exists.casesOn` cannot eliminate into
+  non-`Prop` types without `Classical.choice`. Inlining the
+  `obtain` inside each `Prop`-conclusion theorem avoids this issue.
+- The "let w := ⟨v, hv⟩" bind impedes `simpa` from reducing
+  `w.val` to `v`. Working with the inline term `⟨v, hv_in_kerX0⟩`
+  + `congrArg (fun w => (w : S.V0))` + `simpa` resolves it.
 
 ## Verification
 
-- Ran `grep -n "sorry" InducedOrbitToy/NormalForm.lean`: confirmed 5
-  declaration-use `sorry`s at lines 210, 330, 363, 537/543 (counting as
-  one `theorem`-level sorry each at 495), and 595, matching
-  `PROGRESS.md` lines 41–44.
-- File line count: 630 lines, unchanged from start of round.
-- **No edits made** to `InducedOrbitToy/NormalForm.lean` this round.
+`lake env lean InducedOrbitToy/NormalForm.lean` produces only the 3
+expected sorry warnings (lines 195, 319, 348 — Round 6 work):
 
-## Cross-file build expectations
+```
+warning: InducedOrbitToy/NormalForm.lean:195:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:319:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:348:16: declaration uses `sorry`
+```
 
-Mid-round build breakage is expected per `PROGRESS.md` lines 522–540:
-the `Basic.lean` / `Slice.lean` / `Orbits.lean` triad will go through a
-3-tuple-vs-4-tuple `obtain` mismatch window before all three sister
-provers land. `NormalForm.lean` does not depend on the
-`UnipotentRadical` 4-tuple destructure or on the `XCB_sub_X0Lift_mem_unipotent`
-helper, and its imports flow only from `InducedOrbitToy.Slice`. If
-`Slice.lean` is mid-flight, `NormalForm.lean` may transitively fail to
-import; this is expected and resolves at end of round.
+`lake build` green at end of round (no errors, only the above 3
+NormalForm sorries + 1 Orbits sorry + 1 pre-existing
+`unused variable hlambda` lint).
 
-## Next session prep (Round 5 — when `NormalForm.lean` re-enters scope)
+`#print axioms` confirms no new axioms introduced:
+- `kernelImage_ker`: `[propext, Classical.choice, Quot.sound]`
+- `kernelImage_im`: `[propext, Classical.choice, Quot.sound]`
+- `kernelImage_dim`: `[propext, Classical.choice, Quot.sound]`
 
-The Round 5 objective per `PROGRESS.md` line 60 is **Tier S #4 + close
-`kernelImage_ker`, `kernelImage_im`**. When that round begins:
+## Statements changed
 
-1. **First:** retype `kernelImage_ker`'s `Sₕ` from
-   `S.L1' →ₗ[F] S.Vplus` to `S.L1' ≃ₗ[F] S.Vplus` (mirroring
-   `kernelImage_im` at line 592).
-2. **Audit caller:** check `Orbits.lean` for any callers of
-   `kernelImage_ker` and adjust to pass a `LinearEquiv`.
-3. **Close lines 537/543:** with `Sₕ` an iso, `Sₕ.injective` gives
-   `projL1' e' = 0` from `hSh_zero` (lines 526–529). Then
-   `e' = projL0' e'` (decomposition `E' = L1' ⊕ L0'`), and the equation
-   `Cdual (CST Sₕ) v + (T (projL0' e') : E) = 0` (line 506) splits via
-   the Lagrangian condition `λ(L1, L0') = 0` (the new
-   `S.L1_isotropic_L0'` field): `Cdual (CST Sₕ) v ∈ L1` because
-   `Cdual` lands in the perp of `L0'` w.r.t. `λ`, and `(T x : E) ∈ L0`,
-   so by `IsCompl L1 L0` both summands are 0 individually, giving
-   `v = 0` (via `sDual_restrict_ker_isIso` applied to `Cdual (CST Sₕ)`)
-   and `T (projL0' e') = 0`.
-4. **Close line 595 (`kernelImage_im`):** the constructive direction
-   builds preimages using `sDual_restrict_ker_isIso` (already closed in
-   session 4 per `task_done.md`); the reverse direction uses
-   `λ(L1, L0') = 0` to confine `Cdual (CST Sₕ) v` to `L1`.
+Only `kernelImage_ker`'s signature changed (Tier S #4):
 
-## Notes
+```
+-- Before:
+theorem kernelImage_ker
+    (_hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
+    LinearMap.ker (XST S Sₕ T) = kerXST_submod S Sₕ T
 
-- Confirmed via `lean_local_search` etc. is unnecessary at this stage —
-  no edits to verify.
-- No new `axiom` introduced (no edits).
-- File unchanged: `git status` should show no diff for
-  `InducedOrbitToy/NormalForm.lean`.
+-- After (Round 5):
+theorem kernelImage_ker
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
+    LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) =
+      kerXST_submod S (Sₕ : S.L1' →ₗ[F] S.Vplus) T
+```
+
+`kernelImage_im` statement unchanged (already used `LinearEquiv` from
+Round 4). `kernelImage_dim` statement unchanged.
+
+`pNormalForm`, `pNormalForm_witnesses`, `residual_levi_extract`,
+`residual_levi_build`, `pNormalForm_residual_orbit_iso`,
+`IsParabolicElement` signatures and proof structures are **unchanged**
+— only `kernelImage_*` and the `kernelImage_dim` call site were touched.
+
+## Notes for the plan agent
+
+- Comments at lines 344, 357 (in `residual_levi_build`) still reference
+  the old `L0_isotropic` field. They are stale but do not break
+  anything; refresh them when Round 6 work touches that proof.
+- The `lambda_isPerfPair_local` helper is a near-duplicate of the
+  private `lambda_isPerfPair` in `Slice.lean`. If a future refactor
+  promotes the Slice version to public, remove the local copy.

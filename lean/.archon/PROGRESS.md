@@ -6,7 +6,7 @@ prover
 ## Stages
 - [x] init
 - [x] autoformalize
-- [ ] prover  ← current (round 4)
+- [ ] prover  ← current (round 5)
 - [ ] polish
 
 ## Authoritative Sources
@@ -14,11 +14,11 @@ prover
 - Blueprint: `references/blueprint_verified.md` (1049 lines).
 - Module split + scope decisions: `references/formalization_plan.md`.
 - Per-file informal sketches: `.archon/informal/{slice,normalform,localforms,orbits}.md`.
-- Latest review: `.archon/proof-journal/sessions/session_5/summary.md`
+- Latest reviews: `.archon/proof-journal/sessions/session_5/summary.md`
   and `.archon/proof-journal/sessions/session_5/recommendations.md`.
 - Cumulative state: `.archon/PROJECT_STATUS.md`.
 
-## Verified State (independent checks, 2026-04-28 — end of Round 3)
+## Verified State (independent checks, 2026-04-28 — end of Round 4)
 
 - `lake build` succeeds; only `sorry` warnings + 1 unused-variable lint
   (`InducedOrbitToy/X0Geometry.lean:221:35: unused variable hlambda` —
@@ -27,517 +27,558 @@ prover
 - Custom `axiom` declarations: 0 (re-verified by `lean_verify` on every
   public theorem; only `[propext, Classical.choice, Quot.sound]` appears,
   plus `sorryAx` on declarations that still embed an explicit `sorry`).
-- Round-3 progress: 9 → 7 declaration-use `sorry` warnings (Tier S #1
-  landed: `uD_isParabolic` and `pNormalForm`'s IsOrthogonal conjunct
-  both closed).
+- Round-4 progress: 7 → 6 declaration-use `sorry` warnings.
+  - **`Slice.lean :: parametrizeX0PlusU_existence` is sorry-free** (Tier D
+    closed via Tier S #2's new `IsSkewAdjoint` conjunct on
+    `UnipotentRadical`).
+  - Tier S #2 (`UnipotentRadical` tightening) and Tier S #3 (`SliceSetup`
+    Lagrangian quartet `L0_paired`, `L1_isotropic_L0'`, `L0_isotropic_L1'`,
+    replacing mis-named `L0_isotropic`) both landed in Basic.lean with
+    full cascades through Slice.lean (`parametrizeX0PlusU_mem`) and
+    Orbits.lean (`XCB_sub_X0Lift_mem_unipotent`,
+    `XST_sub_X0Lift_mem_unipotent`, `XST_mem_O0PlusU`, `inducedOrbits`,
+    `main`).
 - Remaining declaration-use `sorry` lines (verified by `lake build`):
-  - `InducedOrbitToy/Slice.lean`: 1
-    - line 232 — `parametrizeX0PlusU_existence` (Tier D, 2 internal
-      scoped `sorry`s at lines 256 and 294; **assigned this round**
-      — Tier S #2 unblocks it).
   - `InducedOrbitToy/NormalForm.lean`: 5
     - line 195 — `pNormalForm_witnesses` (Tier A, blocked on Levi
       machinery; Round 6),
     - line 319 — `residual_levi_extract` (Tier A, Round 6),
-    - line 348 — `residual_levi_build` (Tier A + Tier S #3, Round 6),
-    - line 495 — `kernelImage_ker` (Tier C + Tier S #3 + #4, Round 5),
-    - line 590 — `kernelImage_im` (Tier C + Tier S #3, Round 5).
+    - line 348 — `residual_levi_build` (Tier A; Tier S #3 fields now
+      present, but Levi machinery still needed; Round 6),
+    - line 495 — `kernelImage_ker` (Tier C + Tier S #4;
+      **assigned this round**),
+    - line 590 — `kernelImage_im` (Tier C; Tier S #3 condition now
+      available; **assigned this round**).
   - `InducedOrbitToy/Orbits.lean`: 1
-    - line 242 — `sIndependenceAndOrbitCriterion` (Tier A deferred,
+    - line 324 — `sIndependenceAndOrbitCriterion` (Tier A deferred,
       depends on `pNormalForm_residual_orbit_iso` fully closing; Round 7).
 
-## Round Plan (revised after session 5)
+## Round Plan (revised after Round 4)
 
-The 7 remaining sorries split across Tier S structural fixes, Tier A
-infrastructure, Tier C closes, and the deferred Tier A in `Orbits.lean`.
-The plan-agent expects **4 more prover rounds** (4 → 7), each focused on
-a single block of work to keep mid-round build coupling manageable:
+The 6 remaining sorries split across one Tier S structural fix
+(Tier S #4), two Tier C closes (this round), three Tier A items
+requiring Levi machinery (Round 6), and one deferred Tier A in
+`Orbits.lean` (Round 7).
 
 | Round | Focus | Files | Sorry Δ |
 |---|---|---|---|
-| **4 (this round)** | **Tier S #2** + Tier S #3 (additive) + close `parametrizeX0PlusU_existence` | Basic, Slice, Orbits | 7 → 6 |
-| 5 | Tier S #4 + close `kernelImage_ker`, `kernelImage_im` | NormalForm, Orbits | 6 → 4 |
+| **5 (this round)** | **Tier S #4 + close `kernelImage_ker`, `kernelImage_im`** | NormalForm | 6 → 4 |
 | 6 | Levi machinery (additive) + close `pNormalForm_witnesses`, `residual_levi_extract`, `residual_levi_build` | Slice, NormalForm | 4 → 1 |
 | 7 | Close `sIndependenceAndOrbitCriterion` | Orbits | 1 → 0 |
 
-Round 4's three objectives are **tightly coupled**: `Basic.lean`'s
-`UnipotentRadical` tightening cascades to consumers in `Slice.lean` and
-`Orbits.lean`. Mid-round build breakage is expected (the harness runs in
-parallel); end-of-round build must be green.
+Round 5 is **single-file**: only `NormalForm.lean` has work this round.
+All other files are either complete or blocked on Round 6+ infrastructure.
 
-## Current Objectives (Round 4)
+## Current Objectives (Round 5)
 
-**Three objectives.** All other files are blocked on Round 5+ work or are
+**One objective.** All other files are blocked on Round 6+ work or are
 already complete; **do not assign provers to them this round**.
 
-### 1. `InducedOrbitToy/Basic.lean` — Tier S #2 + Tier S #3 (structural fixes)
+### 1. `InducedOrbitToy/NormalForm.lean` — Tier S #4 + close `kernelImage_ker` + `kernelImage_im`
 
-Two structural changes to definitions/structures. Both are
-*plan-agent-mandated* — the prover must apply them as written below, then
-verify the file still type-checks.
+Three sub-tasks, in order:
 
-#### 1a. Tier S #2 — Tighten `UnipotentRadical` with skew-adjointness
+#### 1a. Tier S #4 — Retype `kernelImage_ker`'s `Sₕ` to a `LinearEquiv`
 
-**Target:** `UnipotentRadical` (line 208).
+**Target:** `kernelImage_ker` (line 495).
 
-**Current definition** (verbatim, lines 208–213):
+**Current signature** (verbatim, lines 495–498):
 ```lean
-noncomputable def UnipotentRadical {F : Type*} [Field F] (S : SliceSetup F) :
-    Submodule F (Module.End F S.V) where
-  carrier :=
-    { f | (∀ x ∈ S.flagE, f x = 0) ∧
-          (∀ x ∈ S.flagEV0, f x ∈ S.flagE) ∧
-          (∀ x : S.V, f x ∈ S.flagEV0) }
+theorem kernelImage_ker
+    (_hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
+    LinearMap.ker (XST S Sₕ T) = kerXST_submod S Sₕ T := by
 ```
 
-**Change to** (4 conjuncts):
+**Change to** (mirroring `kernelImage_im` line 590–594):
 ```lean
-noncomputable def UnipotentRadical {F : Type*} [Field F] (S : SliceSetup F) :
-    Submodule F (Module.End F S.V) where
-  carrier :=
-    { f | (∀ x ∈ S.flagE, f x = 0) ∧
-          (∀ x ∈ S.flagEV0, f x ∈ S.flagE) ∧
-          (∀ x : S.V, f x ∈ S.flagEV0) ∧
-          IsSkewAdjoint S.ambientForm f }
+theorem kernelImage_ker
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (hT : IsSkewT S T) :
+    LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) =
+      kerXST_submod S (Sₕ : S.L1' →ₗ[F] S.Vplus) T := by
 ```
 
-(Add the 4th conjunct `IsSkewAdjoint S.ambientForm f`, which encodes
-"`f` is skew w.r.t. the ambient bilinear form".)
+(Underscore-prefix → real name on hypotheses now that they will be used.
+Coerce `Sₕ` explicitly inside `XST` and `kerXST_submod` since both still
+take a `LinearMap`.)
 
-**Update the closure proofs** (`zero_mem'`, `add_mem'`, `smul_mem'`):
-extend each `refine ⟨?_, ?_, ?_⟩` to `refine ⟨?_, ?_, ?_, ?_⟩` and discharge
-the new IsSkewAdjoint goal:
-- `zero_mem'`: trivial — `IsSkewAdjoint B 0` reduces to `B 0 _ + B _ 0 = 0`,
-  i.e. `0 + 0 = 0`. `intro x y; simp [LinearMap.zero_apply, map_zero]` or
-  `intro x y; simp` should close it.
-- `add_mem'`: `IsSkewAdjoint B (f + g)` from `IsSkewAdjoint B f` +
-  `IsSkewAdjoint B g`. Unfold `(f + g) x = f x + g x`, distribute `B`,
-  rearrange. Pattern: `intro x y; simp only [LinearMap.add_apply,
-  map_add, LinearMap.add_apply]; linear_combination (h_f x y) + (h_g x y)`
-  — or just `linarith` after distributing.
-- `smul_mem'`: `IsSkewAdjoint B (c • f)` from `IsSkewAdjoint B f`.
-  Pattern: `intro x y; simp only [LinearMap.smul_apply, map_smul,
-  LinearMap.smul_apply, smul_eq_mul]; linear_combination c * (h_f x y)`.
-
-**Update the docstring** at line 200–207 to mention the 4th conjunct
-("`f` is skew-adjoint w.r.t. `S.ambientForm`") and remove the
-"loose 𝔭" framing — the new definition matches `𝔲 = 𝔭 ∩ 𝔤`.
-
-#### 1b. Tier S #3 — Add Lagrangian-condition fields to `SliceSetup`
-
-**Target:** `SliceSetup` (line 129–138).
-
-**Current structure** has fields:
+**Update the call site at `kernelImage_dim` line 611:** currently:
 ```lean
-structure SliceSetup (F : Type*) [Field F] extends X0Setup F where
-  paired : PairedSpaces F
-  L1 : Submodule F paired.E
-  L0 : Submodule F paired.E
-  L1' : Submodule F paired.E'
-  L0' : Submodule F paired.E'
-  isComplL : IsCompl L1 L0
-  isComplL' : IsCompl L1' L0'
-  L1_paired : IsPaired paired.pairing L1 L1'
-  L0_isotropic : IsIsotropic paired.pairing L0 L0'
+rw [kernelImage_ker S _hNondeg (Sₕ : S.L1' →ₗ[F] S.Vplus) T _hT]
 ```
-
-**Notes on the existing `L0_isotropic` field:**
-
-The blueprint requires the standard Lagrangian decomposition:
-- `L1 ↔ L1'` perfectly paired (already there as `L1_paired`),
-- `L0 ↔ L0'` perfectly paired (MISSING; the planned `L0_paired` field),
-- `λ(L1, L0') = 0` (MISSING; needed by `kernelImage_ker` /
-  `kernelImage_im` / `residual_levi_build`),
-- `λ(L0, L1') = 0` (MISSING; symmetric).
-
-The current `L0_isotropic` (typed as `IsIsotropic paired.pairing L0 L0'`)
-is **mathematically inconsistent with `L0_paired`** — the latter says
-`L0 × L0' → F` is non-degenerate (perfect pairing), so it cannot also be
-identically zero. The `L0_isotropic` field appears to have been a
-mis-named placeholder during autoformalize.
-
-**Audit step (do this first):** grep all uses of `L0_isotropic` in the
-codebase. The expected outcome:
-
-```bash
-grep -rn "L0_isotropic" InducedOrbitToy/
-```
-
-If the field is unused (or used only in autoformalization scaffolding
-that can be retargeted), remove it and replace with the intended
-`L1_isotropic_L0'` (the cross-isotropy condition `λ(L1, L0') = 0`). If it
-is used and the use site genuinely requires `λ(L0, L0') = 0`, then there
-is a deeper modelling bug — escalate to the plan agent before proceeding.
-
-**Change** (assuming `L0_isotropic` is replaceable):
+After retype, `kernelImage_dim`'s `Sₕ` is already a `LinearEquiv` (line
+606); pass it directly:
 ```lean
-structure SliceSetup (F : Type*) [Field F] extends X0Setup F where
-  paired : PairedSpaces F
-  L1 : Submodule F paired.E
-  L0 : Submodule F paired.E
-  L1' : Submodule F paired.E'
-  L0' : Submodule F paired.E'
-  isComplL : IsCompl L1 L0
-  isComplL' : IsCompl L1' L0'
-  L1_paired : IsPaired paired.pairing L1 L1'
-  L0_paired : IsPaired paired.pairing L0 L0'
-  L1_isotropic_L0' : IsIsotropic paired.pairing L1 L0'
-  L0_isotropic_L1' : IsIsotropic paired.pairing L0 L1'
+rw [kernelImage_ker S _hNondeg Sₕ T _hT]
 ```
 
-If `L0_isotropic` *is* used somewhere mathematically (i.e. a downstream
-proof actively relies on `λ(L0, L0') = 0`), keep it but **add the three
-new fields alongside** — and flag the inconsistency in the prover's
-report so the plan agent can untangle it next round.
+#### 1b. Close `kernelImage_ker` (lines 537, 543)
 
-**No proof body to discharge** — these are structure fields, additive
-data only. Existing `SliceSetup` instances in the codebase (if any —
-unlikely given this is a structure parameter not a singleton) will need
-to be updated, but a quick audit suggests there are no such instances
-(only the parameter `(S : SliceSetup F)` is threaded through proofs).
+Both sorries are in the reverse inclusion `ker XST ⊆ kerXST_submod`.
+The proof prefix (lines 502–530) already establishes:
+- `hX0v_zero : S.X0 v = 0`,
+- `hSh_zero : (Sₕ (projL1' S e') : S.V0) = 0`,
+- `hv_in_kerX0 : v ∈ LinearMap.ker S.X0`.
+
+After retyping `Sₕ` to `LinearEquiv`, use `Sₕ.injective` to push
+`hSh_zero` to `(projL1' S e' : S.E') = 0`. Combined with the
+decomposition `e' = projL1' e' + projL0' e'` (via `S.isComplL'`), this
+gives `e' ∈ L0'` (i.e. `e' = projL0' e'` viewed in `E'`).
+
+Then the equation `Cdual S (CST Sₕ) v + (T (projL0' S e') : S.E) = 0`
+(line 506, `hx1`) splits via the Lagrangian conditions:
+
+**Key fact (need a helper):** `Cdual S (CST Sₕ) v ∈ S.L1` for any
+`v : S.V0`.
+
+Why: `CST Sₕ = S.Vplus.subtype ∘ₗ Sₕ ∘ₗ projL1'` zeros on `L0'` (since
+`projL1'` lands in `L1'`, and `projL1'` of an `L0'` element is 0). For
+any `e' ∈ L0'`, `(CST Sₕ) e' = 0`. By `Cdual_pairing_eq`,
+`λ(Cdual S (CST Sₕ) v, e') = -formV0 v ((CST Sₕ) e') = 0`. So
+`Cdual S (CST Sₕ) v ∈ (L0')^⊥` (where `⊥` is w.r.t. `λ`). The
+Lagrangian condition `S.L1_isotropic_L0'` says `λ(L1, L0') = 0`, i.e.
+`L1 ⊆ (L0')^⊥`. By the perfect-pairing dimension count (`L1 ↔ L1'`
+and `L0 ↔ L0'` both perfect, `L1 ⊕ L0 = E`, `L1' ⊕ L0' = E'`),
+`(L0')^⊥ = L1`. So `Cdual S (CST Sₕ) v ∈ L1`.
+
+(Alternatively, prove `(L0')^⊥ = L1` directly using
+`L1_paired.injective_left` + dimension; or prove `Cdual S (CST Sₕ) v ∈ L1`
+without going through `(L0')^⊥` at all by using
+`Submodule.IsCompl.eq_of_le_of_finrank_eq` style reasoning.)
+
+**Proof outline for the two sorries:**
+
+```lean
+  -- Continuing after `hv_in_kerX0` at line 530:
+
+  -- (Sₕ injective ⇒ projL1' e' = 0 in L1')
+  have hproj_e' : (projL1' S e' : S.L1') = 0 := Sₕ.injective <| by
+    -- Sₕ (projL1' e') = 0 in Vplus follows from `hSh_zero`
+    -- combined with Vplus.subtype injectivity.
+    have : (Sₕ (projL1' S e') : S.Vplus) = 0 := by
+      apply Submodule.coe_injective_of_subtype_injective
+        S.Vplus.injective_subtype.mp
+      simpa using hSh_zero
+    rw [map_zero]
+    exact_mod_cast this  -- coerce L1'.subtype injectivity through
+
+  -- Wait — Sₕ is `S.L1' ≃ₗ[F] S.Vplus`, so `Sₕ x = 0 ⇔ x = 0`.
+  -- The cleaner path:
+  have hproj_e'_zero : projL1' S e' = (0 : S.L1') := by
+    apply Sₕ.injective
+    rw [map_zero]
+    -- Reduce `(Sₕ (projL1' e') : S.V0) = 0` to `Sₕ (projL1' e') = 0`
+    -- via `S.Vplus.subtype.injective`.
+    exact Subtype.ext hSh_zero  -- or similar coerce step
+
+  -- Now `e' ∈ L0'` because projL1' e' = 0 in E':
+  have he'_in_L0' : (e' : S.E') = (projL0' S e' : S.E') := by
+    have hsum := projL1'_add_projL0'_eq S e'  -- helper from Orbits.lean!
+    -- ↑(projL1' e') + ↑(projL0' e') = e'
+    -- With ↑(projL1' e') = 0 (subtype-coerce hproj_e'_zero):
+    have : ((projL1' S e' : S.L1') : S.E') = 0 := by
+      rw [hproj_e'_zero]; rfl
+    linarith  -- no, in F-vector space need linear_combination or ring
+    -- Actually: rw [← hsum, this, zero_add]
+
+  -- ((Sub-helper for `Cdual (CST Sₕ) v ∈ L1`)) — extract as new private lemma:
+  have h_Cdual_in_L1 : Cdual S (CST S Sₕ) v ∈ S.L1 := by
+    -- Use perfect pairing's `bijective_right` on L0 ↔ L0' to get L1 = (L0')^⊥
+    -- (or build a more direct argument). See sketch below.
+    sorry  -- to be expanded
+
+  -- Now `hx1 : Cdual S (CST Sₕ) v + (T (projL0' S e') : S.E) = 0`.
+  -- LHS first summand in L1, second summand in L0 (since T : L0' → L0).
+  -- IsCompl L1 L0 ⇒ both summands are 0.
+  have h_disj : Disjoint S.L1 S.L0 := S.isComplL.disjoint
+  have h_first_zero : Cdual S (CST S Sₕ) v = 0 := by
+    -- ... use h_Cdual_in_L1, hT_in_L0, hx1, h_disj.
+    sorry
+  have h_second_zero : (T (projL0' S e') : S.E) = 0 := by
+    have := hx1
+    rw [h_first_zero, zero_add] at this
+    exact this
+
+  -- v = 0: from `h_first_zero`, `hv_in_kerX0`, and Cdual restricted to ker X0
+  -- being injective via `sDual_restrict_ker_isIso`.
+  have hv_zero : v = 0 := by
+    -- Build a `DualTransposeData` for (S, S.lambda, S.L1, S.L1', Sₕ).
+    -- Tdual := Cdual (S.Vplus.subtype ∘ₗ Sₕ.toLinearMap) -- no, just Cdual (CST Sₕ).
+    -- pairing_eq follows from Cdual_pairing_eq.
+    -- range_le_L1 follows from `h_Cdual_in_L1` (range Cdual ⊆ L1).
+    -- finrank_L1_eq follows from `S.L1_paired` + perfect pairing.
+    -- Then sDual_restrict_ker_isIso gives ker X0 ≃ L1 via `Cdual ∘ subtype`.
+    -- Injectivity of that map on ker X0 forces v = 0 from h_first_zero.
+    sorry
+
+  -- Now close the two structural sorries:
+  refine ⟨trivial, ?_, ?_⟩
+  · -- Goal: v ∈ ⊥
+    rw [hv_zero]; exact Submodule.zero_mem _
+  · -- Goal: e' ∈ map L0'.subtype (ker T)
+    rw [Submodule.mem_map]
+    refine ⟨projL0' S e', ?_, ?_⟩
+    · -- projL0' e' ∈ ker T
+      rw [LinearMap.mem_ker]
+      apply Submodule.coe_injective_of_subtype S.L0  -- or similar coerce
+      -- (T (projL0' e') : E) = 0 by h_second_zero
+      simpa using h_second_zero
+    · -- L0'.subtype (projL0' e') = e'
+      exact he'_in_L0'.symm
+```
+
+(The above is a *sketch*. The prover should pick the cleanest formulation
+— in particular, the `h_Cdual_in_L1` lemma and `hv_zero` step both want a
+genuine `DualTransposeData` instance. See "Helper to extract" below.)
+
+**Helper to extract (private, near `kerXST_submod_le_ker`):**
+
+```lean
+/-- For any `v : S.V0`, the Cdual of `CST Sₕ` lands in `L1`. This is the
+content of the cross-isotropy `S.L1_isotropic_L0'`: `Cdual (CST Sₕ) v`
+pairs to zero with every `L0'` element (because `CST Sₕ` zeros on `L0'`),
+hence lies in `(L0')^⊥ = L1` (where the equality uses the perfect
+pairings `L1 ↔ L1'` / `L0 ↔ L0'` and the cross-isotropy). -/
+private lemma Cdual_CST_mem_L1 (S : SliceSetup F)
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (v : S.V0) :
+    Cdual S (CST S Sₕ) v ∈ S.L1 := by
+  sorry
+```
+
+The cleanest way to prove `(L0')^⊥_λ = L1` may be via a custom small lemma
+"if `λ(x, l') = 0` for all `l' ∈ L0'`, then `x ∈ L1`", proved directly
+from `L1 ⊕ L0 = E` and `L0 ↔ L0'` perfect (so any `l ∈ L0` with
+`λ(l, l') = 0` for all `l' ∈ L0'` must be 0). The decomposition gives
+`x = x_L1 + x_L0`, and pairing both sides with `l' ∈ L0'`:
+`λ(x_L1, l') + λ(x_L0, l') = 0`. By `L1_isotropic_L0'`, `λ(x_L1, l') = 0`
+for all `l'`. So `λ(x_L0, l') = 0` for all `l' ∈ L0'`, and `L0_paired`'s
+left injectivity gives `x_L0 = 0`. Hence `x = x_L1 ∈ L1`.
+
+**Helper to extract (`DualTransposeData` instance):**
+
+```lean
+/-- The `DualTransposeData` for `S.lambda`, `S.L1`, `S.L1'` with
+`Tdual := Cdual S (CST S Sₕ)`, witnessed by an iso `Sₕ : L1' ≃ Vplus`
+and the in-place Lagrangian conditions. -/
+private noncomputable def kernelImage_DTD (S : SliceSetup F)
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) :
+    DualTransposeData S.toX0Setup S.lambda S.L1 S.L1'
+      ((S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus)).comp
+        S.L1'.subtype) := by  -- check the exact T-shape needed
+  sorry
+```
+
+Then `sDual_restrict_ker_isIso S.toX0Setup hNondeg S.lambda
+S.lambda_isPerfPair S.L1 S.L1' (?finrank-condition) Sₕ kernelImage_DTD`
+gives the iso `ker X0 ≃ L1` whose `Tdual` is the dual transpose of `Sₕ`.
+
+Note the finite-rank condition `Module.finrank F L1' = c S` (the third
+argument to `sDual_restrict_ker_isIso`): this follows from
+`L1_paired.injective_right.finrank_eq` + `c_eq_finrank_quotient` + the
+identification `Vplus ≃ V0 / range X0`. Worth packaging as a small
+helper.
+
+#### 1c. Close `kernelImage_im` (line 595)
+
+**Target:** `kernelImage_im` (line 590).
+
+**Statement** (already uses `Sₕ : LinearEquiv`):
+```lean
+theorem kernelImage_im
+    (_hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
+    LinearMap.range (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) =
+      imXST_submod S (Sₕ : S.L1' →ₗ[F] S.Vplus) T := by
+  sorry
+```
+
+Need both directions:
+
+##### `imXST_submod ⊆ range XST` (constructive forward direction)
+
+Given `(a, b, 0) ∈ imXST_submod` with:
+- `a ∈ S.L1 ⊔ (LinearMap.range T).map S.L0.subtype`,
+- `b ∈ ⊤` (i.e. `b : S.V0`).
+
+Construct a preimage `(e, v, e') ∈ S.V` with `XST(e, v, e') = (a, b, 0)`.
+
+By `Submodule.mem_sup`, write `a = a_L1 + a_T` with `a_L1 ∈ L1` and
+`a_T ∈ map L0.subtype (range T)`. Pick `l ∈ L0'` with `T l = a_T`'s
+preimage (i.e. `(T l : E) = a_T`).
+
+Use `sDual_restrict_ker_isIso` (now applicable with the helper from 1b)
+to get `φ : ker X0 ≃ L1` such that `φ⁻¹(a_L1) = w_L1 ∈ ker X0`. Then:
+- `v := w_L1 + Sₕ⁻¹(b - X0(...))` — actually need to think carefully.
+
+Cleanest setup: split `b = b_Vplus + X0 v_pre` for some `v_pre : V0` via
+`S.isCompl : IsCompl S.Vplus (range X0)`. Set `v_X0 := v_pre`, choose
+`l1' ∈ L1'` with `Sₕ l1' = b_Vplus` (use `Sₕ.symm`). Then take `e' :=
+(l1' : E') + (l : E')` (so `projL1' e' = l1'`, `projL0' e' = l`).
+
+Take `v := w_L1 + v_X0` where `w_L1` is a preimage of `a_L1 - Cdual(CST
+Sₕ)(v_X0) - …` under `Cdual S (CST Sₕ)|_{ker X0}`. Wait — this is getting
+tangled. Better: choose `v` and `e'` first, then `e` is free (use `e := 0`).
+
+Let `e' := (Sₕ.symm b_Vplus : E') + (l : E')` where `l : L0'` chosen with
+`(T l : E) = a_T`. Then:
+- `Sₕ (projL1' e') = b_Vplus` (V0-component of `Sₕ` part).
+- `(T (projL0' e') : E) = a_T`.
+
+Now solve `XST(e, v, e') = (a, b, 0)` for `(e, v)`:
+- `Cdual (CST Sₕ) v + a_T = a_L1 + a_T`, i.e. `Cdual (CST Sₕ) v = a_L1`.
+  Use `φ : ker X0 ≃ L1` to find `v ∈ ker X0` with `φ v = a_L1`, but
+  `φ v = D.Tdual v = Cdual (CST Sₕ) v` if the `DualTransposeData` is set
+  up right.
+- `X0 v + b_Vplus = b`, i.e. `X0 v = b - b_Vplus`, but `b - b_Vplus ∈
+  range X0` by the `IsCompl S.Vplus (range X0)` decomposition.
+
+Two constraints on `v`: `Cdual (CST Sₕ) v = a_L1` and `X0 v = b -
+b_Vplus`. Need a shared `v` satisfying both. The first forces
+`v ∈ ker X0` (because `φ : ker X0 ≃ L1` and `a_L1 ∈ L1`)? No — `φ`
+restricts `Cdual` to `ker X0`, but `Cdual (CST Sₕ) : V0 → E` is defined
+on all of `V0`, not just `ker X0`. We need to verify whether `Cdual (CST
+Sₕ) v` only depends on `v mod range X0`, then split.
+
+Actually `Cdual_pairing_eq` says
+`λ(Cdual (CST Sₕ) v, e') = -formV0 v ((CST Sₕ) e')`. The kernel of this
+linear map (as a function of `v`) is `(image of CST Sₕ)^⊥_{formV0}`,
+which is `(Vplus)^⊥_{formV0}` (since `CST Sₕ` lands in `Vplus`). By the
+`vplusKerPairing_isPerfPair` (X0Geometry), `Vplus^⊥_{formV0}` modulo
+something equals `range X0` (I think).
+
+This is getting complicated. Let me instead suggest: **use the
+`DualTransposeData` helper from 1b** to package the iso `ker X0 ≃ L1`,
+and decompose `V0 = ker X0 ⊕ V_section` for some complement `V_section`
+(pick any). On `ker X0`, `Cdual (CST Sₕ)` is the iso `φ`. Outside `ker
+X0`, `Cdual (CST Sₕ)` is *not* an iso (it sends V_section to L1 or
+L1?... need to check).
+
+Hmm, `Cdual (CST Sₕ)` lands in L1 always (per helper from 1b), so it's a
+map `V0 → L1`. Its restriction to `ker X0` is an iso to `L1` (by
+`sDual_restrict_ker_isIso`). So `Cdual (CST Sₕ)` is *surjective* onto
+`L1` (with kernel containing `range X0` — wait, the map from `V0/ker(map
+to L1)` is the iso, so the kernel of `V0 → L1` is exactly `(ker X0)^⊥` in
+some sense. Actually if `restriction to ker X0` is bijective onto L1,
+then the *full* map factors through `V0 → V0/(some complement) → L1`
+where the complement is *not* ker X0 but rather the kernel of the full
+map. Bottom line: surjective `V0 ↠ L1` with kernel of dimension `dim V0
+- dim L1`. Not ker X0 in general.
+
+OK this is complicated. The prover should consult the blueprint
+construction for the forward direction of `kernelImage_im` carefully. The
+informal sketch is in `informal/normalform.md` (light on detail) and the
+blueprint `references/blueprint_verified.md` `prop:kernel-image`.
+
+**Simplification:** the forward direction uses `b ∈ ⊤` (so `b : V0`
+arbitrary). Choose `v ∈ ker X0` such that `Cdual (CST Sₕ) v = a_L1`
+(possible by `sDual_restrict_ker_isIso`). Then `X0 v = 0`. So we need
+`b = Sₕ (projL1' e')`, i.e. `Sₕ (projL1' e') = b`. But `Sₕ : L1' →
+Vplus`, not `L1' → V0`. So we need `b ∈ Vplus`.
+
+**The `b ∈ ⊤` claim is too strong.** Either:
+- The `imXST_submod` definition (line 548–552) has `Submodule.prod ⊤ ⊥`
+  as the `(V0, E')` factor, i.e. `b : V0` is arbitrary, `e' = 0`.
+  But then `(a, b, 0) = XST(e, v, e')` requires
+  `X0 v + Sₕ (projL1' e') = b` with `e' = 0`, i.e. `X0 v = b`. So
+  `b ∈ range X0`. But the spec says `b ∈ ⊤`. So `range X0 = V0`?
+  No — `range X0 ⊕ Vplus = V0` and `Vplus` is non-trivial.
+
+There may be a subtle issue with the `imXST_submod` definition. Look at
+the blueprint description: "`Im X_{S,T} = (L1 ⊕ Im T) ⊕ V₀`". The
+"`⊕ V₀`" part means the full `V0` factor *but* it gets there via `X0 v +
+Sₕ(projL1' e')`. So a value `b ∈ V0` is decomposed `b = b_range + b_Vplus`
+with `b_range ∈ range X0` and `b_Vplus ∈ Vplus`. Then `X0 v = b_range`
+(pick `v` with `X0 v = b_range`) and `Sₕ (projL1' e') = b_Vplus` (pick
+`l1' = Sₕ.symm b_Vplus`, then `(l1' : E') ∈ E'` has `projL1' = l1'`).
+
+With both `v` (for `b_range`) and `e'` (for `b_Vplus` plus the `T` part)
+determined, the V0 component of `XST(e, v, e')` is
+`X0 v + (Sₕ (projL1' e') : V0) = b_range + b_Vplus = b`. ✓
+
+For the E component: `Cdual (CST Sₕ) v + (T (projL0' e') : E) = a`. We
+have a fixed `v` (chosen for the V0 component) and need `e'`'s `L0'`
+part. Adjust `(T (projL0' e') : E) = a - Cdual (CST Sₕ) v`.
+
+We need `a - Cdual (CST Sₕ) v ∈ map L0.subtype (range T) ⊆ L0`. We have
+`a = a_L1 + a_T` with `a_T ∈ map L0.subtype (range T)`. And `Cdual (CST
+Sₕ) v ∈ L1` (helper from 1b). So `a - Cdual (CST Sₕ) v = (a_L1 - Cdual
+(CST Sₕ) v) + a_T`. The first parenthesis is in L1, the second in
+`map L0.subtype (range T) ⊆ L0`. By `IsCompl L1 L0`, the L1 piece must
+vanish for `a - Cdual (CST Sₕ) v` to be in `L0`.
+
+**Forced:** `Cdual (CST Sₕ) v = a_L1`. With `v ∈ ker X0` (so `X0 v = 0`),
+the iso `ker X0 ≃ L1` from `sDual_restrict_ker_isIso` gives a unique
+preimage. But we already used `v` for the `b_range` part — so we need a
+*different* `v`. **Re-decomposition:**
+
+The right decomposition: `v = v_ker + v_section` with `v_ker ∈ ker X0`
+(carries the L1 mass via `Cdual (CST Sₕ) v_ker = a_L1`) and `v_section`
+chosen so `X0 v_section = b_range`. The full `X0 v = b_range` since
+`X0 v_ker = 0`. The full `Cdual (CST Sₕ) v = Cdual (CST Sₕ) v_ker + Cdual
+(CST Sₕ) v_section = a_L1 + Cdual (CST Sₕ) v_section`. We need this to
+equal `a_L1`, i.e. `Cdual (CST Sₕ) v_section = 0`. But `Cdual (CST Sₕ)`
+is *not* zero on `range X0` in general.
+
+**Alternative:** absorb the `Cdual (CST Sₕ) v_section` term into `e'`'s
+`L0'` part:
+`(T (projL0' e') : E) = a - Cdual (CST Sₕ) v = a - (a_L1 + Cdual (CST Sₕ)
+v_section) = (a_T) - Cdual (CST Sₕ) v_section`.
+
+This needs to be in `L0`. `a_T ∈ L0`, and `Cdual (CST Sₕ) v_section ∈ L1`
+(helper). Difference is `(a_T) - (Cdual (CST Sₕ) v_section) ∈ L0 + L1 =
+E`, but not necessarily in `L0` alone. **Stuck again.**
+
+The actual fix: **choose `v_section = 0`**, i.e. take `v := v_ker` so
+that `X0 v = 0`, and make `Sₕ (projL1' e')` carry the *entire* `b` (not
+just `b_Vplus`). But `Sₕ` lands in `Vplus`, not `V0`, so this only works
+if `b ∈ Vplus`, contradicting `b ∈ ⊤`.
+
+This suggests **the `imXST_submod` definition is wrong** (or at least
+inconsistent with the construction). Ahhh — actually, look again at line
+551–552:
+```lean
+  Submodule.prod (S.L1 ⊔ (LinearMap.range T).map S.L0.subtype)
+    (Submodule.prod ⊤ ⊥)
+```
+The structure of `S.V = E × V0 × E'`. So `imXST_submod` is `(L1 ⊔ image
+T) × ⊤ × ⊥`. The `⊤` is the full `V0`. The `⊥` is the trivial `E'`.
+
+Re-examining: with `e' = 0`, we have `projL1' e' = 0` and `projL0' e' =
+0`, so `XST(e, v, 0) = (Cdual(CST Sₕ) v, X0 v, 0)`. The image as `e, v`
+range over `E × V0` is `{(Cdual(CST Sₕ) v, X0 v, 0) | v ∈ V0} +
+{(e, 0, 0) | e ∈ E}` — the latter is `E × 0 × 0` ⊆ `imXST_submod`. The
+former is `{(L1, V0_image, 0)}`-shaped where `V0_image := range X0`.
+Adding gives `(E + L1, V0 + range X0, 0) = (E, range X0, 0)` — *not*
+`(L1 ⊔ image T, ⊤, 0)`.
+
+So for `b ∉ range X0` (i.e. `b` has a `Vplus` component), we need `e' ≠
+0` to capture it via `Sₕ (projL1' e')`. But this also adds `T (projL0'
+e') ∈ L0` to the E component, requiring `a` to have an `image T`
+component to absorb it.
+
+The full picture: parametrize by `(e, v, e')`, get
+`XST = (Cdual(CST Sₕ) v + T(projL0' e'), X0 v + Sₕ(projL1' e'), 0)`.
+Range:
+- E component: `Cdual(CST Sₕ)(V0) + T(L0') = L1 + image T` (since
+  `Cdual(CST Sₕ)(V0) ⊆ L1` by 1b helper, and equality holds because
+  `Cdual(CST Sₕ)|ker X0` is iso to L1).
+- V0 component: `X0(V0) + Sₕ(L1') = range X0 + Vplus = ⊤` (full V0 by
+  `S.isCompl`).
+- E' component: 0.
+
+So **range = `(L1 + image T) × ⊤ × 0`** ⊇ `imXST_submod`. The forward
+direction `imXST_submod ⊆ range`: given `(a, b, 0)` with `a ∈ L1 + image
+T`, `b ∈ V0`, construct preimage:
+- Decompose `b = X0 v_b + Sₕ(l1')` with `v_b ∈ V0` (any preimage; e.g.
+  `v_b ∈ V_section` for some complement of `ker X0`) and `l1' ∈ L1'`.
+- Decompose `a = a_L1 + a_T`. Find `v_a ∈ ker X0` with `Cdual(CST Sₕ)
+  v_a = a_L1` (sDual iso). Find `l ∈ L0'` with `(T l : E) = a_T`.
+- Set `v := v_a + v_b - (some adjustment)`, `e' := (l1' : E') + (l : E')`,
+  `e := -Cdual(CST Sₕ)(v_b)` (to cancel the spurious `Cdual(CST Sₕ) v_b`
+  term that would land in L1 via `v_b`).
+  - Wait: `XST(e, v, e').1 = Cdual(CST Sₕ) v + T(projL0' e')`. There's
+    no `e` contribution to component 1. `XST` ignores `e`! Looking at
+    `XST_apply` again: `(Cdual (CST Sₕ) v + (T (projL0' e') : E),
+    X0 v + (Sₕ (projL1' e') : V0), 0)`. Right, no `e`.
+  - So `XST(e, v, e').1 = Cdual(CST Sₕ) v + T(projL0' e')` regardless of
+    `e`. The `e` is "free" and absorbed into the image without affecting
+    the output.
+  - Wait that means `(e, v, e') ↦ XST(e, v, e')` does not see `e` at
+    all. That's strange — let me re-check.
+
+Looking at `XCB` definition (Slice.lean, line 110+):
+```lean
+inE ∘ₗ ((Cdual S C) ∘ₗ projV0 + B ∘ₗ projE') +
+  inV0 ∘ₗ (S.X0 ∘ₗ projV0 + C ∘ₗ projE')
+```
+The `inE` is `LinearMap.inl F E (V0 × E')`, the `projV0` is "first of
+second", the `projE'` is "second of second". Indeed there is no `projE`,
+so the `e` component is dropped.
+
+So `XST(e, v, e') = (Cdual(CST Sₕ) v + T(projL0' e'), X0 v + Sₕ(projL1' e'), 0)`
+ignores `e`. The image is exactly the set described above, and the
+preimage is **non-unique** in `e` (the kernel always has `e ∈ E`
+free).
+
+For the forward direction proof: pick `e := 0` (anything works), `v :=
+v_a + v_b`, `e' := (l1' : E') + (l : E')`. Verify the three components.
+
+OK so the construction is feasible — the prover just needs careful
+bookkeeping. The above sketch should be enough.
+
+##### `range XST ⊆ imXST_submod` (reverse direction)
+
+Given `XST(e, v, e') = (a, b, c)`, show:
+- `c = 0` (immediate from XST_apply, since the third component is always 0).
+- `a ∈ L1 + image T` (use the `Cdual(CST Sₕ) v ∈ L1` helper from 1b plus
+  `T(projL0' e') ∈ image T`).
+- `b ∈ ⊤` (trivially).
+
+This direction is direct from `XST_apply` + the helper, no new
+infrastructure needed.
 
 #### Acceptance criteria for objective 1
 
-- `Basic.lean` compiles in isolation:
-  `lake env lean InducedOrbitToy/Basic.lean` produces no errors.
-- The 4 conjuncts of `UnipotentRadical` are present (in the order: vanish
-  on flagE, send flagEV0 to flagE, send V to flagEV0, IsSkewAdjoint
-  ambientForm).
-- The 3 (or 4 if `L0_isotropic` is preserved) new fields of `SliceSetup`
-  are present.
-- `lake build` is green at end of round (after sister provers land).
-- No new `axiom` declarations.
-- `c_eq_finrank_quotient` (the only theorem in this file) is unchanged
-  and still proven.
-
-### 2. `InducedOrbitToy/Slice.lean` — close `parametrizeX0PlusU_existence`
-
-**Target:** `parametrizeX0PlusU_existence` (line 232) — close both
-internal scoped sorries (lines 256 and 294) using the **new** 4th conjunct
-of `UnipotentRadical` (which provides skew-adjointness of `Y`).
-
-**Do NOT touch:** `uD_isParabolic` (line 442) — closed in Round 3, no
-work this round. `Cdual`, `uD`, `XCB`, `XST`, `BST`, `CST`, `projL0'`,
-`projL1'`, all `_apply` helpers — all sorry-free, do not modify.
-
-#### Required changes
-
-After Tier S #2 lands, the hypothesis `_hY : Y ∈ UnipotentRadical S` now
-gives a 4-tuple destructure: `_hY = ⟨hflagE, hflagEV0, hAll, hSkewY⟩`
-where `hSkewY : IsSkewAdjoint S.ambientForm Y` (i.e.
-`∀ x y, S.ambientForm (Y x) y + S.ambientForm x (Y y) = 0`).
-
-Update line 264 from:
-```lean
-obtain ⟨hflagE, hflagEV0, hAll⟩ := _hY
-```
-to:
-```lean
-obtain ⟨hflagE, hflagEV0, hAll, hSkewY⟩ := _hY
-```
-
-#### Sorry at line 256 — `IsSkewB B`
-
-**Goal** after the existing `intro u v; show ...`:
-```
-S.lambda ((projE ∘ₗ Y ∘ₗ inE') u) v
-    + S.eps * S.lambda ((projE ∘ₗ Y ∘ₗ inE') v) u = 0
-```
-
-**Strategy:** This is the `(E', E')`-block of the skew-adjointness identity
-for `Y` w.r.t. `S.ambientForm` evaluated at the points
-`(0, 0, u)` and `(0, 0, v)`. Apply `hSkewY (0, 0, u) (0, 0, v)`:
-```
-S.ambientForm (Y (0, 0, u)) (0, 0, v) +
-  S.ambientForm (0, 0, u) (Y (0, 0, v)) = 0
-```
-
-Unfold `ambientForm` (it's `λ + B₀ + ε·λ` per `LinearMap.mk₂`).
-Both `(0, 0, u)` and `(0, 0, v)` have zero E and V0 parts, so the
-`B₀` and the `ε·λ(_.1, _.2.2)` terms collapse on the appropriate sides.
-What remains is exactly `λ((Y (0,0,u)).1, v) + ε · λ((Y (0,0,v)).1, u) = 0`,
-i.e. `λ(projE(Y(inE'(u))), v) + ε · λ(projE(Y(inE'(v))), u) = 0`. The
-`projE` and `inE'` definitions match by `simp` / `rfl`.
-
-Suggested proof skeleton:
-```lean
-intro u v
-show S.lambda ((projE ∘ₗ Y ∘ₗ inE') u) v
-    + S.eps * S.lambda ((projE ∘ₗ Y ∘ₗ inE') v) u = 0
-have h := hSkewY (0, 0, u) (0, 0, v)
--- h : S.ambientForm (Y (0,0,u)) (0,0,v) + S.ambientForm (0,0,u) (Y (0,0,v)) = 0
-simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, projE, inE',
-  LinearMap.comp_apply, LinearMap.inr_apply, LinearMap.inl_apply,
-  LinearMap.fst_apply, LinearMap.snd_apply,
-  Prod.fst, Prod.snd, map_zero, LinearMap.zero_apply, zero_add, add_zero,
-  mul_zero, mul_one] at h
--- After simp, h should match the goal up to ordering / commutativity
-linarith
-```
-(Adjust the `simp only` set as needed — the precise lemmas to peel
-`S.ambientForm` of `(0, 0, u)` are `Prod.fst_zero`, `Prod.snd_zero`, plus
-`map_zero` to kill the `λ(_.1, _.2.2)` and `B₀(_.2.1, _.2.1)` terms.)
-
-If `linarith` fails, try `linear_combination h` after a final `ring_nf`.
-
-#### Sorry at line 294 — E component of the equality
-
-**Goal:** at `(e, v, e') ∈ S.V`, after the existing `LinearMap.sub_apply`,
-`XCB_apply`, `X0Lift_apply`, `hY_sum` rewrites, the E-component of
-`XCB S C B - X0Lift S = Y` evaluated at `(e, v, e')` reduces to:
-```
-Cdual S C v + B e' = (Y (0, v, 0)).1 + (Y (0, 0, e')).1
-```
-where `C := projV0 ∘ₗ Y ∘ₗ inE'` and `B := projE ∘ₗ Y ∘ₗ inE'`.
-
-The first summand on the RHS, `(Y (0, v, 0)).1`, is the V₀→E block of
-`Y` applied to `v`. The new skew-adjointness lets us identify this as
-`Cdual S (projV0 ∘ₗ Y ∘ₗ inE') v` (modulo sign/ε via `Cdual_pairing_eq`).
-The second summand, `(Y (0, 0, e')).1`, is exactly `B e'` by the
-definition of `B = projE ∘ₗ Y ∘ₗ inE'`.
-
-**Strategy:** Use `hSkewY (0, v, 0) (0, 0, w)` for an arbitrary `w ∈ S.E'`
-to extract the E-block identity. Specifically, the V₀→E block of `Y` is
-forced by skew-adjointness to equal `Cdual` of the E'→V₀ block via the
-identity:
-```
-λ((Y (0, v, 0)).1, w) = -ε · λ((Y (0, 0, w)).1, v) ... no, that's wrong.
-```
-
-Actually, work it out: `S.ambientForm (Y (0, v, 0)) (0, 0, w) +
-S.ambientForm (0, v, 0) (Y (0, 0, w)) = 0`. Unfolding (with the V0×E'
-component zero on the left of the second term and the E×V0 components
-zero on the right of the first term), we get:
-
-```
-λ((Y(0,v,0)).1, w) + S.formV0 v ((Y (0,0,w)).2.1) = 0
-```
-
-(The other terms vanish: `B₀(_.2.1, _.2.1)` for the first half has
-`(Y(0,v,0)).2.1` paired with `0`, etc.)
-
-Rearranging:
-```
-λ((Y(0,v,0)).1, w) = - S.formV0 v ((Y(0,0,w)).2.1)
-                   = - S.formV0 v ((projV0 ∘ Y ∘ inE') w)
-                   = - S.formV0 v (C w)
-```
-
-where `C := projV0 ∘ₗ Y ∘ₗ inE'` (our chosen `C`). Now
-`Cdual_pairing_eq` says `λ(Cdual D v, w) = S.formV0 (D w) v` (for any
-`D : S.E' →ₗ[F] S.V0`). With `D := -C` (or with a sign adjustment), this
-gives `λ((Y(0,v,0)).1, w) = λ(Cdual (-C) v, w) = -λ(Cdual C v, w)`.
-
-Hmm — this would say `(Y(0,v,0)).1 = -Cdual C v` (by non-degeneracy of
-`λ`). The expected E component of the equation is:
-```
-(Cdual C) v + B e' - 0 = (Y(0,v,0)).1 + (Y(0,0,e')).1
-```
-(via `XCB(C, B) - X0Lift` evaluated at `(e, v, e')`). With
-`(Y(0,0,e')).1 = (projE ∘ Y ∘ inE') e' = B e'`, the equation reduces to
-`(Cdual C) v = (Y(0,v,0)).1`, but skew-adjointness gives
-`(Y(0,v,0)).1 = -(Cdual C) v`. There's a sign discrepancy.
-
-This may indicate that `C` should be defined as `-(projV0 ∘ₗ Y ∘ₗ inE')`
-(negate), or that `XCB_apply` has the opposite sign convention from what
-the proof expects. **Audit `XCB_apply` and `Cdual_pairing_eq` for the
-exact sign convention before committing to a fix** (use `lean_hover_info`).
-
-The blueprint identity is documented in `informal/slice.md`. Cross-check
-against the existing successful proof of `uD_conj_XCB` (sorry-free in
-Slice.lean), which uses the same toolkit and has the right signs.
-
-If the sign analysis reveals that `C := -(projV0 ∘ₗ Y ∘ₗ inE')` is the
-right choice, update line 246 from
-`refine ⟨projV0 ∘ₗ Y ∘ₗ inE', projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩`
-to
-`refine ⟨-(projV0 ∘ₗ Y ∘ₗ inE'), projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩`,
-adjust the IsSkewB proof accordingly (the negation flips the sign in the
-identity), and discharge the line-294 sorry as
-`λ((Y(0,v,0)).1, w) = λ(Cdual C v, w)` for the new `C`.
-
-#### Acceptance criteria for objective 2
-
-- `parametrizeX0PlusU_existence` (line 232) is sorry-free at end of round.
-- File compiles in isolation:
-  `lake env lean InducedOrbitToy/Slice.lean` produces no `sorry`
-  warnings.
-- `lake build` is green at end of round (after sister provers land).
-- No new `axiom` declarations; `#print axioms parametrizeX0PlusU_existence`
-  shows only `[propext, Classical.choice, Quot.sound]`.
-- `uD_isParabolic`, `uD_conj_XCB`, `Cdual_pairing_eq`, `Cdual`, `uD`,
-  `XCB`, `XST`, `BST`, `CST`, `projL0'`, `projL1'`, and all `_apply`
-  helpers are **unchanged** (they are load-bearing for `NormalForm.lean`).
-
-### 3. `InducedOrbitToy/Orbits.lean` — cascade for tightened `UnipotentRadical`
-
-**Target:** `XCB_sub_X0Lift_mem_unipotent` (line 166) and
-`XST_sub_X0Lift_mem_unipotent` (line 196). With the new 4th conjunct in
-`UnipotentRadical`, both helpers must now also prove
-`IsSkewAdjoint S.ambientForm (XCB C B - X0Lift S)` (or the analogous
-statement for `XST`).
-
-**Do NOT touch:** `sIndependenceAndOrbitCriterion` (line 242, Tier A
-deferred to Round 7) — leave its sorries unchanged. `inducedOrbits` and
-`main` proof structures should remain intact; only the cascade lemmas
-need updating.
-
-#### Required changes
-
-##### `XCB_sub_X0Lift_mem_unipotent` (line 166)
-
-This helper currently claims membership without any skew hypothesis on
-`(C, B)`. The new tight `UnipotentRadical` requires skew-adjointness,
-which **does not hold for arbitrary `(C, B)`**. Two acceptable fixes:
-
-**Option A — add a skew hypothesis to the helper:**
-```lean
-private lemma XCB_sub_X0Lift_mem_unipotent (S : SliceSetup F)
-    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E)
-    (hskew : IsSkewAdjoint S.ambientForm (XCB S C B - X0Lift S)) :
-    XCB S C B - X0Lift S ∈ UnipotentRadical S := by
-  refine ⟨?_, ?_, ?_, hskew⟩
-  -- existing proof of the 3 flag-stability conjuncts unchanged
-```
-The caller (`XST_sub_X0Lift_mem_unipotent`) then constructs `hskew` from
-`IsSkewT T` + `S.skew` and passes it through.
-
-**Option B — bypass `XCB_sub_X0Lift_mem_unipotent` from `XST_sub_X0Lift_mem_unipotent`:**
-Inline the 3 flag-stability proofs directly in `XST_sub_X0Lift_mem_unipotent`
-and add the skew-adjointness proof. Keep `XCB_sub_X0Lift_mem_unipotent`
-either deleted, or kept as a private "loose flag-stability only" lemma
-that no longer claims `UnipotentRadical` membership (e.g. just claim the
-3 flag-stability properties separately).
-
-**Recommended:** Option A is cleaner and preserves the helper.
-
-##### `XST_sub_X0Lift_mem_unipotent` (line 196)
-
-Currently:
-```lean
-private lemma XST_sub_X0Lift_mem_unipotent (S : SliceSetup F)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) :
-    XST S Sₕ T - X0Lift S ∈ UnipotentRadical S :=
-  XCB_sub_X0Lift_mem_unipotent S (CST S Sₕ) (BST S T)
-```
-
-Change to add `IsSkewT T` hypothesis and discharge skew-adjointness:
-```lean
-private lemma XST_sub_X0Lift_mem_unipotent (S : SliceSetup F)
-    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (hT : IsSkewT S T) :
-    XST S Sₕ T - X0Lift S ∈ UnipotentRadical S := by
-  apply XCB_sub_X0Lift_mem_unipotent S (CST S Sₕ) (BST S T)
-  -- prove `IsSkewAdjoint S.ambientForm (XST S Sₕ T - X0Lift S)`
-  intro x y
-  obtain ⟨e₁, v₁, e₁'⟩ := x
-  obtain ⟨e₂, v₂, e₂'⟩ := y
-  rw [LinearMap.sub_apply, LinearMap.sub_apply, XST_apply, X0Lift_apply]
-  -- Now expand `S.ambientForm` (`mk₂` of `λ + B₀ + ε·λ`) and apply:
-  -- - `S.skew` (X0 skew on V0): `B₀ (X0 v₁) v₂ + B₀ v₁ (X0 v₂) = 0`
-  -- - `IsSkewT T` on the L0' components projected through projL0'
-  -- - `S.epsSymm` for the cross-pairing terms
-  -- The blueprint identity is in informal/slice.md / informal/orbits.md
-  sorry  -- detailed expansion needed
-```
-
-The proof of the new skew-adjointness goal is **the substantive new
-content** for this round in Orbits.lean. The expansion mirrors
-`uD_conj_XCB`'s proof in `Slice.lean`: destruct vectors, `simp only` with
-the `ambientForm` lemma set, apply `S.skew` + `IsSkewT T` + `S.epsSymm`,
-close with `linear_combination`.
-
-If the prover finds the skew-adjointness proof intractable, **escalate**
-by reporting the blocker — do not introduce a new `sorry` in
-`XST_sub_X0Lift_mem_unipotent` itself; the helper is private and not in
-the round's "remaining sorry" budget.
-
-##### Update call sites of `XST_sub_X0Lift_mem_unipotent`
-
-The new signature has two extra hypotheses (`_hNondeg`, `_hChar`) and one
-extra explicit hypothesis (`hT : IsSkewT S T`). Update:
-- `XST_mem_O0PlusU` (line 204) — currently passes `Sₕ T` only; needs
-  `_hNondeg`, `_hChar`, and the skew hypothesis. The caller has access
-  to these (or can take them as new parameters).
-- `inducedOrbits` (line 218) — has `_hT : T ∈ Tset_circ`; unfold to
-  extract `IsSkewT T` (i.e. `_hT.1`) for the call.
-- Any other call site found by `grep -n XST_sub_X0Lift_mem_unipotent`.
-
-The propagating `_hNondeg` / `_hChar` may also need to be threaded into
-intermediate helpers; if so, add them to `XST_mem_O0PlusU` and propagate
-upward.
-
-#### Acceptance criteria for objective 3
-
-- `XCB_sub_X0Lift_mem_unipotent` and `XST_sub_X0Lift_mem_unipotent`
-  produce a proof of the *tightened* (4-conjunct) `UnipotentRadical`
-  membership.
-- All call sites of `XST_sub_X0Lift_mem_unipotent` updated to pass the
-  new hypothesis (and any new `_hNondeg` / `_hChar` if they are added).
-- `lake env lean InducedOrbitToy/Orbits.lean` has only the line 242
-  `sIndependenceAndOrbitCriterion` `sorry` warning — same as start of
-  round.
+- `kernelImage_ker` (line 495) is sorry-free, signature uses
+  `Sₕ : S.L1' ≃ₗ[F] S.Vplus`.
+- `kernelImage_im` (line 590) is sorry-free.
+- `kernelImage_dim` call site at line 611 updated to pass `Sₕ` directly
+  (no explicit coercion to LinearMap).
+- New private helper `Cdual_CST_mem_L1` (or equivalent) added.
+- New private `DualTransposeData` instance (e.g. `kernelImage_DTD`)
+  added.
+- `lake env lean InducedOrbitToy/NormalForm.lean` produces only the 3
+  remaining `sorry` warnings (lines 195, 319, 348 — Round 6 work).
 - `lake build` is green at end of round.
-- No new `axiom` declarations; `#print axioms` for `inducedOrbits` /
-  `main` shows `[propext, Classical.choice, Quot.sound]` (plus `sorryAx`
-  for `main`'s downstream call to `sIndependenceAndOrbitCriterion`).
-- `inducedOrbits`, `main`, `multiplicityNonDeg`, `multiplicityOddCase`,
-  `embO0`, `O0`, `IndPG`, `O0PlusU`, `GOrbit` signatures and proof
-  structures **unchanged** (only the cascade helpers are modified).
+- No new `axiom` declarations; `#print axioms kernelImage_ker` /
+  `kernelImage_im` / `kernelImage_dim` shows only `[propext,
+  Classical.choice, Quot.sound]`.
+- `pNormalForm`, `pNormalForm_witnesses`, `residual_levi_extract`,
+  `residual_levi_build`, `pNormalForm_residual_orbit_iso`,
+  `IsParabolicElement` signatures and proof structures **unchanged**
+  (only `kernelImage_*` and `kernelImage_dim`'s call site are touched).
+- Stale comments at lines 344, 357 that reference the old
+  `L0_isotropic` field can be left for Round 6 (they don't break
+  anything; refresh in the `residual_levi_build` work).
+
+#### Informal references
+
+- Blueprint: `references/blueprint_verified.md` `prop:kernel-image`
+  (lines 321–411).
+- Per-file informal sketch: `.archon/informal/normalform.md`
+  (light on `kernelImage_*` detail; consult the blueprint for proof
+  structure).
 
 ### Files NOT assigned this round
 
-The following files have remaining sorries but are blocked by Round 5+
-work. **Do not assign provers to them this round.**
-
-- `InducedOrbitToy/X0Geometry.lean` — already done (closed in session 4);
-  no work.
-- `InducedOrbitToy/LocalForms.lean` — already done; no work.
-- `InducedOrbitToy/NormalForm.lean` — `kernelImage_ker`, `kernelImage_im`
-  are Round 5 (need Tier S #4 + Tier S #3 fields, both landing this
-  round and next); `pNormalForm_witnesses`, `residual_levi_extract`,
-  `residual_levi_build` are Round 6 (need Levi machinery).
-
-The harness has been observed to dispatch provers to all 6 files
-regardless of `PROGRESS.md`'s stated assignments. Provers receiving
-non-objective files this round should:
-- verify the file compiles in isolation (modulo expected mid-round
-  cross-file errors from Tier S #2's cascade),
+The following files have remaining sorries but are blocked by Round 6+
+work. **Do not assign provers to them this round.** If the harness
+dispatches a prover anyway, the prover should:
+- verify the file compiles in isolation (`lake env lean
+  InducedOrbitToy/<File>.lean`),
 - write a brief "no work" `task_results/<File>.md`, and
 - **not edit anything**.
 
-## Coordination notes for Round 4 (parallel-safety)
+- `InducedOrbitToy/Basic.lean` — already done (Round 4); no work.
+- `InducedOrbitToy/X0Geometry.lean` — already done (session 4); no work.
+- `InducedOrbitToy/Slice.lean` — already done (Round 4); no work this
+  round (Round 6 will add Levi machinery additively to this file).
+- `InducedOrbitToy/LocalForms.lean` — already done; no work.
+- `InducedOrbitToy/Orbits.lean` — `sIndependenceAndOrbitCriterion` is
+  Round 7 (needs `pNormalForm_residual_orbit_iso` fully closed via
+  Round 6's Levi machinery).
 
-Round 4's three objectives are **tightly coupled across files**:
+## Coordination notes for Round 5 (parallel-safety)
 
-- `Basic.lean`'s tightened `UnipotentRadical` cascades to:
-  - `Slice.lean :: parametrizeX0PlusU_existence` (consumes the new 4th
-    conjunct via the `_hY` hypothesis destructure);
-  - `Orbits.lean :: XCB_sub_X0Lift_mem_unipotent` /
-    `XST_sub_X0Lift_mem_unipotent` (must produce the new 4th conjunct
-    in their `refine` blocks).
-- `Basic.lean`'s new `SliceSetup` fields are purely additive — no
-  existing proof breaks (they are new fields no proof currently
-  references).
+Round 5 is **single-file** (NormalForm.lean only). No cross-file cascade.
+The Tier S #4 signature change to `kernelImage_ker` only affects its sole
+caller `kernelImage_dim` (also in NormalForm.lean), no external file.
 
-Mid-round build breakage is expected when:
-- The Slice prover finishes first using the 4-tuple `obtain` while
-  Basic is still 3-tuple → "expected 3, got 4" error.
-- The Orbits prover finishes first proving the 4-conjunct `refine` while
-  Basic is still 3-conjunct → "expected 3, got 4" error.
-- The Basic prover finishes first → Slice and Orbits both fail until
-  they land their cascade.
-
-**Provers must NOT panic at mid-round build breakage** when the only
-errors are in the *other* file's still-pending edits. The plan-agent
-post-round verification will check end-of-round `lake build` after all
-three provers finish.
-
-If a prover finishes its own file's edits but `lake build` still has
-errors only in the *other* assigned files, the prover should:
-- still write its `task_results/<File>.md` reporting its file's edits,
-- explicitly note that the cross-file error is expected and will resolve
-  when the sister provers land.
+There is no parallel race this round; provers dispatched to other files
+should write "no work" reports immediately.
 
 ## Reusable Gotchas (carry forward, augmented)
 
@@ -575,22 +616,39 @@ errors only in the *other* assigned files, the prover should:
   — fix by packaging the equation directly in helper's conclusion
   (avoid the existential wrapper).
 - Verify structure location via `grep` before scoping a refactor.
-- **(NEW session 5) Adjoint-pair → orthogonal via paired inverse:**
+- **(session 5) Adjoint-pair → orthogonal via paired inverse:**
   given `IsAdjointPair B B f g` and `g ∘ f = id`, conclude
   `IsOrthogonal B f` via `intro u v; calc B (f u) (f v) = B u (g (f v))
   := hAdj u (f v) _ = B u v := by rw [hinv_apply]`.
-- **(NEW session 5) Cross-file proof structure validation via
+- **(session 5) Cross-file proof structure validation via
   `lean_run_code`:** when a proof depends on a sister-prover's signature
   change not yet landed, validate the local proof shape with hypothetical
   inputs of the correct shape via a standalone `example`. Eliminates
   uncertainty during the parallel race.
-- **(NEW session 5) Bilinear-form identities via block-decomposition +
+- **(session 5) Bilinear-form identities via block-decomposition +
   `linear_combination`:** for an identity in `S.ambientForm`, destruct
   vectors as `(e, v, e')`, apply `*_apply` lemmas, use the standard
   `simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, …]` set,
   apply pairing-eq lemmas to all `λ(F ·, ·)` atoms, then close with
   `linear_combination` using ε-symmetry-derived hypotheses (`hε`, `hε2`,
   point-specific instantiations).
+- **(NEW Round 4) `IsSkewAdjoint` closure proofs over generic `[Field
+  F]`:** use `linear_combination hf + hg` (add) / `linear_combination c
+  * hf` (smul). **Do not use `linarith`** — it requires `LinearOrderedField`
+  and fails over generic `Field`.
+- **(NEW Round 4) `Submodule.IsCompl.projection_add_projection_eq_self`**
+  (not `linearProjOfIsCompl_add_…`, which leansearch suggests but
+  **does not exist** in current Mathlib) combined with
+  `Submodule.IsCompl.projection_apply` to bridge between the
+  `IsCompl.projection` and `linearProjOfIsCompl`-coerced-subtype forms.
+- **(NEW Round 4) `conv_lhs => rw [...]`** to scope a rewrite to the LHS
+  only when bare `rw [← h]` would over-rewrite (e.g. rewriting `v` while
+  `projL0' v` appears as a sub-expression on the RHS).
+- **(NEW Round 4) Cross-file 4-tuple cascade:** when a structure or
+  predicate gains a new conjunct, every `obtain ⟨...⟩` and `refine
+  ⟨..., ?_⟩` site that constructs/destructs the value needs a parallel
+  arity bump. Plan-agent allocated parallel provers; mid-round build
+  breakage was expected and resolved at end-of-round.
 
 ## Reporting
 
@@ -602,8 +660,6 @@ Each prover writes `.archon/task_results/<File>.md` with:
   not repeat dead ends);
 - confirmation that the assigned file compiles in isolation
   (`lake env lean InducedOrbitToy/<File>.lean`);
-- confirmation that `lake build` is green **at end of round** (after the
-  sister files land; cross-file errors mid-round are expected for
-  Round 4);
+- confirmation that `lake build` is green **at end of round**;
 - confirmation that no `axiom` was introduced
   (`#print axioms` for each public theorem in the file).
