@@ -35,16 +35,6 @@ $$
 \operatorname{Ind}_P^G(\mathcal O_0)
 :=\overline{G\cdot(\mathcal O_0+\mathfrak u)}.
 $$
-固定 X_0\in O_0. 
-
-
-Iso_{r, -\epsilon} := -\epsilon-sesquelinear form on $r$-dim $D$ space. 
-定义 X_{C,B},
-
-
-Lemma 1: r =  \kappa - dim_D \ker X_0 >=0. 那么 orbit in Ind (O_0)  in bijection with Iso_{r,-\epsilon}, r even is (\epislon, D) = (1,R) or (1,C) .
-multilpity = 1. 
-
 Since $G_0$ is contained in the Levi factor of $P$, and since $\mathfrak u$ is stable under this Levi factor, we have
 $$
 \mathcal O_0+\mathfrak u
@@ -153,15 +143,15 @@ B'=hB h^\vee+R^\vee C h^\vee-(C h^\vee)^\vee R-R^\vee X_0R. \tag{LU}
 $$
 This is the calculation used below: $h$ puts the full-rank quotient map $\bar C$ in standard position, and $u_R$ removes the remaining $\operatorname{Im}X_0$-part of $C$.
 
-### Hint for the normalization
+### Detailed block reduction used in the normalization
 
-The displayed $n_u$-calculation in the notes is exactly the following use of (U).  In the notation of that calculation, the middle-right block called $B$ is our $C$, the top-right block called $C$ is our $B$, and the parameter $u$ is our $R$.
+This paragraph records the only point in the normalization where one needs to look at the blocks carefully.  After the quotient map $\bar C$ has been put in standard position, formula (U) is used once to replace the $C$-block by $C_S$.  We then keep $C=C_S$ fixed and reduce the remaining $B$-block.
 
-After the quotient map $\bar C$ has been put in standard position, the first use of (U) makes the $C$-block equal to $C_S$.  From this point on, we only use unipotents $u_R$ with
+To keep $C_S$ fixed, take $R:E'\to V_0$ with
 $$
 R(E')\subset \ker X_0.
 $$
-Then $X_0R=0$, so (U) keeps the $C$-block fixed and gives
+Then $X_0R=0$, and formula (U) becomes
 $$
 u_RX_{C_S,B}u_R^{-1}=X_{C_S,B'},
 \qquad
@@ -183,16 +173,16 @@ R_1^\vee S-S^\vee R_1&-S^\vee R_0\\
 R_0^\vee S&0
 \end{bmatrix}.                                      \tag{R'}
 $$
-This formula explains the reduction of the $B$-block.
+Here $S^\vee|_{\ker X_0}:\ker X_0\to L_1$ is an isomorphism, because the pairing between $V_+$ and $\ker X_0$ is perfect.  Therefore:
 
-1.  The bottom-right block $L'_0\to L_0$ is unchanged.  This is the residual block which we call
-    $$
-    T:L'_0\to L_0.
-    $$
-2.  The map $S^\vee|_{\ker X_0}:\ker X_0\to L_1$ is an isomorphism, because the pairing between $V_+$ and $\ker X_0$ is perfect.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block.  The skew-adjointness relation (3) then kills the opposite $L'_1\to L_0$ cross-block at the same time.
-3.  After the cross-blocks are gone, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$; this is the term $R_1^\vee S-S^\vee R_1$ in (R').
+1. The bottom-right block $L'_0\to L_0$ is not changed by (R').  This block is the residual map
+   $$
+   T:L'_0\to L_0.
+   $$
+2. The term $-S^\vee R_0$ can be chosen arbitrarily as a map $L'_0\to L_1$.  We choose $R_0$ to kill the $L'_0\to L_1$ cross-block of $B$.  Then the skew-adjointness relation (3) kills the opposite $L'_1\to L_0$ cross-block.
+3. After the cross-blocks are killed, the only block left besides $T$ is the $L'_1\to L_1$ block.  This block satisfies the same skew-adjointness condition as in (3).  Since the pairing between $V_+$ and $\ker X_0$ is perfect, the expression $R_1^\vee S-S^\vee R_1$ runs through all such blocks.  Choosing $R_1$ kills the $L'_1\to L_1$ block.
 
-Thus, once $C=C_S$ is fixed, the unipotent action kills every part of $B$ except the residual block $T:L'_0\to L_0$.  This is the precise meaning of the hint in the older $n_u$ computation.
+Consequently, after $C=C_S$ is fixed, the unipotent action kills every part of $B$ except the residual block $T:L'_0\to L_0$.  In the older notation using $n_u$, the middle-right block denoted $B$ is the present $C$, the top-right block denoted $C$ is the present $B$, and the parameter $u$ is the present $R$.
 
 Put
 $$
