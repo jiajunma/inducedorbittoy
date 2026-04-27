@@ -124,8 +124,10 @@ theorem c_eq_finrank_quotient {F : Type*} [Field F] (S : X0Setup F) :
 /-! ## The slice setup -/
 
 /-- The data of `lem:parametrize-x0-plus-u`: an `X0Setup`, a `PairedSpaces`
-and a Lagrangian-style decomposition of `E`, `E'` (with `L₁` paired to
-`L₁'` and `L₀, L₀'` jointly isotropic). -/
+and a Lagrangian-style decomposition of `E`, `E'`:
+* `L₁` is perfectly paired with `L₁'` and `L₀` is perfectly paired with
+  `L₀'` (so `L₁ ⊕ L₀ = E` and `L₁' ⊕ L₀' = E'` are dual decompositions),
+* the cross-pairings `λ(L₁, L₀') = 0` and `λ(L₀, L₁') = 0` vanish. -/
 structure SliceSetup (F : Type*) [Field F] extends X0Setup F where
   paired : PairedSpaces F
   L1 : Submodule F paired.E
@@ -135,7 +137,9 @@ structure SliceSetup (F : Type*) [Field F] extends X0Setup F where
   isComplL : IsCompl L1 L0
   isComplL' : IsCompl L1' L0'
   L1_paired : IsPaired paired.pairing L1 L1'
-  L0_isotropic : IsIsotropic paired.pairing L0 L0'
+  L0_paired : IsPaired paired.pairing L0 L0'
+  L1_isotropic_L0' : IsIsotropic paired.pairing L1 L0'
+  L0_isotropic_L1' : IsIsotropic paired.pairing L0 L1'
 
 namespace SliceSetup
 
@@ -198,26 +202,34 @@ def IsParabolic {F : Type*} [Field F] (S : SliceSetup F)
   ∀ f ∈ P, Submodule.map f S.flagE ≤ S.flagE ∧
             Submodule.map f S.flagEV0 ≤ S.flagEV0
 
-/-- The unipotent radical `𝔲 ≤ End F V`: maps that send each step of
-the flag `0 ≤ E ≤ E ⊕ V₀ ≤ V` into the next-lower step.
+/-- The unipotent radical `𝔲 = 𝔭 ∩ 𝔤 ≤ End F V`: maps that send each step
+of the flag `0 ≤ E ≤ E ⊕ V₀ ≤ V` into the next-lower step *and* are
+skew-adjoint with respect to `S.ambientForm`.
 
 Concretely:
 * `f` annihilates `E`,
 * `f` sends `E ⊕ V₀` into `E`,
-* `f` sends all of `V` into `E ⊕ V₀`. -/
+* `f` sends all of `V` into `E ⊕ V₀`,
+* `f` is skew-adjoint w.r.t. `S.ambientForm` (the form-preservation
+  condition that distinguishes `𝔲 = 𝔭 ∩ 𝔤` from the loose parabolic
+  subspace `𝔭`). -/
 noncomputable def UnipotentRadical {F : Type*} [Field F] (S : SliceSetup F) :
     Submodule F (Module.End F S.V) where
   carrier :=
     { f | (∀ x ∈ S.flagE, f x = 0) ∧
           (∀ x ∈ S.flagEV0, f x ∈ S.flagE) ∧
-          (∀ x : S.V, f x ∈ S.flagEV0) }
+          (∀ x : S.V, f x ∈ S.flagEV0) ∧
+          IsSkewAdjoint S.ambientForm f }
   zero_mem' :=
     ⟨fun _ _ => rfl,
      fun _ _ => Submodule.zero_mem _,
-     fun _ => Submodule.zero_mem _⟩
+     fun _ => Submodule.zero_mem _,
+     by
+       intro x y
+       simp [LinearMap.zero_apply, map_zero]⟩
   add_mem' := by
-    rintro f g ⟨h1, h2, h3⟩ ⟨h1', h2', h3'⟩
-    refine ⟨?_, ?_, ?_⟩
+    rintro f g ⟨h1, h2, h3, h4⟩ ⟨h1', h2', h3', h4'⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
     · intro x hx
       simp [LinearMap.add_apply, h1 x hx, h1' x hx]
     · intro x hx
@@ -226,9 +238,14 @@ noncomputable def UnipotentRadical {F : Type*} [Field F] (S : SliceSetup F) :
     · intro x
       simpa [LinearMap.add_apply] using
         Submodule.add_mem _ (h3 x) (h3' x)
+    · intro x y
+      have hf := h4 x y
+      have hg := h4' x y
+      simp only [LinearMap.add_apply, map_add, LinearMap.add_apply]
+      linear_combination hf + hg
   smul_mem' := by
-    rintro c f ⟨h1, h2, h3⟩
-    refine ⟨?_, ?_, ?_⟩
+    rintro c f ⟨h1, h2, h3, h4⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
     · intro x hx
       simp [LinearMap.smul_apply, h1 x hx]
     · intro x hx
@@ -237,5 +254,10 @@ noncomputable def UnipotentRadical {F : Type*} [Field F] (S : SliceSetup F) :
     · intro x
       simpa [LinearMap.smul_apply] using
         Submodule.smul_mem _ c (h3 x)
+    · intro x y
+      have hf := h4 x y
+      simp only [LinearMap.smul_apply, map_smul, LinearMap.smul_apply,
+        smul_eq_mul]
+      linear_combination c * hf
 
 end InducedOrbitToy

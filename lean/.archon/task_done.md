@@ -178,3 +178,54 @@ file is downstream).
 - All public theorems audited via `#print axioms` / `lean_verify`:
   only `[propext, Classical.choice, Quot.sound]` plus `sorryAx` on
   declarations that still embed an explicit `sorry`. **No custom axioms.**
+
+## Prover Round 3 (session 5 — Tier S #1 statement correction)
+
+Net: 9 → 7 declaration-use `sorry`. `lake build` ✅, 0 custom axioms.
+
+Two files coupled (Slice.lean + NormalForm.lean), end-of-round build green
+after both halves landed in parallel.
+
+### `InducedOrbitToy/Slice.lean` (2 → 1) — Tier S #1, half 1
+
+- `uD_isParabolic` — statement corrected: 4th conjunct
+  `IsAdjointPair B B (uD D) (uD D)` (false self-adjoint) →
+  `IsAdjointPair B B (uD D) (uD (-D))` (isometry pair). Sorry at line 460
+  closed via `Cdual_pairing_eq` + `S.epsSymm` + `linear_combination` with
+  ε-symmetry coefficients (no new helpers, no axioms).
+  - Proof template: destruct vectors as `(e, v, e')`, apply `uD_apply` /
+    `uD_apply` (for `uD (-D)`), `simp only [SliceSetup.ambientForm,
+    LinearMap.mk₂_apply, ...]`, apply `Cdual_pairing_eq` to all
+    `λ(Cdual D ·, ·)` atoms, close with `linear_combination` using `hε`,
+    `hε2`, point-specific `hC`, `hD'`.
+  - Anti-pattern confirmed retired: `field_simp` for `(2:F)⁻¹+(2:F)⁻¹=1`.
+  - Helpers `XCB_apply`, `XST_apply`, `uD_apply`, `uD_conj_XCB`,
+    `Cdual_pairing_eq` signatures unchanged.
+
+### `InducedOrbitToy/NormalForm.lean` (6 → 5) — Tier S #1, half 2
+
+- `IsParabolicElement` — definition's 4th conjunct changed:
+  `LinearMap.IsAdjointPair S.ambientForm S.ambientForm p p` →
+  `LinearMap.IsOrthogonal S.ambientForm p`. Now matches the `IsometryEnd`
+  shape used in `Orbits.lean`. Docstring updated to reflect isometry semantics.
+- `pNormalForm` — line-272 inheritance sorry closed via 16-line calc chain
+  combining the corrected `uD_isParabolic` (giving `IsAdjointPair (uD D)
+  (uD (-D))`) with `uD_neg_inverse` (giving `uD (-D) ∘ uD D = id`) yielding
+  `B (uD D u) (uD D v) = B u (uD (-D) (uD D v)) = B u v`.
+- `residual_levi_build` — comment updated (Tier-D inheritance reference
+  removed); body unchanged (still bare sorry, blocked on Tier S #3 + Levi).
+- All other sorries (`pNormalForm_witnesses`, `residual_levi_extract`,
+  `residual_levi_build` body, `kernelImage_ker`, `kernelImage_im`) untouched.
+
+### Cross-cutting wins (session 5)
+
+- **Adjoint-pair → orthogonal via paired inverse:** template proof for
+  converting `IsAdjointPair B B f g` + `g ∘ f = id` to `IsOrthogonal B f`
+  via a 3-line calc chain.
+- **Cross-file proof structure validation via `lean_run_code`:** when a
+  proof depends on a sister-prover's signature change not yet landed,
+  validate the local proof shape with hypothetical inputs of the correct
+  shape (eliminates uncertainty during the parallel race).
+- All public theorems re-audited: `#print axioms` shows only
+  `[propext, Classical.choice, Quot.sound]` (plus `sorryAx` on still-open
+  declarations). **No custom axioms.**

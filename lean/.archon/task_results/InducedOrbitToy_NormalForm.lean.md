@@ -1,211 +1,82 @@
-# InducedOrbitToy/NormalForm.lean — Round 3 (Tier S #1, half 2)
+# InducedOrbitToy/NormalForm.lean
 
-## Summary
+## Status: NO WORK THIS ROUND (Round 4)
 
-Implemented the assigned Tier S #1 fix for `NormalForm.lean`:
+Per `PROGRESS.md` (Round 4 plan, lines 56–66 and 488–507): `NormalForm.lean`
+is **not assigned** this round. Round 4's three objectives are restricted to
+`Basic.lean` (Tier S #2 + Tier S #3), `Slice.lean`
+(`parametrizeX0PlusU_existence`), and `Orbits.lean` (cascade for the
+tightened `UnipotentRadical`). All 5 remaining sorries in this file are
+blocked on later rounds:
 
-1. **Statement edit** — `IsParabolicElement`'s 4th conjunct changed from
-   `LinearMap.IsAdjointPair S.ambientForm S.ambientForm p p`
-   (self-adjoint, false in general) to
-   `LinearMap.IsOrthogonal S.ambientForm p` (the genuine isometry
-   condition; matches `IsometryEnd` already used in `Orbits.lean`).
-2. **Sorry closed** — `pNormalForm`'s line-272 inheritance sorry (now at
-   ~line 270) replaced with a proof that chains the (sister-prover's
-   corrected) `uD_isParabolic` first conjunct
-   `IsAdjointPair (uD D) (uD (-D))` with `uD_neg_inverse` to evaluate
-   `uD (-D) ∘ uD D = id`.
-3. **Docstring updates** — both `IsParabolicElement` and the now-stale
-   "Tier D blocker" reference in `residual_levi_build`.
+| Theorem (line) | Tier | Blocker | Round |
+|---|---|---|---|
+| `pNormalForm_witnesses` (195) | A | Levi-action machinery (additive in `Slice.lean`) | 6 |
+| `residual_levi_extract` (319/330) | A | Levi/unipotent decomposition lemma `parabolic_decompose` | 6 |
+| `residual_levi_build` (348/363) | A + S #3 | Lagrangian fields (S #3) + Levi machinery | 6 |
+| `kernelImage_ker` (495, 2 internal sorries lines 537/543) | C + S #3 + S #4 | `Sₕ : LinearEquiv` retype (S #4) + `λ(L1, L0') = 0` (S #3) | 5 |
+| `kernelImage_im` (590) | C + S #3 | `λ(L1, L0') = 0` (S #3) + `sDual_restrict_ker_isIso` (already done) | 5 |
 
-**Sorry count:** 6 → 5 ✅ (per acceptance criteria).
+The Round 4 changes that touch `Basic.lean`'s `SliceSetup` are described
+as "purely additive" (Tier S #3, `task_pending.md` lines 71–73): new
+fields `L0_paired`, `L1_isotropic_L0'`, `L0_isotropic_L1'` are added but
+no field that `NormalForm.lean` currently consumes is removed or
+retyped. The `UnipotentRadical` tightening (Tier S #2) is consumed only
+by `Slice.lean :: parametrizeX0PlusU_existence` and
+`Orbits.lean :: XCB_sub_X0Lift_mem_unipotent` /
+`XST_sub_X0Lift_mem_unipotent`; `NormalForm.lean` does not construct or
+destructure any `UnipotentRadical` members in the current code, so it
+should be insulated from that cascade as well.
 
-## Statements changed
+## Verification
 
-### `IsParabolicElement` (lines 85–88)
+- Ran `grep -n "sorry" InducedOrbitToy/NormalForm.lean`: confirmed 5
+  declaration-use `sorry`s at lines 210, 330, 363, 537/543 (counting as
+  one `theorem`-level sorry each at 495), and 595, matching
+  `PROGRESS.md` lines 41–44.
+- File line count: 630 lines, unchanged from start of round.
+- **No edits made** to `InducedOrbitToy/NormalForm.lean` this round.
 
-Changed 4th conjunct:
-```diff
-- LinearMap.IsAdjointPair S.ambientForm S.ambientForm p p
-+ LinearMap.IsOrthogonal S.ambientForm p
-```
+## Cross-file build expectations
 
-Updated docstring to reflect the new (correct) semantics: "p is an
-isometry of the ambient form (`LinearMap.IsOrthogonal S.ambientForm p`)",
-matching the `IsometryEnd` shape already used in `Orbits.lean:34`.
+Mid-round build breakage is expected per `PROGRESS.md` lines 522–540:
+the `Basic.lean` / `Slice.lean` / `Orbits.lean` triad will go through a
+3-tuple-vs-4-tuple `obtain` mismatch window before all three sister
+provers land. `NormalForm.lean` does not depend on the
+`UnipotentRadical` 4-tuple destructure or on the `XCB_sub_X0Lift_mem_unipotent`
+helper, and its imports flow only from `InducedOrbitToy.Slice`. If
+`Slice.lean` is mid-flight, `NormalForm.lean` may transitively fail to
+import; this is expected and resolves at end of round.
 
-### `residual_levi_build` (lines 348–362)
+## Next session prep (Round 5 — when `NormalForm.lean` re-enters scope)
 
-Body unchanged (still bare `sorry`). Inline comment updated to remove the
-now-stale "Tier D inheritance" remark: after this round, the
-`IsParabolicElement` 4th conjunct is genuinely correct, so the only
-residual blocker for `residual_levi_build` is the perfect-pairing dual
-machinery (Tier S #3, deferred to Round 4 / 5).
+The Round 5 objective per `PROGRESS.md` line 60 is **Tier S #4 + close
+`kernelImage_ker`, `kernelImage_im`**. When that round begins:
 
-## Per-target detail
+1. **First:** retype `kernelImage_ker`'s `Sₕ` from
+   `S.L1' →ₗ[F] S.Vplus` to `S.L1' ≃ₗ[F] S.Vplus` (mirroring
+   `kernelImage_im` at line 592).
+2. **Audit caller:** check `Orbits.lean` for any callers of
+   `kernelImage_ker` and adjust to pass a `LinearEquiv`.
+3. **Close lines 537/543:** with `Sₕ` an iso, `Sₕ.injective` gives
+   `projL1' e' = 0` from `hSh_zero` (lines 526–529). Then
+   `e' = projL0' e'` (decomposition `E' = L1' ⊕ L0'`), and the equation
+   `Cdual (CST Sₕ) v + (T (projL0' e') : E) = 0` (line 506) splits via
+   the Lagrangian condition `λ(L1, L0') = 0` (the new
+   `S.L1_isotropic_L0'` field): `Cdual (CST Sₕ) v ∈ L1` because
+   `Cdual` lands in the perp of `L0'` w.r.t. `λ`, and `(T x : E) ∈ L0`,
+   so by `IsCompl L1 L0` both summands are 0 individually, giving
+   `v = 0` (via `sDual_restrict_ker_isIso` applied to `Cdual (CST Sₕ)`)
+   and `T (projL0' e') = 0`.
+4. **Close line 595 (`kernelImage_im`):** the constructive direction
+   builds preimages using `sDual_restrict_ker_isIso` (already closed in
+   session 4 per `task_done.md`); the reverse direction uses
+   `λ(L1, L0') = 0` to confine `Cdual (CST Sₕ) v` to `L1`.
 
-### `pNormalForm` IsOrthogonal conjunct (was line 272 sorry, now lines 266–284)
+## Notes
 
-#### Approach
-- **RESOLVED.** Used the strategy from `PROGRESS.md`: chain
-  `uD_isParabolic`'s 1st conjunct (after Slice prover lands the
-  Tier S #1 fix) with `uD_neg_inverse` via `congrArg`.
-
-#### Proof body
-```lean
-· -- LinearMap.IsOrthogonal S.ambientForm (uD S D)
-  intro u v
-  have hAdj :
-      LinearMap.IsAdjointPair S.ambientForm S.ambientForm
-          (uD S D) (uD S (-D)) :=
-    (uD_isParabolic S _hNondeg _hChar D).1
-  have hinv : uD S (-D) ∘ₗ uD S D = LinearMap.id := by
-    have := uD_neg_inverse S _hNondeg _hChar (-D)
-    simpa [neg_neg] using this
-  have hinv_apply : ∀ w, uD S (-D) (uD S D w) = w := by
-    intro w
-    have := congrArg (fun f : Module.End F S.V => f w) hinv
-    simpa using this
-  calc S.ambientForm (uD S D u) (uD S D v)
-      = S.ambientForm u (uD S (-D) (uD S D v)) := hAdj u (uD S D v)
-    _ = S.ambientForm u v := by rw [hinv_apply]
-```
-
-#### Mathlib lemmas / facts used
-- `LinearMap.IsAdjointPair B B' f g` unfolds to
-  `∀ x y, B' (f x) y = B x (g y)` — verified via `lean_run_code` round-trip.
-- `LinearMap.IsOrthogonal B f` unfolds to `∀ x y, B (f x) (f y) = B x y`
-  — verified via `lean_run_code` (`rfl` round-trip).
-- `uD_neg_inverse S _hNondeg _hChar (-D)` gives `uD S (-D) ∘ₗ uD S D = id`
-  after `neg_neg` rewriting.
-
-#### Verification of proof structure (independent of Slice prover)
-
-Ran a self-contained `lean_run_code` snippet matching the proof shape:
-
-```lean
-example {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
-    (B : LinearMap.BilinForm R M) (f g : Module.End R M)
-    (hAdj : LinearMap.IsAdjointPair B B f g)
-    (hinv_apply : ∀ w, g (f w) = w) :
-    LinearMap.IsOrthogonal B f := by
-  intro u v
-  calc B (f u) (f v)
-      = B u (g (f v)) := hAdj u (f v)
-    _ = B u v := by rw [hinv_apply]
-```
-
-Result: ✅ no diagnostics — the proof structure is sound.
-
-## Cross-file dependency status (mid-round, expected)
-
-`lake env lean InducedOrbitToy/NormalForm.lean` currently reports **one
-error** at line 274:
-
-```
-Type mismatch
-  (uD_isParabolic S _hNondeg _hChar D).left
-has type
-  IsAdjointPair S.ambientForm S.ambientForm ⇑(uD S D) ⇑(uD S D)
-but is expected to have type
-  IsAdjointPair S.ambientForm S.ambientForm ⇑(uD S D) ⇑(uD S (-D))
-```
-
-This is **expected per `PROGRESS.md` "Coordination notes for Round 3
-(parallel-safety)"**: my IsOrthogonal proof depends on the sister
-prover's update to `Slice.lean :: uD_isParabolic` (also Round 3 / Tier S
-#1) which changes the first conjunct of `uD_isParabolic` from
-`IsAdjointPair (uD D) (uD D)` to `IsAdjointPair (uD D) (uD (-D))`.
-
-The error will resolve automatically when the sister prover lands its
-half. End-of-round `lake build` will be green.
-
-All other diagnostics in `NormalForm.lean` are 5 declaration-use `sorry`
-warnings (line numbers shifted by ~7 lines because the proof body
-expanded from `sorry` to the calc chain):
-
-- line 195: `pNormalForm_witnesses` (Tier A — Round 4) — untouched
-- line 319: `residual_levi_extract` (Tier A — Round 4) — untouched
-- line 348: `residual_levi_build` (Tier A + S #3 — Round 4 / 5) —
-  comment updated, body untouched
-- line 495: `kernelImage_ker` (Tier C — Round 4 / 5) — untouched
-- line 590: `kernelImage_im` (Tier C — Round 4 / 5) — untouched
-
-No new sorries introduced.
-
-## Untouched declarations (per round assignment)
-
-The following sorries were explicitly listed as **not to be touched**
-this round:
-
-- `pNormalForm_witnesses` (line 195, Tier A) ✅ untouched
-- `residual_levi_extract` (line 319, Tier A) ✅ untouched
-- `residual_levi_build` (line 348, Tier A + S #3) ✅ body untouched
-  (only inline comment about now-resolved Tier D blocker updated)
-- `kernelImage_ker` (line 495, Tier C) ✅ untouched
-- `kernelImage_im` (line 590, Tier C) ✅ untouched
-
-The signatures, helper lemmas (`isUnit_uD`, `map_uD_eq_of_le`,
-`XST_apply`, `kerXST_submod_le_ker`, `submoduleProdEquiv`,
-`finrank_submodule_prod`), and all working proofs are also unchanged.
-
-## Side-effect review of other `IsParabolicElement` consumers
-
-After the definition change, every site that *consumes* the predicate
-needed verification:
-
-- `pNormalForm` (line 236) — produces `IsParabolicElement`; the new
-  IsOrthogonal conjunct is discharged in the body (above).
-- `residual_levi_extract` (line 321) — consumes `IsParabolicElement S p`
-  as a hypothesis (`_hP`), body is whole-statement `sorry`. **No change
-  needed**; underscore-prefixed binding doesn't care about which
-  predicate field is which.
-- `residual_levi_build` (line 348) — produces `IsParabolicElement S p`
-  in its existential conclusion; body is whole-statement `sorry`. **No
-  change needed**; the `sorry` discharges the entire conclusion.
-- `pNormalForm_residual_orbit_iso` (line 388) — uses
-  `IsParabolicElement` only in the iff statement; body delegates to
-  `residual_levi_extract` / `residual_levi_build`. **No change needed**.
-
-## Negative results / things tried
-
-- Considered using `LinearEquiv.isAdjointPair_symm_iff`
-  (`IsAdjointPair B B f f.symm ↔ IsOrthogonal B f`) to convert
-  symmetrically. Rejected: requires `uD S D` packaged as a `LinearEquiv`,
-  which would entail extra plumbing via `isUnit_uD` and `Units` to extract
-  the inverse as `LinearEquiv.symm`. The direct calc chain is shorter
-  and avoids the LinearEquiv wrapping.
-- Tried using just `(uD_isParabolic …).1 u (uD S D v)` directly in
-  the calc step without the intermediate `hAdj` binding — possible but
-  less readable; the explicit `hAdj` makes the type-correction
-  dependency on Slice's Tier S #1 update clearer to future agents.
-
-## Acceptance criteria checklist
-
-- ✅ `IsParabolicElement` 4th conjunct uses `LinearMap.IsOrthogonal`.
-- ✅ `pNormalForm` line-272 sorry closed (replaced with calc chain).
-- ✅ All other sorries unchanged (lines 195, 319, 348, 495, 590).
-- ✅ Sorry count: 6 → 5 (one closed).
-- ⏳ File compiles in isolation: 1 cross-file type-mismatch error at
-  line 274, expected per parallel-safety notes; resolves when sister
-  prover (Slice.lean) lands the corrected `uD_isParabolic` signature.
-- ⏳ `lake build` is green: depends on sister prover landing.
-- ✅ No new `axiom` declarations introduced (no `axiom` keyword used;
-  only added a calc chain and updated a definition + docstring).
-- ✅ Helpers `isUnit_uD`, `map_uD_eq_of_le`, `XST_apply`,
-  `kerXST_submod_le_ker`, `submoduleProdEquiv`, `finrank_submodule_prod`
-  unchanged.
-
-## Reusable gotchas (for next round)
-
-- **`LinearMap.IsAdjointPair B B' f g` direction**: unfolds to
-  `∀ x y, B' (f x) y = B x (g y)` (the `B'`-applied side is on the
-  *function-image* side). With `B = B'`, this reads
-  `B (f x) y = B (x) (g y)`.
-- **`LinearMap.IsOrthogonal B f` is `rfl`-equal to
-  `∀ x y, B (f x) (f y) = B x y`** — `intro u v` works directly without
-  `unfold IsOrthogonal`.
-- **Cross-file Tier S coupling**: when a definition change in file X
-  forces a calc-chain change in file Y, the `lean_run_code` MCP tool can
-  verify the proof structure independently with hypothetical inputs of
-  the correct shape. Useful for sanity-checking before the sister file
-  lands.
+- Confirmed via `lean_local_search` etc. is unnecessary at this stage —
+  no edits to verify.
+- No new `axiom` introduced (no edits).
+- File unchanged: `git status` should show no diff for
+  `InducedOrbitToy/NormalForm.lean`.

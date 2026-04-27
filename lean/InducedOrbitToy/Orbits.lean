@@ -161,12 +161,15 @@ private lemma X0Lift_apply (S : SliceSetup F)
       (0, S.X0 v, 0)
   rfl
 
-/-- The block-matrix difference `XCB - X0Lift` always lies in the
-unipotent radical, irrespective of skew-symmetry of `(C, B)`. -/
+/-- The block-matrix difference `XCB - X0Lift` lies in the (tightened)
+unipotent radical given an explicit skew-adjointness witness with respect
+to `S.ambientForm`.  The flag-stability conjuncts hold for any `(C, B)`;
+the form-preservation conjunct is provided by the caller. -/
 private lemma XCB_sub_X0Lift_mem_unipotent (S : SliceSetup F)
-    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) :
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E)
+    (hskew : IsSkewAdjoint S.ambientForm (XCB S C B - X0Lift S)) :
     XCB S C B - X0Lift S ∈ UnipotentRadical S := by
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, hskew⟩
   · intro x hx
     have hxx : x.2 ∈ Submodule.prod (⊥ : Submodule F S.V0) (⊥ : Submodule F S.E') :=
       (Submodule.mem_prod.mp hx).2
@@ -192,20 +195,98 @@ private lemma XCB_sub_X0Lift_mem_unipotent (S : SliceSetup F)
     refine ⟨trivial, trivial, ?_⟩
     simp
 
-/-- `XST S Sₕ T - X0Lift S` is unipotent. -/
+/-- Pointwise formula for `BST`: definitional equality with the
+`L0`-embedded image under `T ∘ projL0'`. -/
+private lemma BST_apply (S : SliceSetup F) (T : S.L0' →ₗ[F] S.L0)
+    (u : S.paired.E') :
+    BST S T u = ((T (projL0' S u) : S.L0) : S.paired.E) := rfl
+
+/-- The `L1' ⊕ L0' = E'` decomposition: every `v : E'` decomposes as the
+sum of its `L1'`-projection and its `L0'`-projection (subtype-coerced). -/
+private lemma projL1'_add_projL0'_eq (S : SliceSetup F) (v : S.paired.E') :
+    ((projL1' S v : S.L1') : S.paired.E')
+        + ((projL0' S v : S.L0') : S.paired.E') = v := by
+  have h := Submodule.IsCompl.projection_add_projection_eq_self S.isComplL' v
+  rw [Submodule.IsCompl.projection_apply,
+      Submodule.IsCompl.projection_apply] at h
+  exact h
+
+/-- For `x ∈ L0` and `v ∈ E'`, the pairing `λ(x, v)` collapses to the
+pairing with the `L0'`-projection of `v`, since the `L1'` part vanishes
+under the cross-isotropy `λ(L0, L1') = 0`. -/
+private lemma lambda_L0_eq_lambda_L0_projL0'
+    (S : SliceSetup F) (x : S.L0) (v : S.paired.E') :
+    S.lambda ((x : S.paired.E)) v
+      = S.lambda ((x : S.paired.E)) ((projL0' S v : S.L0') : S.paired.E') := by
+  have h_eq := projL1'_add_projL0'_eq S v
+  have h_iso :
+      S.lambda ((x : S.paired.E)) ((projL1' S v : S.L1') : S.paired.E') = 0 :=
+    S.L0_isotropic_L1' _ x.property _ (projL1' S v).property
+  conv_lhs => rw [← h_eq]
+  rw [map_add, h_iso, zero_add]
+
+/-- `IsSkewT T` upgrades to `IsSkewB (BST T)` via the cross-isotropy
+`L0_isotropic_L1'`. -/
+private lemma IsSkewB_BST (S : SliceSetup F) {T : S.L0' →ₗ[F] S.L0}
+    (hT : S.IsSkewT T) : IsSkewB S (BST S T) := by
+  intro u v
+  have hT_uv := hT (projL0' S u) (projL0' S v)
+  rw [BST_apply, BST_apply,
+      lambda_L0_eq_lambda_L0_projL0' S (T (projL0' S u)) v,
+      lambda_L0_eq_lambda_L0_projL0' S (T (projL0' S v)) u]
+  exact hT_uv
+
+/-- `XST S Sₕ T - X0Lift S` is unipotent when `T` is skew (with respect to
+the residual form `BT`).  The skew-adjointness w.r.t. `S.ambientForm`
+required by the tightened `UnipotentRadical` is built from `S.skew` (X₀
+skew on V₀), `S.epsSymm` + `eps² = 1` (the cross-form cancellation), and
+`IsSkewB (BST T)` (derived from `IsSkewT T` via `IsSkewB_BST`). -/
 private lemma XST_sub_X0Lift_mem_unipotent (S : SliceSetup F)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) :
-    XST S Sₕ T - X0Lift S ∈ UnipotentRadical S :=
-  XCB_sub_X0Lift_mem_unipotent S (CST S Sₕ) (BST S T)
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) {T : S.L0' →ₗ[F] S.L0} (hT : S.IsSkewT T) :
+    XST S Sₕ T - X0Lift S ∈ UnipotentRadical S := by
+  apply XCB_sub_X0Lift_mem_unipotent S (CST S Sₕ) (BST S T)
+  -- Goal: IsSkewAdjoint S.ambientForm (XCB S (CST S Sₕ) (BST S T) - X0Lift S).
+  have hSkewB : IsSkewB S (BST S T) := IsSkewB_BST S hT
+  intro x y
+  obtain ⟨e₁, v₁, e₁'⟩ := x
+  obtain ⟨e₂, v₂, e₂'⟩ := y
+  have hε := S.epsSymm
+  have hε2 : S.eps * S.eps = 1 := by
+    rcases S.epsValid with h | h <;> simp [h]
+  have hSym :
+      S.formV0 v₂ ((CST S Sₕ) e₁') = S.eps * S.formV0 ((CST S Sₕ) e₁') v₂ :=
+    hε _ _
+  have hSkewB_uv := hSkewB e₁' e₂'
+  have hY1 :
+      (XCB S (CST S Sₕ) (BST S T) - X0Lift S) (e₁, v₁, e₁')
+        = (Cdual S (CST S Sₕ) v₁ + (BST S T) e₁',
+            (CST S Sₕ) e₁', (0 : S.paired.E')) := by
+    rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply]
+    ext <;> simp
+  have hY2 :
+      (XCB S (CST S Sₕ) (BST S T) - X0Lift S) (e₂, v₂, e₂')
+        = (Cdual S (CST S Sₕ) v₂ + (BST S T) e₂',
+            (CST S Sₕ) e₂', (0 : S.paired.E')) := by
+    rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply]
+    ext <;> simp
+  rw [hY1, hY2]
+  simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, map_add,
+    LinearMap.add_apply, map_zero, mul_zero, add_zero, zero_add]
+  rw [Cdual_pairing_eq S hNondeg (CST S Sₕ) v₁ e₂',
+      Cdual_pairing_eq S hNondeg (CST S Sₕ) v₂ e₁']
+  linear_combination hSkewB_uv + (-S.eps) * hSym
+    + (-(S.formV0 ((CST S Sₕ) e₁') v₂)) * hε2
 
 /-- `XST S Sₕ T` lies in `O₀ + 𝔲`: take the orbit representative
 `S.X0 ∈ O₀` (lifted to the ambient space via `embO0 = X0Lift`) plus the
 unipotent residual `XST - X0Lift`. -/
 private lemma XST_mem_O0PlusU (S : SliceSetup F)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) :
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) {T : S.L0' →ₗ[F] S.L0} (hT : S.IsSkewT T) :
     XST S Sₕ T ∈ O0PlusU S := by
   refine ⟨S.X0, X0_mem_O0 S, XST S Sₕ T - X0Lift S,
-    XST_sub_X0Lift_mem_unipotent S Sₕ T, ?_⟩
+    XST_sub_X0Lift_mem_unipotent S hNondeg Sₕ hT, ?_⟩
   rw [embO0_X0_eq_X0Lift]; abel
 
 /-! ## Theorems -/
@@ -218,14 +299,15 @@ relation.  For autoformalize we expose the weaker statement that every
 theorem inducedOrbits (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
     [ClassifyBilinearForms F]
+    (hNondeg : S.formV0.Nondegenerate)
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus)
-    (T : S.L0' →ₗ[F] S.L0) (_hT : T ∈ S.Tset_circ) :
+    (T : S.L0' →ₗ[F] S.L0) (hT : T ∈ S.Tset_circ) :
     GOrbit S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) ⊆ IndPG S := by
   intro y hy
   obtain ⟨g, hg, hyeq⟩ := hy
   apply subset_closure
   exact ⟨g, hg, XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T,
-    XST_mem_O0PlusU S _ T, hyeq⟩
+    XST_mem_O0PlusU S hNondeg _ hT.1, hyeq⟩
 
 /-- `prop:s-independence-and-orbit-criterion`.  Two parametrisations
 yield the same `G`-orbit iff the corresponding `T`'s are isometric.
@@ -327,7 +409,7 @@ of the main theorem of the blueprint:
 -/
 theorem main (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
-    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     [ClassifyBilinearForms F] [MultiplicityTheory S]
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus) :
     (∀ T : S.L0' →ₗ[F] S.L0, S.IsSkewT T →
@@ -342,10 +424,10 @@ theorem main (S : SliceSetup F)
         Module.finrank F (LinearMap.range T) = Module.finrank F S.L0' →
         Multiplicity S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) = 1) := by
   refine ⟨?_, ?_, ?_, ?_⟩
-  · intro T _hT
-    exact XST_sub_X0Lift_mem_unipotent S (Sₕ : S.L1' →ₗ[F] S.Vplus) T
   · intro T hT
-    exact inducedOrbits S Sₕ T hT
+    exact XST_sub_X0Lift_mem_unipotent S hNondeg (Sₕ : S.L1' →ₗ[F] S.Vplus) hT
+  · intro T hT
+    exact inducedOrbits S hNondeg Sₕ T hT
   · intro T₁ T₂ hT₁ hT₂
     exact sIndependenceAndOrbitCriterion S Sₕ Sₕ T₁ T₂ hT₁ hT₂
   · intro T hT hNonDeg

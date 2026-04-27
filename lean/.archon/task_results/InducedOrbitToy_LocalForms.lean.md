@@ -1,36 +1,46 @@
 # InducedOrbitToy/LocalForms.lean
 
-## Round 3 — No work assigned
+## Round 4 — No work
 
-`PROGRESS.md` (Round 3, "Files NOT assigned this round") explicitly lists
-`InducedOrbitToy/LocalForms.lean` as **done; no work**. The harness
-dispatched a prover to this file anyway; per the documented protocol I
-verified compilation and made **no edits**.
+PROGRESS.md (Round 4 plan) explicitly lists `InducedOrbitToy/LocalForms.lean`
+under "Files NOT assigned this round" with the note:
 
-### Verification
+> `InducedOrbitToy/LocalForms.lean` — already done; no work.
 
-- `grep -n "sorry" InducedOrbitToy/LocalForms.lean` → no matches.
-- `lean_diagnostic_messages` on the absolute path
+The harness still dispatched a prover to this file. Per PROGRESS.md's
+parallel-safety guidance for non-objective files, the prover should:
+
+1. verify the file compiles in isolation,
+2. write a brief "no work" report,
+3. **not edit anything**.
+
+## Verification
+
+- File status: **0 sorries**, 0 errors, 0 warnings.
+- Inspection via `lean_diagnostic_messages` on
   `/Users/hoxide/mydoc/inducedorbittoy/lean/InducedOrbitToy/LocalForms.lean`
-  returned `items: []` (no errors, no warnings, no sorry-warnings).
-- File length: 162 lines.
-- No `/- USER: ... -/` hints present.
+  returned `items: []` and `failed_dependencies: []`.
+- All three public theorems are sorry-free at end of session 5
+  (`localFormClasses_finite`, `localFormClasses_open`, `localFormClasses`),
+  closed via the enriched `ClassifyBilinearForms` typeclass.
+- No edits were made to `InducedOrbitToy/LocalForms.lean` this round.
 
-### Files edited
+## Cross-file coupling note
 
-None. The assigned file is already sorry-free and was untouched this
-round.
+LocalForms.lean only depends on `InducedOrbitToy.NormalForm` (which
+re-exports `SliceSetup`, `IsSkewT`, `Tset_circ`, `BT`, etc.). Round 4's
+Tier S #2 / #3 changes in `Basic.lean` flow through `NormalForm.lean`'s
+import chain, but none of the affected names (`UnipotentRadical` /
+`SliceSetup` field list) are referenced by LocalForms.lean. So:
 
-### Cross-file note
+- Mid-round cross-file errors (if any) will surface in Slice/Orbits, not
+  here.
+- End-of-round `lake build` should remain green for this file regardless
+  of how the sister provers' Tier S edits land.
 
-Round 3's two assigned objectives (`Slice.lean :: uD_isParabolic` and
-`NormalForm.lean :: pNormalForm` IsParabolicElement update) do not
-consume anything from `LocalForms.lean`, so end-of-round `lake build`
-status for this file depends only on the sister provers landing their
-edits. No coordination required from this side.
+## Axiom hygiene
 
-### Axiom hygiene
-
-Not re-checked this round (no edits). Prior rounds confirmed only
-`[propext, Classical.choice, Quot.sound]` for public theorems in this
-file.
+Not re-verified this round (no edits). Last verified in session 5:
+`#print axioms` for each of the three public theorems shows
+`[propext, Classical.choice, Quot.sound]` only — no custom axioms,
+no `sorryAx`.

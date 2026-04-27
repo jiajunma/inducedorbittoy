@@ -180,12 +180,21 @@ private lemma X0Lift_apply (S : SliceSetup F)
   unfold X0Lift
   simp
 
+/-- Pointwise formula for `XCB - X0Lift`: the V₀-part is just `C e'`. -/
+private lemma XCB_sub_X0Lift_apply (S : SliceSetup F)
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E)
+    (e : S.paired.E) (v : S.V0) (e' : S.paired.E') :
+    (XCB S C B - X0Lift S) (e, v, e')
+      = (Cdual S C v + B e', C e', (0 : S.paired.E')) := by
+  rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply]
+  ext <;> simp
+
 /-- `X_{C,B}` lies in `X₀ + 𝔲` for any admissible `(C, B)`. -/
 theorem parametrizeX0PlusU_mem (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B) :
     XCB S C B - X0Lift S ∈ UnipotentRadical S := by
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
   · -- vanishes on `flagE`
     intro x hx
     obtain ⟨e, v, e'⟩ := x
@@ -210,25 +219,31 @@ theorem parametrizeX0PlusU_mem (S : SliceSetup F)
     rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply]
     refine ⟨trivial, trivial, ?_⟩
     simp
+  · -- IsSkewAdjoint S.ambientForm (XCB S C B - X0Lift S)
+    intro x y
+    obtain ⟨e₁, v₁, e₁'⟩ := x
+    obtain ⟨e₂, v₂, e₂'⟩ := y
+    rw [XCB_sub_X0Lift_apply, XCB_sub_X0Lift_apply]
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, map_add,
+      LinearMap.add_apply, map_zero, mul_zero, add_zero, zero_add]
+    rw [Cdual_pairing_eq S _hNondeg C v₁ e₂',
+        Cdual_pairing_eq S _hNondeg C v₂ e₁']
+    have hε := S.epsSymm
+    have hε2 : S.eps * S.eps = 1 := by
+      rcases S.epsValid with h | h <;> simp [h]
+    have hskewB := _hB e₁' e₂'
+    have hSym : S.formV0 v₂ (C e₁') = S.eps * S.formV0 (C e₁') v₂ := hε _ _
+    linear_combination hskewB - S.eps * hSym
+      - S.formV0 (C e₁') v₂ * hε2
 
 /-- Existence in `lem:parametrize-x0-plus-u`: every `Y ∈ X₀ + 𝔲`
 is of the form `X_{C,B}` for some admissible `(C, B)`.
 
-NOTE.  The current `Basic.lean :: UnipotentRadical` definition is the
-loose flag-preserving Lie algebra (it does **not** enforce
-skew-adjointness with respect to `S.ambientForm`).  As written, the
-existence claim is false in this generality: an arbitrary
-flag-preserving `Y` decomposes as a triple of free linear maps
-`(α : V₀ →ₗ E, β : E' →ₗ E, γ : E' →ₗ V₀)`, while a member of the image
-of `(C, B) ↦ XCB C B - X0Lift` must satisfy `α = Cdual γ` and
-`IsSkewB β`, neither of which is automatic.
-
-The intended statement (matching the blueprint's `𝔲 = 𝔭 ∩ 𝔤`) requires
-a hypothesis that `Y` is also skew-adjoint with respect to
-`S.ambientForm`.  Below we record the canonical candidates for `C` and
-`B`, but discharge the two genuine constraints with `sorry` until the
-plan agent strengthens `Basic.lean :: UnipotentRadical` to include
-skew-adjointness. -/
+The 4th conjunct of `UnipotentRadical S` (skew-adjointness w.r.t.
+`S.ambientForm`) is what forces `(α, γ) ↦ α = Cdual γ` and
+`IsSkewB β` on the V₀→E and E'→E blocks of `Y`, ensuring the candidate
+`(C, B) := (projV0 ∘ Y ∘ inE', projE ∘ Y ∘ inE')` actually returns a
+member of the image of `(C, B) ↦ XCB C B - X0Lift`. -/
 theorem parametrizeX0PlusU_existence (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate)
     (Y : Module.End F S.V) (_hY : Y ∈ UnipotentRadical S) :
@@ -243,25 +258,27 @@ theorem parametrizeX0PlusU_existence (S : SliceSetup F)
   let projV0 : S.V →ₗ[F] S.V0 :=
     (LinearMap.fst F S.V0 S.paired.E') ∘ₗ
       (LinearMap.snd F S.paired.E (S.V0 × S.paired.E'))
+  -- Destructure `Y ∈ UnipotentRadical S` to its four conjuncts.
+  obtain ⟨hflagE, hflagEV0, hAll, hSkewY⟩ := _hY
   refine ⟨projV0 ∘ₗ Y ∘ₗ inE', projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩
-  · -- IsSkewB B: `λ(B u, v) + ε λ(B v, u) = 0` for `B := projE ∘ Y ∘ inE'`.
-    -- Unfolding `B` and substituting the projections, this expands to
-    -- `λ(projE (Y inE'(u)), v) + ε λ(projE (Y inE'(v)), u) = 0`, which is
-    -- precisely the `(E', E')`-block of the skew-adjointness identity for
-    -- `Y` w.r.t. `S.ambientForm`. The loose `UnipotentRadical` definition
-    -- does NOT enforce skew-adjointness on `Y`. (Tier D blocker.)
+  · -- IsSkewB B for `B := projE ∘ Y ∘ inE'`: the (E', E')-block of the
+    -- skew-adjointness identity `hSkewY (0, 0, u) (0, 0, v)` collapses
+    -- the `B₀(_,_)` and `λ(_,0)`/`λ(0,_)` terms, leaving exactly
+    -- `λ((Y(0,0,u)).1, v) + ε · λ((Y(0,0,v)).1, u) = 0`.
     intro u v
     show S.lambda ((projE ∘ₗ Y ∘ₗ inE') u) v
         + S.eps * S.lambda ((projE ∘ₗ Y ∘ₗ inE') v) u = 0
-    sorry
+    have h := hSkewY (0, 0, u) (0, 0, v)
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, map_zero,
+      LinearMap.zero_apply, mul_zero, add_zero, zero_add] at h
+    -- After simp, `h` matches the goal (up to `(projE ∘ₗ Y ∘ₗ inE') u
+    --   = (Y (0, 0, u)).1`, which is definitional).
+    show S.paired.pairing (Y (0, 0, u)).1 v
+        + S.eps * S.paired.pairing (Y (0, 0, v)).1 u = 0
+    exact h
   · -- The equality `XCB S C B - X0Lift S = Y`.
-    -- We can prove the V₀ and E' components without further hypotheses;
-    -- the E component requires `Y` to be skew-adjoint w.r.t.
-    -- `S.ambientForm` (so that the V₀→E block of `Y` is `Cdual` of the
-    -- E'→V₀ block), which the loose `UnipotentRadical` does NOT supply.
     apply LinearMap.ext
     rintro ⟨e, v, e'⟩
-    obtain ⟨hflagE, hflagEV0, hAll⟩ := _hY
     -- Y vanishes on `flagE`.
     have hY_e0 : Y (e, 0, 0) = 0 :=
       hflagE _ ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
@@ -283,24 +300,43 @@ theorem parametrizeX0PlusU_existence (S : SliceSetup F)
     obtain ⟨_, _, hY_e'_E'⟩ := hY_e'_flagEV0
     have hY_e'_E'_eq : (Y (0, 0, e')).2.2 = 0 := by
       simpa [Submodule.mem_bot] using hY_e'_E'
+    -- The V₀-block of `Y` applied to `(0, 0, e'')` is exactly `C e''`
+    -- (this is the definition of `C := projV0 ∘ₗ Y ∘ₗ inE'`).
+    have hC_eq : ∀ e'' : S.paired.E',
+        (projV0 ∘ₗ Y ∘ₗ inE') e'' = (Y (0, 0, e'')).2.1 := by
+      intro e''
+      simp [projV0, inE', LinearMap.comp_apply]
+    -- The E-block of `Y` on `V₀`: `(Y (0, v, 0)).1 = Cdual S C v`.
+    -- Proof via the perfect pairing: it suffices to show the two sides
+    -- pair to the same value with every `e'' : S.paired.E'`.
+    have hY_v_E_eq : (Y (0, v, 0)).1 = Cdual S (projV0 ∘ₗ Y ∘ₗ inE') v := by
+      apply S.paired.isPerfect.1
+      apply LinearMap.ext
+      intro e''
+      have h := hSkewY (0, v, 0) (0, 0, e'')
+      simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, map_zero,
+        LinearMap.zero_apply, mul_zero, add_zero, zero_add] at h
+      -- `h : S.paired.pairing (Y(0,v,0)).1 e''
+      --        + S.formV0 v (Y(0,0,e'')).2.1 = 0`
+      rw [Cdual_pairing_eq S _hNondeg, hC_eq]
+      linear_combination h
     -- Reduce LHS via `XCB_apply` and `X0Lift_apply`.
     rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply, hY_sum]
     -- Decompose into (E, V₀, E') components.
     refine Prod.mk.injEq .. |>.mpr
       ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
-    · -- E component: requires `(Cdual S C) v = (Y (0, v, 0)).1` (V₀→E
-      -- block of Y), which only holds if Y is skew-adjoint w.r.t.
-      -- `S.ambientForm`. (Tier D blocker.)
-      sorry
+    · -- E component: `Cdual C v + B e' - 0 = (Y(0,v,0)).1 + (Y(0,0,e')).1`.
+      -- Use `hY_v_E_eq` and `B e' = (Y(0,0,e')).1`.
+      have hB_eq : (projE ∘ₗ Y ∘ₗ inE') e' = (Y (0, 0, e')).1 := by
+        simp [projE, inE', LinearMap.comp_apply]
+      show Cdual S (projV0 ∘ₗ Y ∘ₗ inE') v + (projE ∘ₗ Y ∘ₗ inE') e' - 0
+          = (Y (0, v, 0)).1 + (Y (0, 0, e')).1
+      rw [sub_zero, hB_eq, ← hY_v_E_eq]
     · -- V₀ component: `X0 v + (projV0 ∘ Y ∘ inE') e' - X0 v
       --   = (Y (0, v, 0)).2.1 + (Y (0, 0, e')).2.1`.
-      -- Reduces to `(Y (0, 0, e')).2.1 = (Y (0, 0, e')).2.1` via the
-      -- definitions of `projV0` and `inE'`.
       simp only [hY_v_V0_eq, zero_add]
-      -- Goal: `X0 v + (projV0 ∘ Y ∘ inE') e' - X0 v = (Y (0, 0, e')).2.1`.
       simp [projV0, inE', LinearMap.comp_apply]
     · -- E' component: `0 - 0 = (Y (0, v, 0)).2.2 + (Y (0, 0, e')).2.2`.
-      -- Both addends are 0.
       simp [hY_v_E'_eq, hY_e'_E'_eq]
 
 /-- Uniqueness in `lem:parametrize-x0-plus-u`: the parameters `(C, B)`
