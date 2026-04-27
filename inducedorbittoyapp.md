@@ -2,44 +2,60 @@
 
 ## Setting
 
-This appendix spells out the orbit calculation used in Proposition 10.5.  The parabolic there is the maximal parabolic subgroup
-$$
-P=P_{\mathsf{s}'',\mathsf{s}_0}\subset G_{\mathsf{s}''}
-$$
-whose Levi factor contains $G_{\mathsf{s}'}$.  The isotropic block used for induction has size $\kappa$, where $\kappa$ is defined in Section~\ref{subsec:gdescent}.
+This appendix spells out the orbit calculation used in Proposition 10.5.  We first put the maximal parabolic in a fixed notation.
 
-Let $(V_0,\langle\ ,\ \rangle_0)$ be a non-degenerate $\epsilon$-Hermitian $\mathbb D$-space, let $G_0$ be its isometry group, and let
-$$
-X_0\in \mathfrak g_0=\operatorname{Lie}(G_0)
-$$
-be nilpotent.  Put
-$$
-\mathcal O_0=G_0\cdot X_0,
-\qquad
-c=\dim_{\mathbb D}\ker X_0.
-$$
-Thus $c=\mathbf c_1(\mathcal O_0)$.
-
-Let $E,E'$ be $\kappa$-dimensional right $\mathbb D$-modules with a perfect pairing
-$$
-\lambda:E\times E'\to \mathbb D.
-$$
-Set
+Let $D\in\{\mathbb R,\mathbb C,\mathbb H\}$, with its standard involution, and let $\langle\ ,\ \rangle$ be an $\epsilon$-Hermitian sesquilinear form.  Let
 $$
 V=E\oplus V_0\oplus E'
 $$
-with the standard hyperbolic extension of $\langle\ ,\ \rangle_0$ determined by $\lambda$.  Let $G$ be the isometry group of $V$.  Let $P$ be the maximal parabolic stabilizing $E$, and let $\mathfrak u$ be the Lie algebra of its unipotent radical.
+be a Witt decomposition in which $V_0$ is non-degenerate and $E,E'$ are totally isotropic subspaces paired perfectly by $\langle\ ,\ \rangle$.  We assume
+$$
+\dim_D E=\dim_D E'=\kappa.
+$$
+Equivalently, $V_0\simeq E^\perp/E$.  Let
+$$
+P=P_E\subset G(V)
+$$
+be the maximal parabolic subgroup stabilizing $E$, where $G=G(V)$, and let $\mathfrak u$ be the Lie algebra of its unipotent radical.  
 
-The induced orbit is
+Let $G_0=G(V_0)$ and let
+$$
+\mathfrak g_0=\operatorname{Lie}(G_0).
+$$
+The Levi factor of $P$ contains $G_0$; we regard $\mathfrak g_0$ as a summand of the Lie algebra of this Levi factor, acting on $V_0$ and acting trivially on $E\oplus E'$.  Let
+$$
+\mathcal O_0\subset \mathfrak g_0
+$$
+be a nilpotent $G_0$-orbit, and choose $X_0\in\mathcal O_0$.
+
+## The induced orbit to be computed
+
+The object computed in this appendix is
 $$
 \operatorname{Ind}_P^G(\mathcal O_0)
-=\overline{G\cdot(\mathcal O_0+\mathfrak u)}.
+:=\overline{G\cdot(\mathcal O_0+\mathfrak u)}.
 $$
-Since $G_0$ is contained in the Levi factor of $P$,
+固定 X_0\in O_0. 
+
+
+Iso_{r, -\epsilon} := -\epsilon-sesquelinear form on $r$-dim $D$ space. 
+定义 X_{C,B},
+
+
+Lemma 1: r =  \kappa - dim_D \ker X_0 >=0. 那么 orbit in Ind (O_0)  in bijection with Iso_{r,-\epsilon}, r even is (\epislon, D) = (1,R) or (1,C) .
+multilpity = 1. 
+
+Since $G_0$ is contained in the Levi factor of $P$, and since $\mathfrak u$ is stable under this Levi factor, we have
 $$
-\mathcal O_0+\mathfrak u=G_0\cdot(X_0+\mathfrak u).
+\mathcal O_0+\mathfrak u
+=G_0\cdot(X_0+\mathfrak u).
 $$
-So the orbit calculation reduces to the slice $X_0+\mathfrak u$.
+Therefore
+$$
+\operatorname{Ind}_P^G(\mathcal O_0)
+=\overline{G\cdot(X_0+\mathfrak u)}.                 \tag{I}
+$$
+Thus the calculation is concrete: write the elements of $X_0+\mathfrak u$ as matrices $X_{C,B}$, use the $P$-action to normalize the pair $(C,B)$ on the open locus, and then read off the open $G$-orbits in (I).  This is the only purpose of the section.
 
 ## The slice $X_0+\mathfrak u$
 
@@ -49,7 +65,7 @@ V=E\oplus V_0\oplus E',
 $$
 every element of $X_0+\mathfrak u$ has the form
 $$
-X_0+Y_{C,B},
+X_{C,B}:=X_0+Y_{C,B},
 \qquad
 Y_{C,B}=
 \begin{bmatrix}
@@ -66,13 +82,123 @@ B:E'\to E,
 $$
 and $C^\vee:V_0\to E$ is determined by
 $$
-\lambda(C^\vee v,a')=-\langle v,Ca'\rangle_0.
+\langle C^\vee v,a'\rangle=-\langle v,Ca'\rangle_0.
+$$
+Equivalently,
+$$
+X_{C,B}(e+v+a')=C^\vee v+Ba'+X_0v+Ca'.              \tag{2}
 $$
 The condition on $B$ is
 $$
-\lambda(Ba',b')+\epsilon\overline{\lambda(Bb',a')}=0
-\qquad(a',b'\in E').                                  \tag{2}
+\langle Ba',b'\rangle+\epsilon\overline{\langle Bb',a'\rangle}=0
+\qquad(a',b'\in E').                                  \tag{3}
 $$
+Conversely, every pair $(C,B)$ satisfying this condition gives an element $X_{C,B}\in X_0+\mathfrak u$, and this expression is unique.
+
+## The $\operatorname{GL}_D(E)$ and unipotent actions
+
+We first record the two conjugation formulas used in the normalization.  These formulas are part of the calculation, so we put them before the proof.
+
+Let $h\in\operatorname{GL}_D(E)$.  Define $h^\vee:E'\to E'$ by
+$$
+\langle he,e'\rangle=\langle e,h^\vee e'\rangle
+\qquad(e\in E,\ e'\in E').
+$$
+The corresponding Levi element is
+$$
+m_h=
+\begin{bmatrix}
+h&0&0\\
+0&1&0\\
+0&0&(h^\vee)^{-1}
+\end{bmatrix}.
+$$
+A direct block multiplication gives
+$$
+m_hX_{C,B}m_h^{-1}=X_{C h^\vee,\,hB h^\vee}.          \tag{L}
+$$
+Hence
+$$
+\bar C\longmapsto \bar C h^\vee.
+$$
+Thus the $\operatorname{GL}_D(E)$-part of the Levi changes coordinates on the source $E'$ of $\bar C$.
+
+Next let $R:E'\to V_0$.  This is the unipotent parameter; to avoid conflict with the coefficient algebra $D$, we write the corresponding unipotent element as $u_R$:
+$$
+u_R=
+\begin{bmatrix}
+1&R^\vee&\frac12R^\vee R\\
+0&1&R\\
+0&0&1
+\end{bmatrix}\in P.
+$$
+Then
+$$
+u_RX_{C,B}u_R^{-1}
+=X_{C-X_0R,\,B+R^\vee C-C^\vee R-R^\vee X_0R}.       \tag{U}
+$$
+In particular, $u_R$ does not change $\bar C$.
+
+Combining (L) and (U), if we first apply $m_h$ and then $u_R$, then
+$$
+u_Rm_hX_{C,B}m_h^{-1}u_R^{-1}=X_{C',B'},
+$$
+where
+$$
+C'=C h^\vee-X_0R,
+$$
+and
+$$
+B'=hB h^\vee+R^\vee C h^\vee-(C h^\vee)^\vee R-R^\vee X_0R. \tag{LU}
+$$
+This is the calculation used below: $h$ puts the full-rank quotient map $\bar C$ in standard position, and $u_R$ removes the remaining $\operatorname{Im}X_0$-part of $C$.
+
+### Hint for the normalization
+
+The displayed $n_u$-calculation in the notes is exactly the following use of (U).  In the notation of that calculation, the middle-right block called $B$ is our $C$, the top-right block called $C$ is our $B$, and the parameter $u$ is our $R$.
+
+After the quotient map $\bar C$ has been put in standard position, the first use of (U) makes the $C$-block equal to $C_S$.  From this point on, we only use unipotents $u_R$ with
+$$
+R(E')\subset \ker X_0.
+$$
+Then $X_0R=0$, so (U) keeps the $C$-block fixed and gives
+$$
+u_RX_{C_S,B}u_R^{-1}=X_{C_S,B'},
+\qquad
+B'=B+R^\vee C_S-C_S^\vee R.                         \tag{R}
+$$
+Write
+$$
+R=R_1\oplus R_0,
+\qquad
+R_1:L'_1\to \ker X_0,
+\qquad
+R_0:L'_0\to \ker X_0.
+$$
+With rows indexed by $L_1,L_0$ and columns indexed by $L'_1,L'_0$, the correction term is
+$$
+R^\vee C_S-C_S^\vee R=
+\begin{bmatrix}
+R_1^\vee S-S^\vee R_1&-S^\vee R_0\\
+R_0^\vee S&0
+\end{bmatrix}.                                      \tag{R'}
+$$
+This formula explains the reduction of the $B$-block.
+
+1.  The bottom-right block $L'_0\to L_0$ is unchanged.  This is the residual block which we call
+    $$
+    T:L'_0\to L_0.
+    $$
+2.  The map $S^\vee|_{\ker X_0}:\ker X_0\to L_1$ is an isomorphism, because the pairing between $V_+$ and $\ker X_0$ is perfect.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block.  The skew-adjointness relation (3) then kills the opposite $L'_1\to L_0$ cross-block at the same time.
+3.  After the cross-blocks are gone, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$; this is the term $R_1^\vee S-S^\vee R_1$ in (R').
+
+Thus, once $C=C_S$ is fixed, the unipotent action kills every part of $B$ except the residual block $T:L'_0\to L_0$.  This is the precise meaning of the hint in the older $n_u$ computation.
+
+Put
+$$
+c:=\dim_D\ker X_0.
+$$
+Thus $c=\mathbf c_1(\mathcal O_0)$.
 
 The open part of the induced orbit is controlled by the quotient of $C$ modulo $\operatorname{Im}X_0$.  Since $X_0$ is skew-adjoint,
 $$
@@ -80,7 +206,7 @@ $$
 $$
 so
 $$
-\dim_{\mathbb D}(V_0/\operatorname{Im}X_0)=c.
+\dim_D (V_0/\operatorname{Im}X_0)=c.
 $$
 Let
 $$
@@ -88,24 +214,28 @@ $$
 $$
 be the quotient map.  The open condition is
 $$
-\operatorname{rank}_{\mathbb D}\bar C=c.              \tag{3}
+\operatorname{rank}_D \bar C=c.              \tag{4}
 $$
 Thus this normal-form calculation requires
 $$
-\kappa=\dim E'\ge c=\dim\ker X_0.                    \tag{4}
+\kappa=\dim_D E'=\dim_D E\ge c=\dim_D\ker X_0.          \tag{5}
 $$
 
-## Normal form $X_0+Y_{S,T}$
+## The normal forms $X_{S,T}$ and the rank-$r$ form locus
 
-Assume $\kappa\ge c$, and put
+Assume
+$$
+\kappa=\dim_D E\ge c:=\dim_D\ker X_0.
+$$
+Put
 $$
 l=\kappa-c.
 $$
-Choose
+Choose a complement
 $$
 V_0=V_+\oplus \operatorname{Im}X_0,
 \qquad
-\dim V_+=c.
+\dim_D V_+=c.
 $$
 Choose decompositions
 $$
@@ -115,60 +245,46 @@ E'=L'_1\oplus L'_0,
 $$
 with
 $$
-\dim L_1=\dim L'_1=c,
+\dim_D L_1=\dim_D L'_1=c,
 \qquad
-\dim L_0=\dim L'_0=l,
+\dim_D L_0=\dim_D L'_0=l,
 $$
-such that $\lambda$ pairs $L_i$ perfectly with $L'_i$ and kills $L_i\times L'_j$ for $i\ne j$.
+such that the pairing restricts to perfect pairings $L_i\times L'_i$ and kills $L_i\times L'_j$ for $i\ne j$.
 
-On the open locus (3), the Levi factor of $P$ lets us arrange
+Let
 $$
-\ker \bar C=L'_0,
-\qquad
-\bar C|_{L'_1}:L'_1\xrightarrow{\sim}V_0/\operatorname{Im}X_0.
+S:L'_1\xrightarrow{\sim}V_+
 $$
-Then the unipotent radical lets us remove the part of $C$ lying in $\operatorname{Im}X_0$.  Hence we may assume that the $C$-block is
+be an isomorphism.  Define $C_S:E'\to V_0$ by
 $$
-C=C_S,
-$$
-where
-$$
-S:L'_1\xrightarrow{\sim}V_+,
-\qquad
 C_S|_{L'_1}=S,
 \qquad
-C_S|_{L'_0}=0.                                      \tag{5}
+C_S|_{L'_0}=0.                                      \tag{6}
 $$
-This is the condition on $S$: it must identify $L'_1$ with the quotient direction $V_0/\operatorname{Im}X_0$, represented by the chosen complement $V_+$.
-
 For such $S$, define $S^\vee:V_0\to L_1$ by
 $$
-\lambda(S^\vee v,a')=-\langle v,Sa'\rangle_0
+\langle S^\vee v,a'\rangle=-\langle v,Sa'\rangle_0
 \qquad(a'\in L'_1).
 $$
-The only remaining part of the $B$-block is a map
+
+Now let $T:L'_0\to L_0$ satisfy
 $$
-T:L'_0\to L_0
-$$
-satisfying
-$$
-\lambda(Tu,v)+\epsilon\overline{\lambda(Tv,u)}=0
-\qquad(u,v\in L'_0).                                  \tag{6}
+\langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0
+\qquad(u,v\in L'_0).                                  \tag{7}
 $$
 Equivalently,
 $$
-B_T(u,v):=\lambda(Tu,v)
+B_T(u,v):=\langle Tu,v\rangle
 $$
-is a $(-\epsilon)$-Hermitian form on $L'_0$.
-
-The normalized element is
+is a $(-\epsilon)$-Hermitian form on $L'_0$.  Let $B(T):E'\to E$ be the map which is $T$ on $L'_0$ and is zero on $L'_1$.  We define
 $$
-X_0+Y_{S,T},                                           \tag{7}
+Y_{S,T}:=Y_{C_S,B(T)},
+\qquad
+X_{S,T}:=X_0+Y_{S,T}.                                  \tag{8}
 $$
-where explicitly
+Explicitly,
 $$
-(X_0+Y_{S,T})(e+v+a'+b')
-=(S^\vee v+Tb')+(X_0v+Sa')
+X_{S,T}(e+v+a'+b')=(S^\vee v+Tb')+(X_0v+Sa')
 $$
 for
 $$
@@ -178,25 +294,42 @@ e\in E,
 \quad b'\in L'_0.
 $$
 
-## Open induced orbits
-
-Let $\mathscr T$ be the space of all $T:L'_0\to L_0$ satisfying (6), and let $\mathscr T^\circ$ be the maximal-rank locus:
+Let $\mathscr T$ be the space of all $T:L'_0\to L_0$ satisfying (7).  Put
 $$
-\operatorname{rank}_{\mathbb D}T=
+r=
 \begin{cases}
-l-1,&\mathbb D=F,\ \bar{\ }=\mathrm{id},\ \epsilon=+1,\ l\text{ odd},\\
+l-1,&D=\mathbb R,\ \epsilon=+1,\ l\text{ odd},\\
 l,&\text{otherwise}.
-\end{cases}
+\end{cases}                                           \tag{9}
 $$
-Then the open $G$-orbits in $\operatorname{Ind}_P^G(\mathcal O_0)$ are exactly
+We write
 $$
-G\cdot(X_0+Y_{S,T}),
+\operatorname{Form}_r(L'_0)
+:=\{T\in\mathscr T:\operatorname{rank}_D T=r\}.
+$$
+Equivalently, $\operatorname{Form}_r(L'_0)$ is the locus where $B_T$ has maximal possible rank: $B_T$ is non-degenerate except in the real alternating odd case, where it has one-dimensional radical.
+
+## Lemma A.1: the general induced-orbit calculation
+
+**Lemma A.1.**  Assume that
+$$
+\dim_D E\ge \dim_D\ker X
+\qquad\text{for }X\in\mathcal O_0.
+$$
+Equivalently, for the fixed choice $X_0\in\mathcal O_0$, this says $\kappa\ge c$.  Then the open $G$-orbits in
+$$
+\operatorname{Ind}_P^G(\mathcal O_0)
+=\overline{G\cdot(\mathcal O_0+\mathfrak u)}
+$$
+are precisely
+$$
+G\cdot X_{S,T},
 \qquad
-T\in \mathscr T^\circ.                                \tag{8}
+T\in\operatorname{Form}_r(L'_0).                                \tag{10}
 $$
-The orbit is independent of $S$, and
+The orbit is independent of the auxiliary choice of $S$.  Moreover,
 $$
-G\cdot(X_0+Y_{S,T_1})=G\cdot(X_0+Y_{S,T_2})
+G\cdot X_{S,T_1}=G\cdot X_{S,T_2}
 $$
 if and only if
 $$
@@ -204,38 +337,42 @@ $$
 $$
 The multiplicity is
 $$
-m(G\cdot(X_0+Y_{S,T}),P)=
+m(G\cdot X_{S,T},P)=
 \begin{cases}
 1,&B_T\text{ is non-degenerate},\\
-2,&B_T\text{ has one-dimensional }\mathbb D\text{-radical}.
-\end{cases}                                           \tag{9}
+2,&B_T\text{ has one-dimensional }D\text{-radical}.
+\end{cases}                                           \tag{11}
 $$
-The second case occurs exactly in the split alternating odd case
+The second case occurs exactly when
 $$
-\mathbb D=F,
-\qquad
-\bar{\ }=\mathrm{id},
+D=\mathbb R,
 \qquad
 \epsilon=+1,
 \qquad
-l\text{ odd}.
+l\text{ is odd}.
 $$
 
-## Equal-rank strict-column case
+## Application to Proposition 10.5
 
-The second induced-orbit calculation needed later is the special case
+**Case I: naive descent.**  In the naive-descent case, Proposition 10.5 applies Lemma A.1 to
 $$
-\kappa=c=\dim_{\mathbb D}\ker X_0
+\mathcal O_0=\mathcal O'=D_{\mathrm{naive}}(\mathcal O),
+$$
+once the inequality $\dim_D E\ge \dim_D\ker X$ for $X\in\mathcal O_0$ has been checked.
+
+**Case II: generalized good descent.**  In the generalized-good-descent case one first applies the one-box $\Lambda$-modification prescribed by the induction formula in Section~\ref{subsec:induced}.  After that modification, the maximal-parabolic calculation is applied to an orbit $\mathcal O_0$ satisfying
+$$
+\kappa=c=\dim_D \ker X_0
 \qquad\text{and}\qquad
-\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0).  \tag{10}
+\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0).  \tag{12}
 $$
-Then $l=0$, so $L_0=L'_0=0$ and $\mathscr T=\{0\}$.  There is no residual form $B_T$.  The normal form becomes
+In this situation $l=0$, so $L_0=L'_0=0$ and $\mathscr T=\{0\}$.  There is no residual form $B_T$.  The normal form becomes
 $$
 X_0+Y_S,
 $$
 where $S:E'\xrightarrow{\sim}V_+$ and
 $$
-(X_0+Y_S)(e+v+a')=S^\vee v+X_0v+Sa'.                  \tag{11}
+(X_0+Y_S)(e+v+a')=S^\vee v+X_0v+Sa'.                  \tag{13}
 $$
 Thus there is a single open $G$-orbit:
 $$
@@ -243,7 +380,7 @@ G\cdot(X_0+Y_S),
 $$
 and its multiplicity is $1$.
 
-In Young diagram language, this is the $t_0=0$ branch of Section~\ref{subsec:induced}: two columns of length $\kappa$ are inserted before the diagram of $\mathcal O_0$.  Since $\mathbf c_1(\mathcal O_0)=\kappa$ and $\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0)$, the beginning of the resulting column sequence is
+In Young diagram language, after the one-box $\Lambda$-modification this is the $t_0=0$ branch of Section~\ref{subsec:induced}: two columns of length $\kappa$ are inserted before the diagram of $\mathcal O_0$.  Since $\mathbf c_1(\mathcal O_0)=\kappa$ and $\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0)$, the beginning of the resulting column sequence is
 $$
 (\kappa,\kappa,\kappa,\mathbf c_2(\mathcal O_0),\mathbf c_3(\mathcal O_0),\ldots).
 $$
@@ -254,7 +391,7 @@ We prove the assertions in the order in which they are used.
 
 **Step 1: the fixed geometry of $X_0$.**  Since $X_0$ is skew-adjoint,
 $$
-(\operatorname{Im}X_0)^\perp=\ker X_0.                         \tag{12}
+(\operatorname{Im}X_0)^\perp=\ker X_0.                         \tag{P1}
 $$
 Indeed, if $w\in\ker X_0$ and $y=X_0z$, then
 $$
@@ -265,13 +402,13 @@ Thus $\ker X_0\subseteq (\operatorname{Im}X_0)^\perp$, and equality follows by d
 $$
 V_0=V_+\oplus \operatorname{Im}X_0,
 $$
-the quotient map identifies $V_+$ with $V_0/\operatorname{Im}X_0$.  Moreover, (12) implies that the pairing
+the quotient map identifies $V_+$ with $V_0/\operatorname{Im}X_0$.  Moreover, (P1) implies that the pairing
 $$
-V_+\times \ker X_0\longrightarrow \mathbb D
+V_+\times \ker X_0\longrightarrow D
 $$
 is perfect.  Hence for every isomorphism $S:L'_1\xrightarrow{\sim}V_+$, the map
 $$
-S^\vee|_{\ker X_0}:\ker X_0\xrightarrow{\sim}L_1              \tag{13}
+S^\vee|_{\ker X_0}:\ker X_0\xrightarrow{\sim}L_1              \tag{P2}
 $$
 is an isomorphism.
 
@@ -294,11 +431,11 @@ A=C^\vee,
 $$
 where
 $$
-\lambda(C^\vee v,a')=-\langle v,Ca'\rangle_0.
+\langle C^\vee v,a'\rangle=-\langle v,Ca'\rangle_0.
 $$
-The same condition on two vectors in $E'$ gives exactly (2):
+The same condition on two vectors in $E'$ gives exactly (3):
 $$
-\lambda(Ba',b')+\epsilon\overline{\lambda(Bb',a')}=0.
+\langle Ba',b'\rangle+\epsilon\overline{\langle Bb',a'\rangle}=0.
 $$
 Therefore every element of $X_0+\mathfrak u$ is uniquely of the form $X_0+Y_{C,B}$ in (1).  In particular, the special choice
 $$
@@ -310,25 +447,9 @@ B|_{L'_1}=0,
 \qquad
 B|_{L'_0}=T
 $$
-gives precisely $X_0+Y_{S,T}$.
+gives precisely $X_{S,T}$.
 
-**Step 3: the unipotent conjugation formula.**  For $D:E'\to V_0$, define
-$$
-u_D=
-\begin{bmatrix}
-1&D^\vee&\frac12D^\vee D\\
-0&1&D\\
-0&0&1
-\end{bmatrix}\in P.
-$$
-The defining property of $D^\vee$ shows that the mixed terms cancel, and hence $u_D$ preserves the form.  A block multiplication gives
-$$
-u_D(X_0+Y_{C,B})u_D^{-1}
-=X_0+Y_{C-X_0D,\,B+D^\vee C-C^\vee D-D^\vee X_0D}.        \tag{14}
-$$
-This is the main calculation.
-
-**Step 4: normalizing the $C$-block.**  Let
+**Step 3: normalizing the $C$-block.**  Let
 $$
 \bar C:E'\to V_0/\operatorname{Im}X_0
 $$
@@ -336,7 +457,7 @@ be the quotient of $C$.  On the open locus
 $$
 \operatorname{rank}\bar C=c,
 $$
-the map $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Using the Levi factor of $P$, we may arrange
+the map $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Using the Levi formula (L), we may arrange
 $$
 \ker\bar C=L'_0,
 \qquad
@@ -346,84 +467,76 @@ After identifying the quotient with the fixed complement $V_+$, this gives the r
 $$
 S:L'_1\xrightarrow{\sim}V_+.
 $$
-Then $C-C_S$ takes values in $\operatorname{Im}X_0$.  Hence there is $D:E'\to V_0$ such that
+Then $C-C_S$ takes values in $\operatorname{Im}X_0$.  Hence there is $R:E'\to V_0$ such that
 $$
-X_0D=C-C_S.
+X_0R=C-C_S.
 $$
-Using (14), conjugation by $u_D$ replaces $C$ by
+Using (U), conjugation by $u_R$ replaces $C$ by
 $$
-C-X_0D=C_S.
+C-X_0R=C_S.
 $$
-Thus every point of the open locus is $P$-conjugate to one with the normalized $C$-block (5).
+Thus every point of the open locus is $P$-conjugate to one with the normalized $C$-block (6).
 
-**Step 5: reducing the $B$-block.**  Now keep $C=C_S$ fixed.  Write $B$ in blocks according to
+**Step 4: reducing the $B$-block.**  Now keep $C=C_S$ fixed.  Write $B$ in blocks according to
 $$
 E'=L'_1\oplus L'_0,
 \qquad
 E=L_1\oplus L_0.
 $$
-We use (14) again, but now with $D$ taking values in $\ker X_0$; this keeps the $C$-block fixed because $X_0D=0$.
+We use the consequence (R)--(R') of (U), with $R$ taking values in $\ker X_0$; this keeps the $C$-block fixed because $X_0R=0$.
 
-First take $D_0:L'_0\to \ker X_0$.  By the perfect pairing $V_+\times\ker X_0$, the map
+First take $R_0:L'_0\to \ker X_0$.  By the perfect pairing $V_+\times\ker X_0$, the map
 $$
-D_0\longmapsto D_0^\vee S
+R_0\longmapsto R_0^\vee S
 $$
-identifies $\operatorname{Hom}(L'_0,\ker X_0)$ with the space of cross-blocks from $L'_1$ to $L_0$.  Hence we choose $D_0$ to kill the corresponding cross-block of $B$.  The relation (2) then kills the opposite cross-block as well.
+identifies $\operatorname{Hom}(L'_0,\ker X_0)$ with the space of cross-blocks from $L'_1$ to $L_0$.  Hence we choose $R_0$ to kill the corresponding cross-block of $B$.  The relation (3) then kills the opposite cross-block as well.
 
-Next take $D_1:L'_1\to\ker X_0$.  The remaining $L'_1\to L_1$ block defines a $(-\epsilon)$-Hermitian form on $L'_1$.  Again using the perfect pairing between $V_+$ and $\ker X_0$, we choose $D_1$ so that the correction
+Next take $R_1:L'_1\to\ker X_0$.  The remaining $L'_1\to L_1$ block defines a $(-\epsilon)$-Hermitian form on $L'_1$.  Again using the perfect pairing between $V_+$ and $\ker X_0$, we choose $R_1$ so that the correction
 $$
-D_1^\vee C_S-C_S^\vee D_1
+R_1^\vee C_S-C_S^\vee R_1
 $$
 kills this block.  Therefore the only block left is
 $$
 T:L'_0\to L_0.
 $$
-The skew-adjointness relation (2) becomes exactly
+The skew-adjointness relation (3) becomes exactly
 $$
-\lambda(Tu,v)+\epsilon\overline{\lambda(Tv,u)}=0,
+\langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0,
 $$
-so $T\in\mathscr T$.  This proves the normal form $X_0+Y_{S,T}$.
+so $T\in\mathscr T$.  This proves the normal form $X_{S,T}$.
 
-The residual Levi action on $L'_0$ is the usual change of coordinates.  If $\gamma\in\operatorname{GL}_{\mathbb D}(L'_0)$ and the Levi acts on $L_0$ by $(\gamma^{-1})^\vee$, then
+After this reduction, the stabilizer of $C_S$ still contains the $\operatorname{GL}_D(L'_0)$-part of the Levi.  Its action on the residual block is the usual change of coordinates.  If $\gamma\in\operatorname{GL}_D(L'_0)$ and the Levi acts on $L_0$ by $(\gamma^{-1})^\vee$, then
 $$
-T\longmapsto (\gamma^{-1})^\vee T\gamma.                  \tag{15}
+T\longmapsto (\gamma^{-1})^\vee T\gamma.                  \tag{P4}
 $$
 This is exactly the change of coordinates for the form
 $$
-B_T(u,v)=\lambda(Tu,v).
+B_T(u,v)=\langle Tu,v\rangle.
 $$
 Hence the residual $P$-orbits in the normalized slice are classified by the isometry classes of $(L'_0,B_T)$.
 
-Conversely, suppose two normalized elements are $P$-conjugate.  Write the conjugating element as a unipotent part times a Levi part.  Formula (14) shows that the unipotent part cannot change the residual $L'_0\to L_0$ block: on $L'_0$, the correction terms either vanish because $C_S|_{L'_0}=0$ or land in $L_1$, not in $L_0$.  Therefore the residual block changes only by (15).  Thus two normalized elements are $P$-conjugate if and only if their residual forms are isometric.
+Conversely, suppose two normalized elements are $P$-conjugate.  Write the conjugating element as a unipotent part times a Levi part.  Formula (U) shows that the unipotent part cannot change the residual $L'_0\to L_0$ block: on $L'_0$, the correction terms either vanish because $C_S|_{L'_0}=0$ or land in $L_1$, not in $L_0$.  Therefore the residual block changes only by (P4).  Thus two normalized elements are $P$-conjugate if and only if their residual forms are isometric.
 
-**Step 6: passing from the slice to induced $G$-orbits.**  Since $G_0$ is contained in the Levi factor,
+**Step 5: passing from the slice to induced $G$-orbits.**  By (I), computing $\operatorname{Ind}_P^G(\mathcal O_0)$ means computing the open $G$-orbits meeting the slice $X_0+\mathfrak u$.
+The condition $\operatorname{rank}\bar C=c$ is open dense in the slice.  Inside the normalized slice, the open part is obtained by requiring $T$ to have maximal possible rank, i.e. $T\in\operatorname{Form}_r(L'_0)$.  Therefore the open induced $G$-orbits are the orbits
 $$
-\mathcal O_0+\mathfrak u=G_0\cdot(X_0+\mathfrak u),
-$$
-and hence
-$$
-\operatorname{Ind}_P^G(\mathcal O_0)
-=\overline{G\cdot(X_0+\mathfrak u)}.
-$$
-The condition $\operatorname{rank}\bar C=c$ is open dense in the slice.  Inside the normalized slice, the open part is obtained by requiring $T$ to have maximal possible rank, i.e. $T\in\mathscr T^\circ$.  Therefore the open induced $G$-orbits are the orbits
-$$
-G\cdot(X_0+Y_{S,T}),
+G\cdot X_{S,T},
 \qquad
-T\in\mathscr T^\circ.
+T\in\operatorname{Form}_r(L'_0).
 $$
 The previous step gives the orbit criterion in terms of the isometry class of $B_T$.  In particular the orbit is independent of the auxiliary choice of $S$.
 
-**Step 7: kernel and image.**  For
+**Step 6: kernel and image.**  For
 $$
-x=X_0+Y_{S,T},
+x=X_{S,T},
 $$
 one has
 $$
-\ker x=E\oplus\ker T,                                  \tag{16}
+\ker x=E\oplus\ker T,                                  \tag{P5}
 $$
 and
 $$
-\operatorname{Im}x=(L_1\oplus\operatorname{Im}T)\oplus V_0.  \tag{17}
+\operatorname{Im}x=(L_1\oplus\operatorname{Im}T)\oplus V_0.  \tag{P6}
 $$
 Indeed, if
 $$
@@ -437,9 +550,9 @@ Since $X_0v\in\operatorname{Im}X_0$ and $Sa'\in V_+$, both terms vanish.  Thus $
 $$
 S^\vee v+Tb'=0.
 $$
-Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  By (13), $v=0$, and hence $b'\in\ker T$.  This proves (16).  The image formula (17) follows similarly: $Sa'$ gives all of $V_+$, $X_0v$ gives $\operatorname{Im}X_0$, the correction using (13) gives $L_1$, and $Tb'$ gives $\operatorname{Im}T$.
+Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  By (P2), $v=0$, and hence $b'\in\ker T$.  This proves (P5).  The image formula (P6) follows similarly: $Sa'$ gives all of $V_+$, $X_0v$ gives $\operatorname{Im}X_0$, the correction using (P2) gives $L_1$, and $Tb'$ gives $\operatorname{Im}T$.
 
-**Step 8: the multiplicity.**  If $B_T$ is non-degenerate, then $\ker T=0$.  By (16),
+**Step 7: the multiplicity.**  If $B_T$ is non-degenerate, then $\ker T=0$.  By (P5),
 $$
 \ker x=E.
 $$
@@ -458,14 +571,14 @@ is one-dimensional.  Choose a complement $M$ of $F$ in $L'_0$, and set
 $$
 \ell:=M^\perp\subset L_0.
 $$
-Then $\ell$ is a line, $\lambda(\ell,F)\ne0$, and
+Then $\ell$ is a line, $\langle \ell,F\rangle\ne0$, and
 $$
 L_0=\operatorname{Im}T\oplus \ell.
 $$
-Using (16) and (17),
+Using (P5) and (P6),
 $$
 \ker x/(\ker x\cap\operatorname{Im}x)
-\simeq \ell\oplus F,                                  \tag{18}
+\simeq \ell\oplus F,                                  \tag{P7}
 $$
 a hyperbolic plane.  Its two isotropic lines give exactly two maximal isotropic subspaces of $\ker x$ containing $\ker x\cap\operatorname{Im}x$:
 $$
@@ -473,7 +586,7 @@ E
 \qquad\text{and}\qquad
 E^\sharp:=L_1\oplus\operatorname{Im}T\oplus F.
 $$
-Every element of $Z_G(x)$ preserves $\ker x$ and $\operatorname{Im}x$, so it permutes the two-point set $\{E,E^\sharp\}$.  The kernel of this action is exactly $Z_G(x)\cap P$.  The permutation is non-trivial: swapping the two lines $\ell$ and $F$ in the hyperbolic plane (18), and fixing the orthogonal complement, gives an element of $Z_G(x)\setminus P$.  Hence
+Every element of $Z_G(x)$ preserves $\ker x$ and $\operatorname{Im}x$, so it permutes the two-point set $\{E,E^\sharp\}$.  The kernel of this action is exactly $Z_G(x)\cap P$.  The permutation is non-trivial: swapping the two lines $\ell$ and $F$ in the hyperbolic plane (P7), and fixing the orthogonal complement, gives an element of $Z_G(x)\setminus P$.  Hence
 $$
 [Z_G(x):Z_G(x)\cap P]=2.
 $$
@@ -482,4 +595,4 @@ $$
 m(G\cdot x,P)=2.
 $$
 
-When $l=0$, there is no $T$ and no residual form.  The preceding argument gives the equal-rank strict-column case directly: the open orbit is unique and its multiplicity is $1$. $\square$
+When $l=0$, there is no $T$ and no residual form.  This is precisely the generalized-good-descent application after the one-box $\Lambda$-modification: the open orbit is unique and its multiplicity is $1$. $\square$
