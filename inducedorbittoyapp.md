@@ -67,31 +67,17 @@ Conversely, every pair $(C,B)$ satisfying (2) gives an element $X_{C,B}\in X_0+\
 
 Put
 $$
-c:=\dim_D\ker X_0.
-$$
-Since $X_0$ is skew-adjoint,
-$$
-(\operatorname{Im}X_0)^\perp=\ker X_0,
-$$
-and hence
-$$
-\dim_D(V_0/\operatorname{Im}X_0)=c.
-$$
-Assume from now on that
-$$
-\kappa=\dim_D E\ge c.
-$$
-Put
-$$
+c:=\dim_D\ker X_0,
+\qquad
 l:=\kappa-c.
 $$
-Choose a complement
+Assume $\kappa\ge c$.  Choose
 $$
 V_0=V_+\oplus\operatorname{Im}X_0,
 \qquad
 \dim_D V_+=c,
 $$
-and choose decompositions
+and decompositions
 $$
 E=L_1\oplus L_0,
 \qquad
@@ -103,65 +89,41 @@ $$
 \qquad
 \dim_D L_0=\dim_D L'_0=l,
 $$
-such that the pairing restricts to perfect pairings $L_i\times L'_i$ and kills $L_i\times L'_j$ for $i\ne j$.
+compatible with the pairing.
 
-Let
-$$
-S:L'_1\xrightarrow{\sim}V_+
-$$
-be an isomorphism.  Define $C_S:E'\to V_0$ by
+For an isomorphism $S:L'_1\xrightarrow{\sim}V_+$, define $C_S:E'\to V_0$ by
 $$
 C_S|_{L'_1}=S,
 \qquad
-C_S|_{L'_0}=0.                                      \tag{3}
+C_S|_{L'_0}=0,                                      \tag{3}
 $$
-For such $S$, define $S^\vee:V_0\to L_1$ by
-$$
-\langle S^\vee v,a'\rangle=-\langle v,Sa'\rangle_0
-\qquad(a'\in L'_1).
-$$
-
-Let $T:L'_0\to L_0$ satisfy
+and write $S^\vee:=C_S^\vee:V_0\to L_1$.  For $T:L'_0\to L_0$ satisfying
 $$
 \langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0
-\qquad(u,v\in L'_0).                                  \tag{4}
+\qquad(u,v\in L'_0),                                  \tag{4}
 $$
-The residual form is
+put
 $$
 B_T(u,v):=\langle Tu,v\rangle.
 $$
-Let $B(T):E'\to E$ be the map which is $T$ on $L'_0$ and is zero on $L'_1$.  Define
+Let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$, and set
 $$
-Y_{S,T}:=Y_{C_S,B(T)},
-\qquad
-X_{S,T}:=X_0+Y_{S,T}.                                  \tag{5}
-$$
-Explicitly,
-$$
-X_{S,T}(e+v+a'+b')=(S^\vee v+Tb')+(X_0v+Sa')
-$$
-for
-$$
-e\in E,
-\quad v\in V_0,
-\quad a'\in L'_1,
-\quad b'\in L'_0.
+X_{S,T}:=X_0+Y_{C_S,B(T)}.                            \tag{5}
 $$
 
-Let $\mathscr T$ be the space of all $T:L'_0\to L_0$ satisfying (4).  Put
+Let $\mathscr T$ be the space of all $T$ satisfying (4).  Put
 $$
 r=
 \begin{cases}
 l-1,&D=\mathbb R,\ \epsilon=+1,\ l\text{ odd},\\
-l,&\text{otherwise}.
+l,&\text{otherwise},
 \end{cases}                                           \tag{6}
 $$
-We write
+and
 $$
 \operatorname{Form}_r(L'_0)
 :=\{T\in\mathscr T:\operatorname{rank}_D T=r\}.
 $$
-Thus $\operatorname{Form}_r(L'_0)$ is the maximal-rank locus for the residual form $B_T$.
 
 ## Lemma A.1: the general induced-orbit calculation
 
@@ -408,7 +370,7 @@ Since $X_0v\in\operatorname{Im}X_0$ and $Sa'\in V_+$, both terms vanish.  Hence 
 $$
 S^\vee v+Tb'=0.
 $$
-Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  Since $S^\vee|_{\ker X_0}$ is an isomorphism, $v=0$, and $b'\in\ker T$.  This proves (18).  Formula (19) follows similarly from the explicit expression for $X_{S,T}$.
+Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  Since $S^\vee|_{\ker X_0}$ is an isomorphism, $v=0$, and $b'\in\ker T$.  This proves (18).  Formula (19) follows directly from (1) and the definition of $X_{S,T}$.
 
 If $B_T$ is non-degenerate, then $\ker T=0$, so $\ker x=E$.  Every element of $Z_G(x)$ preserves $E$, hence lies in $P$.  Thus
 $$
