@@ -319,3 +319,72 @@ Net: 7 → 6 declaration-use `sorry`. `lake build` ✅ at end of round;
 - All public theorems re-audited: `#print axioms` shows only `[propext,
   Classical.choice, Quot.sound]` (plus `sorryAx` on the 6 still-open
   declarations). **No custom axioms.**
+
+## Prover Round 5 (session 7 — Tier S #4 + close `kernelImage_*`)
+
+Net: 6 → 4 declaration-use `sorry`. `lake build` ✅, 0 custom axioms.
+Single-file dispatch: only `NormalForm.lean` was edited.
+
+### `InducedOrbitToy/NormalForm.lean` — Tier S #4 + 2 sorry closes
+
+- **Tier S #4 — `kernelImage_ker` retyped:** `Sₕ : S.L1' →ₗ[F] S.Vplus`
+  → `Sₕ : S.L1' ≃ₗ[F] S.Vplus`. `_hNondeg`/`_hT` → real names; explicit
+  `LinearMap` coercion threaded through `XST` / `kerXST_submod` arguments.
+  `kernelImage_dim`'s call site (now line 783–784) updated to drop the
+  outer `(... : S.L1' →ₗ[F] S.Vplus)` cast — Lean auto-inserts it once
+  `kernelImage_ker` accepts a `LinearEquiv`.
+
+- **`kernelImage_ker` (line 495) — both internal `sorry`s closed.**
+  Reverse-inclusion proof rewritten via three new private helpers
+  (`Cdual_CST_mem_L1`, `kernelImage_DTD`, `lambda_isPerfPair_local`)
+  + `sDual_restrict_ker_isIso` from `X0Geometry.lean` + the
+  `Submodule.IsCompl.projection_*` API.
+
+- **`kernelImage_im` (line 590) — full body landed.** Forward via
+  `XST_apply` + `Cdual_CST_mem_L1` + `Submodule.mem_sup_*`. Reverse via
+  constructive preimage: `Submodule.mem_sup` decomposition of `a`,
+  `IsCompl Vplus (range X0)` decomposition of `b`, build
+  `φ : ker X0 ≃ L1` via `sDual_restrict_ker_isIso`, take
+  `w_a := φ.symm target` for the kernel ingredient. Verify components
+  via `XST_apply` + `map_add` + an explicit `abel` step.
+
+- **3 new private helpers in `NormalForm.lean`:**
+  - `Cdual_CST_mem_L1` (lines 472–516) — `Cdual S (CST S Sₕ) v ∈ L1`
+    via the new `S.L1_isotropic_L0'` Lagrangian field + `L0_paired`
+    perfect-pairing left injectivity.
+  - `kernelImage_DTD` (lines 518–544) — packages `Cdual S (CST S Sₕ)`
+    as a `DualTransposeData S.toX0Setup S.lambda S.L1 S.L1' (Sₕ.toLinearMap)`
+    consumed by `sDual_restrict_ker_isIso`.
+  - `lambda_isPerfPair_local` (lines 546–562) — re-derives
+    `S.lambda.IsPerfPair` from `S.paired.isPerfect` (the version in
+    `Slice.lean` is private; future refactor: promote one).
+
+### Cross-cutting wins (session 7 / Round 5)
+
+- **`linear_combination` is scalar-only over generic Modules.** Confirmed
+  boundary refining session 6's "linear_combination over generic Field
+  F" pattern: `linear_combination` synthesises `CommSemiring`/`CommRing`
+  on the *target* type. `S.E` is `AddCommGroup F + Module F`, not a
+  `CommRing`. For module identities, use `rw` chains + `abel`.
+- **Subtype-wrapping anti-pattern for `Iso + Property`.** Packaging
+  "iso + property" as `{φ : … // ∀ w, …}` inside a helper `def` fails
+  when the proof needs `cases` on `IsCompl.codisjoint` (Prop-eliminator
+  restriction). Inline the `obtain` at each Prop-conclusion call site.
+- **Bridge `IsCompl.projection_apply` ↔ `linearProjOfIsCompl`:**
+  `Submodule.IsCompl.projection_add_projection_eq_self` +
+  `projection_apply` is the canonical bridge (now reused twice — Round 4
+  and Round 5).
+- **Drop explicit `LinearMap` coercion in `rw` arguments** once the
+  callee accepts `LinearEquiv` — Lean auto-inserts; explicit coercion
+  causes `Application type mismatch`.
+- **`lean_leansearch` natural-language > `lean_loogle` patterns** for
+  projection / `IsCompl.projection_*` API discovery (loogle returned
+  `No results found` on several legitimate queries this round).
+- **`#print axioms` via `Bash` + `/tmp/check_axioms.lean`:** lightweight
+  closure-check pattern when `lean_verify` is unavailable. Promote to
+  the standard prover prompt.
+- **`let w := ⟨v, hv⟩` impedes `simpa` reduction.** Use the inline
+  anonymous-constructor term + `congrArg (fun w => (w : S.V0))` + `simpa`
+  to bypass.
+- All sorry-free public theorems re-audited: `#print axioms` shows only
+  `[propext, Classical.choice, Quot.sound]`. **No custom axioms.**

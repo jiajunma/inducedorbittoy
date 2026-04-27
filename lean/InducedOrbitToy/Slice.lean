@@ -676,4 +676,416 @@ theorem uD_conj_XCB (S : SliceSetup F)
       abel
     -- E' component: handled by `rfl` in `refine`.
 
+/-! ## Levi-action machinery (Round 6 additive layer)
+
+Block-diagonal embeddings of `GL(E')` and `G_0` (isometry group of
+`formV0`) into the parabolic, plus the conjugation transformation of
+`XCB`. Used by `NormalForm.lean` (Round 7) for `pNormalForm_witnesses`,
+`residual_levi_extract`, `residual_levi_build`. -/
+
+/-! ### Section 6.1 — Dual transpose on `E` -/
+
+/-- For `g : S.E' →ₗ[F] S.E'`, the **dual transpose** `g^∨ : S.E →ₗ[F] S.E`
+under the perfect pairing `S.lambda`. Defined by the universal property
+`λ(g^∨ e, e') = λ(e, g e')`.
+
+This packages `LinearMap.IsPerfPair`'s round-trip: given `e : S.E`, the
+functional `e' ↦ S.lambda e (g e')` is in `Module.Dual F S.E'`, which
+the perfect pairing identifies with `S.E`. -/
+noncomputable def lambdaDualE (S : SliceSetup F)
+    (g : S.E' →ₗ[F] S.E') : S.E →ₗ[F] S.E :=
+  haveI := lambda_isPerfPair S
+  S.lambda.toPerfPair.symm.toLinearMap.comp (g.dualMap.comp S.lambda)
+
+/-- Defining identity for `lambdaDualE`. -/
+theorem lambdaDualE_pairing_eq (S : SliceSetup F)
+    (g : S.E' →ₗ[F] S.E') (e : S.E) (e' : S.E') :
+    S.lambda (lambdaDualE S g e) e' = S.lambda e (g e') := by
+  haveI := lambda_isPerfPair S
+  show S.lambda
+        (S.lambda.toPerfPair.symm
+          ((g.dualMap.comp S.lambda) e)) e' = _
+  rw [S.lambda.apply_symm_toPerfPair_self]
+  simp [LinearMap.dualMap_apply]
+
+/-- The dual transpose preserves identity. -/
+theorem lambdaDualE_id (S : SliceSetup F) :
+    lambdaDualE S (LinearMap.id : S.E' →ₗ[F] S.E') = LinearMap.id := by
+  apply LinearMap.ext
+  intro e
+  apply S.paired.isPerfect.1
+  apply LinearMap.ext
+  intro e'
+  rw [lambdaDualE_pairing_eq]
+  rfl
+
+/-- The dual transpose is contravariant in composition. -/
+theorem lambdaDualE_comp (S : SliceSetup F)
+    (g₁ g₂ : S.E' →ₗ[F] S.E') :
+    lambdaDualE S (g₁ ∘ₗ g₂) =
+      lambdaDualE S g₂ ∘ₗ lambdaDualE S g₁ := by
+  apply LinearMap.ext
+  intro e
+  apply S.paired.isPerfect.1
+  apply LinearMap.ext
+  intro e'
+  -- Goal: S.lambda (lambdaDualE S (g₁ ∘ₗ g₂) e) e' = S.lambda ((lambdaDualE S g₂ ∘ₗ lambdaDualE S g₁) e) e'
+  show S.lambda (lambdaDualE S (g₁ ∘ₗ g₂) e) e'
+      = S.lambda (lambdaDualE S g₂ (lambdaDualE S g₁ e)) e'
+  rw [lambdaDualE_pairing_eq, lambdaDualE_pairing_eq, lambdaDualE_pairing_eq]
+  rfl
+
+/-- `lambdaDualE` of an iso composed with its inverse (E' side first). -/
+private lemma lambdaDualE_symm_comp (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E') :
+    lambdaDualE S (d.symm : S.E' →ₗ[F] S.E') ∘ₗ
+        lambdaDualE S (d : S.E' →ₗ[F] S.E')
+      = LinearMap.id := by
+  rw [← lambdaDualE_comp]
+  have hdd : (d : S.E' →ₗ[F] S.E') ∘ₗ (d.symm : S.E' →ₗ[F] S.E')
+      = LinearMap.id := by
+    ext e''; simp
+  rw [hdd, lambdaDualE_id]
+
+/-- `lambdaDualE` of an iso composed with its inverse (E side first). -/
+private lemma lambdaDualE_comp_symm (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E') :
+    lambdaDualE S (d : S.E' →ₗ[F] S.E') ∘ₗ
+        lambdaDualE S (d.symm : S.E' →ₗ[F] S.E')
+      = LinearMap.id := by
+  rw [← lambdaDualE_comp]
+  have hdd : (d.symm : S.E' →ₗ[F] S.E') ∘ₗ (d : S.E' →ₗ[F] S.E')
+      = LinearMap.id := by
+    ext e''; simp
+  rw [hdd, lambdaDualE_id]
+
+/-! ### Section 6.2 — Levi block embeddings -/
+
+/-- The Levi `GL(E')` block: for an iso `d : S.E' ≃ₗ[F] S.E'`, the action
+on `S.V = S.E × S.V0 × S.E'` is `((d⁻¹)^∨, id_{V0}, d)`. -/
+noncomputable def leviGL_E (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E') : Module.End F S.V :=
+  LinearMap.inl F S.E (S.V0 × S.E')
+      ∘ₗ lambdaDualE S (d.symm : S.E' →ₗ[F] S.E')
+      ∘ₗ LinearMap.fst F S.E (S.V0 × S.E') +
+    LinearMap.inr F S.E (S.V0 × S.E')
+      ∘ₗ (LinearMap.inl F S.V0 S.E'
+            ∘ₗ LinearMap.fst F S.V0 S.E'
+            ∘ₗ LinearMap.snd F S.E (S.V0 × S.E')) +
+    LinearMap.inr F S.E (S.V0 × S.E')
+      ∘ₗ (LinearMap.inr F S.V0 S.E'
+            ∘ₗ (d : S.E' →ₗ[F] S.E')
+            ∘ₗ LinearMap.snd F S.V0 S.E'
+            ∘ₗ LinearMap.snd F S.E (S.V0 × S.E'))
+
+/-- The Levi `G_0` block: for `g : S.V0 ≃ₗ[F] S.V0`, the action on
+`S.V` is `(id_E, g, id_{E'})`. The definition does not depend on `g`
+being an isometry; only the parabolicity proof does. -/
+noncomputable def leviGL_V0 (S : SliceSetup F)
+    (g : S.V0 ≃ₗ[F] S.V0) : Module.End F S.V :=
+  LinearMap.inl F S.E (S.V0 × S.E')
+      ∘ₗ LinearMap.fst F S.E (S.V0 × S.E') +
+    LinearMap.inr F S.E (S.V0 × S.E')
+      ∘ₗ (LinearMap.inl F S.V0 S.E' ∘ₗ (g : S.V0 →ₗ[F] S.V0)
+            ∘ₗ LinearMap.fst F S.V0 S.E'
+            ∘ₗ LinearMap.snd F S.E (S.V0 × S.E')) +
+    LinearMap.inr F S.E (S.V0 × S.E')
+      ∘ₗ (LinearMap.inr F S.V0 S.E'
+            ∘ₗ LinearMap.snd F S.V0 S.E'
+            ∘ₗ LinearMap.snd F S.E (S.V0 × S.E'))
+
+/-- Pointwise formula for `leviGL_E`. -/
+theorem leviGL_E_apply (S : SliceSetup F) (d : S.E' ≃ₗ[F] S.E')
+    (e : S.E) (v : S.V0) (e' : S.E') :
+    leviGL_E S d (e, v, e') =
+      (lambdaDualE S (d.symm : S.E' →ₗ[F] S.E') e, v, d e') := by
+  unfold leviGL_E
+  simp
+
+/-- Pointwise formula for `leviGL_V0`. -/
+theorem leviGL_V0_apply (S : SliceSetup F) (g : S.V0 ≃ₗ[F] S.V0)
+    (e : S.E) (v : S.V0) (e' : S.E') :
+    leviGL_V0 S g (e, v, e') = (e, g v, e') := by
+  unfold leviGL_V0
+  simp
+
+/-! ### Section 6.3 — Inverses -/
+
+/-- `leviGL_E d.symm ∘ leviGL_E d = id`. -/
+theorem leviGL_E_symm_inverse (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E') :
+    leviGL_E S d.symm ∘ₗ leviGL_E S d = LinearMap.id := by
+  apply LinearMap.ext
+  rintro ⟨e, v, e'⟩
+  simp only [LinearMap.comp_apply, LinearMap.id_apply]
+  rw [leviGL_E_apply, leviGL_E_apply]
+  refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨rfl, ?_⟩⟩
+  · -- E component: lambdaDualE S d.symm.symm (lambdaDualE S d.symm e) = e
+    -- (d.symm.symm = d definitionally)
+    show lambdaDualE S ((d.symm).symm : S.E' →ₗ[F] S.E')
+            (lambdaDualE S (d.symm : S.E' →ₗ[F] S.E') e) = e
+    have h := lambdaDualE_comp_symm S d
+    have := congrArg (fun (f : S.E →ₗ[F] S.E) => f e) h
+    simpa using this
+  · -- E' component: d.symm (d e') = e'
+    show d.symm (d e') = e'
+    simp
+
+/-- `leviGL_V0 g.symm ∘ leviGL_V0 g = id`. -/
+theorem leviGL_V0_symm_inverse (S : SliceSetup F)
+    (g : S.V0 ≃ₗ[F] S.V0) :
+    leviGL_V0 S g.symm ∘ₗ leviGL_V0 S g = LinearMap.id := by
+  apply LinearMap.ext
+  rintro ⟨e, v, e'⟩
+  simp only [LinearMap.comp_apply, LinearMap.id_apply]
+  rw [leviGL_V0_apply, leviGL_V0_apply]
+  refine Prod.mk.injEq .. |>.mpr ⟨rfl, Prod.mk.injEq .. |>.mpr ⟨?_, rfl⟩⟩
+  show g.symm (g v) = v
+  simp
+
+/-! ### Section 6.4 — Parabolicity -/
+
+/-- `leviGL_E d` is in the parabolic. -/
+theorem leviGL_E_isParabolic (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E') :
+    IsUnit (leviGL_E S d) ∧
+      Submodule.map (leviGL_E S d) S.flagE = S.flagE ∧
+      Submodule.map (leviGL_E S d) S.flagEV0 = S.flagEV0 ∧
+      LinearMap.IsOrthogonal S.ambientForm (leviGL_E S d) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- IsUnit (leviGL_E S d): use the symm inverse with d.symm.
+    -- leviGL_E_symm_inverse S d.symm : leviGL_E S d.symm.symm ∘ₗ leviGL_E S d.symm = id.
+    -- d.symm.symm = d definitionally.
+    have hsymm := leviGL_E_symm_inverse S d.symm
+    have h : leviGL_E S d * leviGL_E S d.symm = 1 := hsymm
+    exact (Units.mkOfMulEqOne _ _ h).isUnit
+  · -- Submodule.map (leviGL_E d) flagE = flagE
+    apply le_antisymm
+    · rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
+      rcases hin with ⟨_, hv, he'⟩
+      have hv0 : v = 0 := by simpa using hv
+      have he'0 : e' = 0 := by simpa using he'
+      rw [leviGL_E_apply, hv0, he'0]
+      refine ⟨trivial, ?_, ?_⟩ <;> simp
+    · rintro ⟨e, v, e'⟩ ⟨_, hv, he'⟩
+      have hv0 : v = 0 := by simpa using hv
+      have he'0 : e' = 0 := by simpa using he'
+      refine ⟨(lambdaDualE S (d : S.E' →ₗ[F] S.E') e, 0, 0), ?_, ?_⟩
+      · refine ⟨trivial, ?_, ?_⟩ <;> simp
+      · rw [leviGL_E_apply]
+        refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+        · -- lambdaDualE d.symm (lambdaDualE d e) = e
+          have h := lambdaDualE_symm_comp S d
+          have := congrArg (fun (f : S.E →ₗ[F] S.E) => f e) h
+          simpa using this
+        · simp [hv0]
+        · rw [he'0]; simp
+  · -- Submodule.map (leviGL_E d) flagEV0 = flagEV0
+    apply le_antisymm
+    · rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
+      rcases hin with ⟨_, _, he'⟩
+      have he'0 : e' = 0 := by simpa using he'
+      rw [leviGL_E_apply, he'0]
+      refine ⟨trivial, trivial, ?_⟩
+      simp
+    · rintro ⟨e, v, e'⟩ ⟨_, _, he'⟩
+      have he'0 : e' = 0 := by simpa using he'
+      refine ⟨(lambdaDualE S (d : S.E' →ₗ[F] S.E') e, v, 0), ?_, ?_⟩
+      · refine ⟨trivial, trivial, ?_⟩; simp
+      · rw [leviGL_E_apply]
+        refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨rfl, ?_⟩⟩
+        · have h := lambdaDualE_symm_comp S d
+          have := congrArg (fun (f : S.E →ₗ[F] S.E) => f e) h
+          simpa using this
+        · rw [he'0]; simp
+  · -- LinearMap.IsOrthogonal S.ambientForm (leviGL_E S d)
+    intro x y
+    obtain ⟨e₁, v₁, e₁'⟩ := x
+    obtain ⟨e₂, v₂, e₂'⟩ := y
+    rw [leviGL_E_apply, leviGL_E_apply]
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply]
+    rw [lambdaDualE_pairing_eq, lambdaDualE_pairing_eq]
+    simp
+
+/-- `leviGL_V0 g` is in the parabolic, when `g` is a `formV0`-isometry. -/
+theorem leviGL_V0_isParabolic (S : SliceSetup F)
+    (g : S.V0 ≃ₗ[F] S.V0)
+    (hg : ∀ u v, S.formV0 (g u) (g v) = S.formV0 u v) :
+    IsUnit (leviGL_V0 S g) ∧
+      Submodule.map (leviGL_V0 S g) S.flagE = S.flagE ∧
+      Submodule.map (leviGL_V0 S g) S.flagEV0 = S.flagEV0 ∧
+      LinearMap.IsOrthogonal S.ambientForm (leviGL_V0 S g) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have hsymm := leviGL_V0_symm_inverse S g.symm
+    have h : leviGL_V0 S g * leviGL_V0 S g.symm = 1 := hsymm
+    exact (Units.mkOfMulEqOne _ _ h).isUnit
+  · -- map flagE = flagE
+    apply le_antisymm
+    · rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
+      rcases hin with ⟨_, hv, he'⟩
+      have hv0 : v = 0 := by simpa using hv
+      have he'0 : e' = 0 := by simpa using he'
+      rw [leviGL_V0_apply, hv0, he'0]
+      refine ⟨trivial, ?_, ?_⟩ <;> simp
+    · rintro ⟨e, v, e'⟩ ⟨_, hv, he'⟩
+      have hv0 : v = 0 := by simpa using hv
+      have he'0 : e' = 0 := by simpa using he'
+      refine ⟨(e, 0, 0), ?_, ?_⟩
+      · refine ⟨trivial, ?_, ?_⟩ <;> simp
+      · rw [leviGL_V0_apply]
+        refine Prod.mk.injEq .. |>.mpr ⟨rfl, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+        · simp [hv0]
+        · rw [he'0]
+  · -- map flagEV0 = flagEV0
+    apply le_antisymm
+    · rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
+      rcases hin with ⟨_, _, he'⟩
+      have he'0 : e' = 0 := by simpa using he'
+      rw [leviGL_V0_apply, he'0]
+      refine ⟨trivial, trivial, ?_⟩
+      simp
+    · rintro ⟨e, v, e'⟩ ⟨_, _, he'⟩
+      have he'0 : e' = 0 := by simpa using he'
+      refine ⟨(e, g.symm v, 0), ?_, ?_⟩
+      · refine ⟨trivial, trivial, ?_⟩; simp
+      · rw [leviGL_V0_apply]
+        refine Prod.mk.injEq .. |>.mpr ⟨rfl, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+        · simp
+        · rw [he'0]
+  · -- IsOrthogonal
+    intro x y
+    obtain ⟨e₁, v₁, e₁'⟩ := x
+    obtain ⟨e₂, v₂, e₂'⟩ := y
+    rw [leviGL_V0_apply, leviGL_V0_apply]
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply]
+    rw [hg]
+
+/-! ### Section 6.5 — Conjugation transformation of `XCB` -/
+
+/-- Compatibility of `lambdaDualE` and `Cdual`: precomposing `Cdual S C`
+with `lambdaDualE S g` corresponds to postcomposing `C` with `g`. -/
+private lemma lambdaDualE_Cdual (S : SliceSetup F)
+    (g : S.E' →ₗ[F] S.E') (C : S.E' →ₗ[F] S.V0) (v : S.V0) :
+    lambdaDualE S g (Cdual S C v) = Cdual S (C ∘ₗ g) v := by
+  apply S.paired.isPerfect.1
+  apply LinearMap.ext
+  intro e''
+  rw [lambdaDualE_pairing_eq, Cdual_pairing, Cdual_pairing]
+  rfl
+
+/-- Levi-conjugation of `XCB` on `E'`: `leviGL_E d ∘ XCB(C, B) =
+XCB(C ∘ d⁻¹, (d⁻¹)^∨ ∘ B ∘ d⁻¹) ∘ leviGL_E d`. -/
+theorem leviGL_E_conj_XCB (S : SliceSetup F)
+    (d : S.E' ≃ₗ[F] S.E')
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) :
+    leviGL_E S d ∘ₗ XCB S C B =
+      XCB S (C ∘ₗ (d.symm : S.E' →ₗ[F] S.E'))
+            (lambdaDualE S (d.symm : S.E' →ₗ[F] S.E')
+              ∘ₗ B ∘ₗ (d.symm : S.E' →ₗ[F] S.E'))
+        ∘ₗ leviGL_E S d := by
+  apply LinearMap.ext
+  rintro ⟨e, v, e'⟩
+  simp only [LinearMap.comp_apply]
+  rw [XCB_apply, leviGL_E_apply, leviGL_E_apply, XCB_apply]
+  refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+  · -- E component
+    show lambdaDualE S (d.symm : S.E' →ₗ[F] S.E') (Cdual S C v + B e')
+        = Cdual S (C ∘ₗ (d.symm : S.E' →ₗ[F] S.E')) v
+            + (lambdaDualE S (d.symm : S.E' →ₗ[F] S.E')
+                ∘ₗ B ∘ₗ (d.symm : S.E' →ₗ[F] S.E')) (d e')
+    rw [LinearMap.map_add, lambdaDualE_Cdual]
+    simp [LinearMap.comp_apply]
+  · -- V0 component
+    show S.X0 v + C e' = S.X0 v + (C ∘ₗ (d.symm : S.E' →ₗ[F] S.E')) (d e')
+    simp [LinearMap.comp_apply]
+  · -- E' component: d 0 = 0
+    simp
+
+/-- Levi-conjugation of `XCB` on `V0`: when `g` commutes with `S.X0`
+**and** the `g`-image of `C` agrees pairwise with `C` w.r.t. `formV0`,
+`leviGL_V0 g ∘ XCB(C, B) = XCB(g ∘ C, B) ∘ leviGL_V0 g`.
+
+The `formV0`-isometry hypothesis on `g` is sufficient to derive the
+pairwise condition `hgC` (specialise `hg u v := S.formV0 (g u) (g v) =
+S.formV0 u v` to `(v, C e'')`). For maximum reusability we keep `hgC`
+explicit and stated in `LinearMap`-coerced form. -/
+theorem leviGL_V0_conj_XCB (S : SliceSetup F)
+    (g : S.V0 ≃ₗ[F] S.V0)
+    (hgX : (g : S.V0 →ₗ[F] S.V0) ∘ₗ S.X0
+            = S.X0 ∘ₗ (g : S.V0 →ₗ[F] S.V0))
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E)
+    (hgC : ∀ v e'',
+        S.formV0 (g v)
+            ((g : S.V0 →ₗ[F] S.V0) (C e''))
+          = S.formV0 v (C e'')) :
+    leviGL_V0 S g ∘ₗ XCB S C B =
+      XCB S ((g : S.V0 →ₗ[F] S.V0) ∘ₗ C) B ∘ₗ leviGL_V0 S g := by
+  apply LinearMap.ext
+  rintro ⟨e, v, e'⟩
+  simp only [LinearMap.comp_apply]
+  rw [XCB_apply, leviGL_V0_apply, leviGL_V0_apply, XCB_apply]
+  refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+  · -- E component: Cdual S C v + B e' = Cdual S (g ∘ C) (g v) + B e'
+    -- (Cdual is invariant under the simultaneous (g, g ∘ C)-shift by hgC.)
+    have hC : Cdual S C v = Cdual S ((g : S.V0 →ₗ[F] S.V0) ∘ₗ C) (g v) := by
+      apply S.paired.isPerfect.1
+      apply LinearMap.ext
+      intro e''
+      rw [Cdual_pairing, Cdual_pairing, LinearMap.comp_apply]
+      rw [hgC]
+    rw [hC]
+  · -- V0 component: g (X0 v + C e') = X0 (g v) + (g ∘ C) e'
+    show (g : S.V0 →ₗ[F] S.V0) (S.X0 v + C e')
+        = S.X0 ((g : S.V0 →ₗ[F] S.V0) v)
+            + ((g : S.V0 →ₗ[F] S.V0) ∘ₗ C) e'
+    rw [LinearMap.map_add]
+    have hgXv := congrArg (fun (f : S.V0 →ₗ[F] S.V0) => f v) hgX
+    simp only [LinearMap.comp_apply] at hgXv
+    rw [hgXv]
+    rfl
+  · -- E' component
+    rfl
+
+/-! ### Section 6.6 — Levi/unipotent decomposition (deferred)
+
+The structural Levi/unipotent decomposition `parabolic_decompose`:
+every `IsParabolicElement` factors as `uD D ∘ leviGL_E d ∘ leviGL_V0 g₀`.
+
+Per Round 6 plan (`PROGRESS.md` lines 110–113 and `informal/levi.md`
+§6.6), this theorem is the hardest piece of Round 6 and is **deferred**
+to Round 7. The proof outline (informal/levi.md §6.6) extracts `g₀` from
+the action on `flagEV0 / flagE ≃ V0`, `(d⁻¹)^∨` from the action on
+`flagE = E`, and `D` from the residual off-diagonal mass via
+`parametrizeX0PlusU_uniqueness`.
+
+The formal proof is sketched below as `parabolic_decompose` carrying
+a `sorry` with a one-line gap explanation. Round 7's NormalForm prover
+may either close it here in `Slice.lean` (additively) or work around it
+for `residual_levi_extract` only by using `parametrizeX0PlusU_uniqueness`
++ the `leviGL_*_isParabolic` machinery directly. -/
+
+/-- Levi/unipotent decomposition of a parabolic element. Deferred to
+Round 7 (see preceding comment block).
+
+**Gap:** The full proof requires (a) descending `p` to a quotient
+`flagEV0 / flagE ≃ V0` to extract the `g₀ : V0 ≃ V0` block, (b) reading
+off `(d⁻¹)^∨` from the action of `p` on `flagE = E` using the
+`Submodule.map p S.flagE = S.flagE` conjunct of `IsParabolicElement`,
+and (c) inverting `parametrizeX0PlusU_uniqueness` on `p ∘ₗ
+(leviGL_E d ∘ₗ leviGL_V0 g)⁻¹` to recover the unipotent residue. Each
+step is several dozen lines, so it is best handled in Round 7 alongside
+the `residual_levi_extract` consumer. -/
+theorem parabolic_decompose (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (p : Module.End F S.V)
+    (_hpUnit : IsUnit p)
+    (_hpFlagE : Submodule.map p S.flagE = S.flagE)
+    (_hpFlagEV0 : Submodule.map p S.flagEV0 = S.flagEV0)
+    (_hpIso : LinearMap.IsOrthogonal S.ambientForm p) :
+    ∃ (D : S.E' →ₗ[F] S.V0) (d : S.E' ≃ₗ[F] S.E')
+      (g : S.V0 ≃ₗ[F] S.V0)
+      (_ : ∀ u v, S.formV0 (g u) (g v) = S.formV0 u v),
+      p = uD S D ∘ₗ leviGL_E S d ∘ₗ leviGL_V0 S g := by
+  sorry
+
 end InducedOrbitToy
