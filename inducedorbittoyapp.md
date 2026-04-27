@@ -59,9 +59,9 @@ $$
 The condition on $B$ is
 $$
 \langle Ba',b'\rangle+\epsilon\overline{\langle Bb',a'\rangle}=0
-\qquad(a',b'\in E').                                  \tag{2}
+\qquad(a',b'\in E').                                  \tag{B}
 $$
-Conversely, every pair $(C,B)$ satisfying (2) gives an element $X_{C,B}\in X_0+\mathfrak u$, and this expression is unique.
+Conversely, every pair $(C,B)$ satisfying (B) gives an element $X_{C,B}\in X_0+\mathfrak u$, and this expression is unique.
 
 ## Normal representatives
 
@@ -95,28 +95,23 @@ For an isomorphism $S:L'_1\xrightarrow{\sim}V_+$, define $C_S:E'\to V_0$ by
 $$
 C_S|_{L'_1}=S,
 \qquad
-C_S|_{L'_0}=0,                                      \tag{3}
+C_S|_{L'_0}=0,                                      \tag{2}
 $$
 and write $S^\vee:=C_S^\vee:V_0\to L_1$.
 
-Let $\mathscr T$ be the space of all $T:L'_0\to L_0$ satisfying
-$$
-\langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0
-\qquad(u,v\in L'_0).                                  \tag{4}
-$$
-For $T\in\mathscr T$, put
+For a map $T:L'_0\to L_0$, let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$.  Let $\mathscr T$ be the space of those $T$ for which $B(T)$ satisfies (B).  For $T\in\mathscr T$, put
 $$
 B_T(u,v):=\langle Tu,v\rangle,
 \qquad
-X_{S,T}:=X_0+Y_{C_S,B(T)},                            \tag{5}
+X_{S,T}:=X_0+Y_{C_S,B(T)}.                            \tag{3}
 $$
-where $B(T):E'\to E$ is $T$ on $L'_0$ and zero on $L'_1$.  Put
+Put
 $$
 r=
 \begin{cases}
 l-1,&D=\mathbb R,\ \epsilon=+1,\ l\text{ odd},\\
 l,&\text{otherwise},
-\end{cases}                                           \tag{6}
+\end{cases}                                           \tag{4}
 $$
 and
 $$
@@ -132,7 +127,7 @@ L'_0/\operatorname{rad}(B_T)
 $$
 is non-degenerate of dimension $r$, and we denote its class by
 $$
-[B_T]\in\operatorname{Iso}_{r,-\epsilon}.             \tag{7}
+[B_T]\in\operatorname{Iso}_{r,-\epsilon}.             \tag{5}
 $$
 We regard $B_T$ as the class $[B_T]\in\operatorname{Iso}_{r,-\epsilon}$.
 
@@ -150,7 +145,7 @@ are precisely
 $$
 G\cdot X_{S,T},
 \qquad
-T\in\operatorname{Form}_r(L'_0).                      \tag{8}
+T\in\operatorname{Form}_r(L'_0).                      \tag{6}
 $$
 The $G$-orbit is independent of the auxiliary choice of $S$.  Moreover,
 $$
@@ -167,7 +162,7 @@ m(G\cdot X_{S,T},P)=
 \begin{cases}
 1,&B_T\text{ is non-degenerate},\\
 2,&B_T\text{ has one-dimensional }D\text{-radical}.
-\end{cases}                                           \tag{9}
+\end{cases}                                           \tag{7}
 $$
 The second case occurs exactly when
 $$
@@ -195,7 +190,7 @@ $$
 and therefore
 $$
 \operatorname{Ind}_P^G(\mathcal O_0)
-=\overline{G\cdot(X_0+\mathfrak u)}.                 \tag{10}
+=\overline{G\cdot(X_0+\mathfrak u)}.                 \tag{8}
 $$
 After fixing $X_0$, the remaining parabolic action on the slice is exactly the action of $H_{X_0}$.
 
@@ -216,7 +211,7 @@ $$
 Since $sX_0s^{-1}=X_0$, direct block multiplication gives
 $$
 m_{h,s}X_{C,B}m_{h,s}^{-1}
-=X_{sC h^\vee,\,hBh^\vee}.                           \tag{11}
+=X_{sC h^\vee,\,hBh^\vee}.                           \tag{9}
 $$
 Hence the quotient map
 $$
@@ -240,11 +235,11 @@ $$
 Then
 $$
 u_RX_{C,B}u_R^{-1}
-=X_{C-X_0R,\,B+R^\vee C-C^\vee R-R^\vee X_0R}.       \tag{12}
+=X_{C-X_0R,\,B+R^\vee C-C^\vee R-R^\vee X_0R}.       \tag{10}
 $$
 In particular, $u_R$ does not change $\bar C$.
 
-Combining (11) and (12), if one first applies $m_{h,s}$ and then $u_R$, then
+Combining (9) and (10), if one first applies $m_{h,s}$ and then $u_R$, then
 $$
 u_Rm_{h,s}X_{C,B}m_{h,s}^{-1}u_R^{-1}=X_{C',B'},
 $$
@@ -254,17 +249,17 @@ C'=sC h^\vee-X_0R,
 $$
 and
 $$
-B'=hB h^\vee+R^\vee sC h^\vee-(sC h^\vee)^\vee R-R^\vee X_0R. \tag{13}
+B'=hB h^\vee+R^\vee sC h^\vee-(sC h^\vee)^\vee R-R^\vee X_0R. \tag{11}
 $$
 These are the formulas used below.
 
 **Step 3: the open condition and normalization of the $C$-block.**  The open condition is
 $$
-\operatorname{rank}_D\bar C=c.                         \tag{14}
+\operatorname{rank}_D\bar C=c.                         \tag{12}
 $$
 It is open because $c=\dim_D(V_0/\operatorname{Im}X_0)$, and it is non-empty precisely because $\kappa\ge c$.
 
-On this open locus, $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Using the $\operatorname{GL}_D(E)$-part of (11), we may arrange
+On this open locus, $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Using the $\operatorname{GL}_D(E)$-part of (9), we may arrange
 $$
 \ker\bar C=L'_0,
 \qquad
@@ -274,7 +269,7 @@ After identifying $V_0/\operatorname{Im}X_0$ with the chosen complement $V_+$, t
 $$
 X_0R=C-C_S.
 $$
-By (12), conjugating by $u_R$ replaces $C$ by
+By (10), conjugating by $u_R$ replaces $C$ by
 $$
 C-X_0R=C_S.
 $$
@@ -284,11 +279,11 @@ Thus every point of the open locus is $H_{X_0}$-conjugate to one with $C$-block 
 $$
 R(E')\subset\ker X_0.
 $$
-Then $X_0R=0$, and (12) becomes
+Then $X_0R=0$, and (10) becomes
 $$
 u_RX_{C_S,B}u_R^{-1}=X_{C_S,B'},
 \qquad
-B'=B+R^\vee C_S-C_S^\vee R.                         \tag{15}
+B'=B+R^\vee C_S-C_S^\vee R.                         \tag{13}
 $$
 Write
 $$
@@ -304,17 +299,17 @@ R^\vee C_S-C_S^\vee R=
 \begin{bmatrix}
 R_1^\vee S-S^\vee R_1&-S^\vee R_0\\
 R_0^\vee S&0
-\end{bmatrix}.                                      \tag{16}
+\end{bmatrix}.                                      \tag{14}
 $$
 The pairing between $V_+$ and $\ker X_0$ is perfect, so
 $$
 S^\vee|_{\ker X_0}:\ker X_0\xrightarrow{\sim}L_1
 $$
-is an isomorphism.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block of $B$; then (2) kills the opposite $L'_1\to L_0$ cross-block.  After the cross-blocks are killed, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$, using the term $R_1^\vee S-S^\vee R_1$ in (16).  Thus the only surviving block is
+is an isomorphism.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block of $B$; then (B) forces the opposite $L'_1\to L_0$ cross-block.  After the cross-blocks are killed, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$, using the term $R_1^\vee S-S^\vee R_1$ in (14).  Thus the only surviving block is
 $$
 T:L'_0\to L_0,
 $$
-and the skew-adjointness condition (2) becomes exactly (4).  Therefore the normal form is $X_{S,T}$.
+and the skew-adjointness condition (B) gives $T\in\mathscr T$.  Therefore the normal form is $X_{S,T}$.
 
 In the older notation using $n_u$, the middle-right block denoted $B$ is the present $C$, the top-right block denoted $C$ is the present $B$, and the parameter $u$ is the present $R$.
 
@@ -324,13 +319,13 @@ $$
 $$
 on $L'_0$.  The corresponding action on $L_0$ is by $(\gamma^{-1})^\vee$, and it sends
 $$
-T\longmapsto (\gamma^{-1})^\vee T\gamma.             \tag{17}
+T\longmapsto (\gamma^{-1})^\vee T\gamma.             \tag{15}
 $$
 This is exactly change of coordinates for the form
 $$
 B_T(u,v)=\langle Tu,v\rangle.
 $$
-The unipotent part preserving $C_S$ does not change the residual $L'_0\to L_0$ block, by (16).  Consequently, the remaining $H_{X_0}$-orbits in the normalized slice are classified by the class
+The unipotent part preserving $C_S$ does not change the residual $L'_0\to L_0$ block, by (14).  Consequently, the remaining $H_{X_0}$-orbits in the normalized slice are classified by the class
 $$
 [B_T]\in\operatorname{Iso}_{r,-\epsilon}.
 $$
@@ -339,13 +334,13 @@ The auxiliary choice of $S$ does not affect the resulting $G$-orbit.  Indeed, if
 $$
 S_1h^\vee|_{L'_1}=S_2.
 $$
-Then (11), with $s=1$, sends $X_{S_1,T}$ to $X_{S_2,T}$.
+Then (9), with $s=1$, sends $X_{S_1,T}$ to $X_{S_2,T}$.
 
-**Step 6: the open induced orbits.**  The condition (14) is open in $X_0+\mathfrak u$.  Inside the normalized slice, the open part is obtained by requiring the residual form to have maximal possible rank, namely
+**Step 6: the open induced orbits.**  The condition (12) is open in $X_0+\mathfrak u$.  Inside the normalized slice, the open part is obtained by requiring the residual form to have maximal possible rank, namely
 $$
 T\in\operatorname{Form}_r(L'_0).
 $$
-By (10), the corresponding open $G$-orbits in $\operatorname{Ind}_P^G(\mathcal O_0)$ are precisely
+By (8), the corresponding open $G$-orbits in $\operatorname{Ind}_P^G(\mathcal O_0)$ are precisely
 $$
 G\cdot X_{S,T},
 \qquad
@@ -355,11 +350,11 @@ The orbit criterion in terms of the class $[B_T]\in\operatorname{Iso}_{r,-\epsil
 
 **Step 7: the multiplicity.**  Let $x=X_{S,T}$ with $T\in\operatorname{Form}_r(L'_0)$.  We first record
 $$
-\ker x=E\oplus\ker T,                                  \tag{18}
+\ker x=E\oplus\ker T,                                  \tag{16}
 $$
 and
 $$
-\operatorname{Im}x=(L_1\oplus\operatorname{Im}T)\oplus V_0.  \tag{19}
+\operatorname{Im}x=(L_1\oplus\operatorname{Im}T)\oplus V_0.  \tag{17}
 $$
 Indeed, if $e+v+a'+b'\in E\oplus V_0\oplus L'_1\oplus L'_0$ lies in $\ker x$, then the $V_0$-component gives
 $$
@@ -369,7 +364,7 @@ Since $X_0v\in\operatorname{Im}X_0$ and $Sa'\in V_+$, both terms vanish.  Hence 
 $$
 S^\vee v+Tb'=0.
 $$
-Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  Since $S^\vee|_{\ker X_0}$ is an isomorphism, $v=0$, and $b'\in\ker T$.  This proves (18).  Formula (19) follows directly from (1) and the definition of $X_{S,T}$.
+Here $S^\vee v\in L_1$ and $Tb'\in L_0$, so both vanish.  Since $S^\vee|_{\ker X_0}$ is an isomorphism, $v=0$, and $b'\in\ker T$.  This proves (16).  Formula (17) follows directly from (1) and the definition of $X_{S,T}$.
 
 If $B_T$ is non-degenerate, then $\ker T=0$, so $\ker x=E$.  Every element of $Z_G(x)$ preserves $E$, hence lies in $P$.  Thus
 $$
@@ -390,10 +385,10 @@ Then
 $$
 L_0=\operatorname{Im}T\oplus \ell,
 $$
-and (18)--(19) give
+and (16)--(17) give
 $$
 \ker x/(\ker x\cap\operatorname{Im}x)
-\simeq \ell\oplus F,                                  \tag{20}
+\simeq \ell\oplus F,                                  \tag{18}
 $$
 a hyperbolic plane.  Its two isotropic lines give exactly two maximal isotropic subspaces of $\ker x$ containing $\ker x\cap\operatorname{Im}x$, namely
 $$
@@ -401,7 +396,7 @@ E
 \qquad\text{and}\qquad
 E^\sharp:=L_1\oplus\operatorname{Im}T\oplus F.
 $$
-Every element of $Z_G(x)$ preserves $\ker x$ and $\operatorname{Im}x$, so it permutes the two-point set $\{E,E^\sharp\}$.  The kernel of this action is $Z_G(x)\cap P$, and the permutation is non-trivial by swapping the two isotropic lines in the hyperbolic plane (20).  Hence
+Every element of $Z_G(x)$ preserves $\ker x$ and $\operatorname{Im}x$, so it permutes the two-point set $\{E,E^\sharp\}$.  The kernel of this action is $Z_G(x)\cap P$, and the permutation is non-trivial by swapping the two isotropic lines in the hyperbolic plane (18).  Hence
 $$
 [Z_G(x):Z_G(x)\cap P]=2.
 $$
@@ -428,7 +423,7 @@ has been checked.
 $$
 \kappa=c=\dim_D\ker X_0,
 \qquad
-\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0).  \tag{21}
+\mathbf c_1(\mathcal O_0)>\mathbf c_2(\mathcal O_0).  \tag{19}
 $$
 Here $l=0$, so $L_0=L'_0=0$ and the residual form is absent.  The normal form is
 $$
