@@ -140,6 +140,76 @@ classification by isometry of `BT S T`.
 
 `XCB`, `XST` and `IsSkewB` come from `InducedOrbitToy.Slice`. -/
 
+/-! ### Helper lemmas for `pNormalForm`. -/
+
+/-- Easy consequence: `IsUnit (uD S D)` over a finite-dimensional `S.V`. -/
+private lemma isUnit_uD (S : SliceSetup F)
+    (hNondeg : S.formV0.Nondegenerate) (hChar : (2 : F) ≠ 0)
+    (D : S.E' →ₗ[F] S.V0) :
+    IsUnit (uD S D) := by
+  have h1 : uD S D * uD S (-D) = 1 := uD_neg_inverse S hNondeg hChar D
+  exact (Units.mkOfMulEqOne _ _ h1).isUnit
+
+/-- Map equality from inclusion: `Submodule.map (uD D) F0 ≤ F0` plus
+`Submodule.map (uD (-D)) F0 ≤ F0` upgrades to equality. -/
+private lemma map_uD_eq_of_le (S : SliceSetup F)
+    (hNondeg : S.formV0.Nondegenerate) (hChar : (2 : F) ≠ 0)
+    (D : S.E' →ₗ[F] S.V0) (F0 : Submodule F S.V)
+    (h_pos : Submodule.map (uD S D) F0 ≤ F0)
+    (h_neg : Submodule.map (uD S (-D)) F0 ≤ F0) :
+    Submodule.map (uD S D) F0 = F0 := by
+  apply le_antisymm h_pos
+  intro x hx
+  -- x = uD D (uD (-D) x), and uD (-D) x ∈ F0.
+  have hcomp : uD S D ∘ₗ uD S (-D) = LinearMap.id :=
+    uD_neg_inverse S hNondeg hChar D
+  have hkey : uD S D (uD S (-D) x) = x := by
+    have := congrArg (fun f : Module.End F S.V => f x) hcomp
+    simpa using this
+  refine ⟨uD S (-D) x, ?_, hkey⟩
+  exact h_neg ⟨x, hx, rfl⟩
+
+/-- Witness existence for `pNormalForm`: there exist `Sₕ`, `D`, `T` such
+that the *unipotent* conjugation `uD D ∘ XCB C B ∘ uD (-D)` already
+equals `XST Sₕ T`, with `T` skew.
+
+This bundles the *multi-step Levi pre-conjugation* from the blueprint
+proof (lines 200–264 of `references/blueprint_verified.md`):
+  (a) act by a Levi element of `P` to arrange `ker Cbar = L0'`,
+  (b) act by another Levi element on `L1'` to identify `Cbar|_{L1'}` with
+      a chosen iso `Sₕ : L1' ≃ Vplus`,
+  (c) choose `D` (in two stages, `D_0 : L0' → ker X0` then
+      `D_1 : L1' → ker X0`) so that the unipotent `uD D` absorbs the
+      `B|_{L1'}`-blocks and so that `XCB (C - X0 D) (B + ...) = XST Sₕ T`.
+
+The Lean encoding of steps (a) and (b) requires Levi-action machinery on
+`SliceSetup` that is NOT yet in scope (`Slice.lean` only exposes the
+`uD` unipotent piece). Until the plan agent adds the Levi machinery,
+we record this existence claim as a focused `sorry`; once filled,
+`pNormalForm` follows mechanically.
+
+NOTE: the witness statement glosses over one subtlety — the *input*
+`(C, B)` to `pNormalForm` must already be Levi-normalized for the
+alignment to hold with `p = uD D`. In the actual blueprint proof the
+parabolic `p` is `uD D ∘ ℓ` for a Levi `ℓ`; here we conflate the Levi
+action into the choice of `(Sₕ, D, T)`. -/
+private theorem pNormalForm_witnesses (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
+    (_hRank :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+    ∃ (Sₕ : S.L1' →ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
+      (T : S.L0' →ₗ[F] S.L0),
+      IsSkewT S T ∧
+      uD S D ∘ₗ XCB S C B ∘ₗ uD S (-D) = XST S Sₕ T := by
+  -- BLOCKED: see docstring. Requires Levi-conjugation machinery on
+  -- SliceSetup that is not yet present in Slice.lean. The blueprint
+  -- proof at §prop:p-normal-form (lines 200–264) gives the construction
+  -- explicitly: (a) ker Cbar = L0' via Levi(E') action; (b) Cbar|_{L1'}
+  -- = Sₕ via another Levi(E') action; (c) D = D₀ ⊕ D₁ chosen via the
+  -- perfect pairing V₊ × ker X₀ → F (`vplusKerPairing_isPerfPair`).
+  sorry
+
 /-- `prop:p-normal-form` (existence of normal form).  Existence of a
 `P`-conjugacy (encoded by `IsParabolicElement`) of `XCB S C B` to some
 `XST S Sₕ T` with `T ∈ 𝒯`, given the rank condition `rank Cbar = c`.
@@ -157,13 +227,13 @@ Blueprint outline (`references/blueprint_verified.md` §`prop:p-normal-form`):
    `Slice.lean`.  The remaining `B|_{L0'}` block defines
    `T : L0' →ₗ L0`.
 3. **Step 3.** Verify that the resulting `T` is skew (`IsSkewT`); this
-   uses `_hB : IsSkewB B` plus the conjugation formula
-   `uD_conj_XCB`.
+   uses `_hB : IsSkewB B` plus the conjugation formula `uD_conj_XCB`.
 
-Both `Step 2` and `Step 3` rely on results from `Slice.lean` (`uD`,
-`uD_conj_XCB`, `parametrizeX0PlusU_*`) which are themselves currently
-`sorry`. Filling this theorem therefore depends on the upstream
-`Slice.lean` block being completed first. -/
+This proof reduces to `pNormalForm_witnesses` (the Levi-witness
+existence) plus the standard parabolic-element machinery (`isUnit_uD`,
+`map_uD_eq_of_le`, `uD_isParabolic`). The `IsAdjointPair` conjunct of
+`IsParabolicElement` inherits the Tier D blocker (statement bug in
+`uD_isParabolic`); see the inline `sorry` below. -/
 theorem pNormalForm
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
@@ -173,6 +243,110 @@ theorem pNormalForm
       IsSkewT S T ∧
         ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
           p ∘ₗ XCB S C B = XST S Sₕ T ∘ₗ p := by
+  -- Step 1: Pull (Sₕ, D, T) plus the conjugation equation from the helper.
+  obtain ⟨Sₕ, D, T, hT, hConj⟩ :=
+    pNormalForm_witnesses S _hNondeg _hChar C B _hB _hRank
+  refine ⟨Sₕ, T, hT, uD S D, ?_, ?_⟩
+  · -- IsParabolicElement (uD S D)
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · -- IsUnit (uD S D)
+      exact isUnit_uD S _hNondeg _hChar D
+    · -- Submodule.map (uD D) S.flagE = S.flagE
+      have h_pos : Submodule.map (uD S D) S.flagE ≤ S.flagE :=
+        (uD_isParabolic S _hNondeg _hChar D).2.1
+      have h_neg : Submodule.map (uD S (-D)) S.flagE ≤ S.flagE :=
+        (uD_isParabolic S _hNondeg _hChar (-D)).2.1
+      exact map_uD_eq_of_le S _hNondeg _hChar D S.flagE h_pos h_neg
+    · -- Submodule.map (uD D) S.flagEV0 = S.flagEV0
+      have h_pos : Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 :=
+        (uD_isParabolic S _hNondeg _hChar D).2.2
+      have h_neg : Submodule.map (uD S (-D)) S.flagEV0 ≤ S.flagEV0 :=
+        (uD_isParabolic S _hNondeg _hChar (-D)).2.2
+      exact map_uD_eq_of_le S _hNondeg _hChar D S.flagEV0 h_pos h_neg
+    · -- IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD D):
+      -- This is the Tier D blocker (statement bug in `uD_isParabolic`).
+      -- The autoformalised statement asserts `uD` is *self-adjoint* w.r.t.
+      -- `S.ambientForm`, which is false in general — the blueprint says
+      -- `uD` is an *isometry* (i.e. adjoint pair (uD D, uD (-D))).
+      -- See `Slice.lean :: uD_isParabolic` docstring for details.
+      sorry
+  · -- Conjugation equation: `uD D ∘ XCB C B = XST Sₕ T ∘ uD D`.
+    -- From `hConj : uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T`, multiply on
+    -- the right by `uD D` and use `uD (-D) ∘ uD D = id`.
+    have hinv : uD S (-D) ∘ₗ uD S D = LinearMap.id := by
+      have := uD_neg_inverse S _hNondeg _hChar (-D)
+      simpa [neg_neg] using this
+    -- Apply `(· ∘ₗ uD S D)` to both sides of `hConj`.
+    have hgoal := congrArg (fun f : Module.End F S.V => f ∘ₗ uD S D) hConj
+    simp only at hgoal
+    -- Reduce LHS via associativity and `hinv`.
+    have key :
+        (uD S D ∘ₗ XCB S C B ∘ₗ uD S (-D)) ∘ₗ uD S D
+          = uD S D ∘ₗ XCB S C B := by
+      rw [LinearMap.comp_assoc, LinearMap.comp_assoc, hinv,
+        LinearMap.comp_id]
+    rw [key] at hgoal
+    exact hgoal
+
+/-! ### Helpers for `pNormalForm_residual_orbit_iso`. -/
+
+/-- Forward extraction: from a parabolic `p` realising the conjugation
+`p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p`, extract the Levi `L0'`-block
+`h : L0' ≃ₗ L0'` such that `BT T₂ (h u) (h v) = BT T₁ u v`.
+
+This bundles the *Levi block extraction* from the blueprint proof
+(lines 270–319 of `references/blueprint_verified.md`):
+  (a) write `p = u_D ∘ m` with `m` in the Levi factor,
+  (b) `m` acts on `E'` as `d ∈ GL(E')` preserving `L0' = ker Cbar` so
+      `h := d|_{L0'} ∈ GL(L0')`,
+  (c) the unipotent factor `u_D` does not affect the residual L0' → L0
+      block, so the Levi-action law `T₂ = (h⁻¹)^∨ T₁ h` follows.
+
+Step (a) (Levi/unipotent decomposition of a general parabolic) is not
+yet exposed in `Slice.lean`. Sorried until that machinery lands. -/
+private theorem residual_levi_extract (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂)
+    (p : Module.End F S.V) (_hP : IsParabolicElement S p)
+    (_hConj : p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) :
+    Bilinear.AreIsometric (BT S T₁) (BT S T₂) := by
+  -- BLOCKED: Requires Levi/unipotent decomposition of `p`. The blueprint
+  -- argument (lines 272–319) writes `p = u_D · m` with `m` Levi, then
+  -- restricts `m`'s action on `E'` to `L0'` to obtain `h`. Without that
+  -- decomposition machinery in `Slice.lean`, we cannot extract `h`.
+  sorry
+
+/-- Backward construction: from an isometry `h : L0' ≃ₗ L0'` of
+`(BT T₁) ↦ (BT T₂)`, construct a parabolic `p ∈ Module.End F S.V`
+realising the conjugation `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p`.
+
+Blueprint construction: `p = (h⁻¹)^∨ ⊕ id ⊕ h` on the decomposition
+`V = L_1 ⊕ L_0 ⊕ V_0 ⊕ L_1' ⊕ L_0'`, where `(h⁻¹)^∨ : L_0 → L_0` is
+the perfect-pairing dual of `h⁻¹` (using the `L1×L1'` perfect pairing).
+
+The construction requires the perfect-pairing transpose on the L₀ block
+plus the L₁⊕L₀ direct-sum decomposition of `E` (for assembling `p` on
+the `E` block). Both pieces require additional `SliceSetup` machinery
+(specifically, a Lagrangian condition aligning `L0` with `L0'` via
+`λ`); the bare `SliceSetup` only gives `L0_isotropic` (`λ(L0, L0') = 0`),
+not the perfect pairing on `L0 × L0'`.
+
+Sorried until that infrastructure lands. -/
+private theorem residual_levi_build (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂)
+    (h : S.L0' ≃ₗ[F] S.L0') (_hh : ∀ u v, BT S T₂ (h u) (h v) = BT S T₁ u v) :
+    ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
+      p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p := by
+  -- BLOCKED: Requires the perfect-pairing dual `(h⁻¹)^∨ : L_0 → L_0` on
+  -- the `L_0` block, which needs an extra Lagrangian condition not
+  -- present in the bare `SliceSetup` (only `L0_isotropic` is given,
+  -- not perfect pairing on `L0 × L0'`).
+  -- The IsAdjointPair conjunct of IsParabolicElement also inherits the
+  -- Tier D blocker; even if the construction succeeded, the IsAdjointPair
+  -- proof would still need its own scoped `sorry`.
   sorry
 
 /-- `prop:p-normal-form` (residual-orbit isometry).  Two normalised
@@ -193,9 +367,9 @@ items 3 and surrounding text):
   The conjugation calculation reduces to checking the diagonal blocks
   using `XST_apply` and the isometry condition.
 
-Both directions hinge on having a workable model of the parabolic action
-on the residual block, which in turn requires the
-`pNormalForm`/`Slice.lean` machinery to be in place. Deferred. -/
+Both directions are factored through `residual_levi_extract` and
+`residual_levi_build`, which capture the missing Levi-action machinery
+as focused `sorry`s. -/
 theorem pNormalForm_residual_orbit_iso
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (Sₕ : S.L1' →ₗ[F] S.Vplus)
@@ -203,7 +377,13 @@ theorem pNormalForm_residual_orbit_iso
     (∃ (p : Module.End F S.V), IsParabolicElement S p ∧
         p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) ↔
       Bilinear.AreIsometric (BT S T₁) (BT S T₂) := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · -- (→) Forward: from parabolic conjugation, extract isometry.
+    rintro ⟨p, hP, hConj⟩
+    exact residual_levi_extract S _hNondeg _hChar Sₕ T₁ T₂ _hT₁ _hT₂ p hP hConj
+  · -- (←) Backward: from isometry, build parabolic conjugation.
+    rintro ⟨h, hh⟩
+    exact residual_levi_build S _hNondeg _hChar Sₕ T₁ T₂ _hT₁ _hT₂ h hh
 
 /-! ## Theorem `prop:kernel-image` -/
 

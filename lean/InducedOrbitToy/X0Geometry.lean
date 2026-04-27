@@ -184,8 +184,12 @@ finite-dimensional pair `(E, E')` with a perfect pairing `lambda` together with
 Lagrangian-style decompositions `L1 ⊕ L0 = E` and `L1' ⊕ L0' = E'`.
 
 The dual transpose `T^∨ : S.V0 →ₗ[F] E` of an isomorphism `T : L1' ≃ S.Vplus`
-is characterised pointwise by `lambda (T^∨ v) a' = - S.formV0 v (T a')`; the
-precise construction is part of the prover stage. -/
+is characterised pointwise by `lambda (T^∨ v) a' = - S.formV0 v (T a')`. In the
+slice setup, the Lagrangian conditions `L1` paired with `L1'` and `L0` jointly
+isotropic with `L0'` further force `T^∨` to land in `L1` and force the
+dimensional condition `dim L1 = dim L1'`. These two conditions are recorded as
+extra fields below, since they are not implied by `pairing_eq` alone but are
+present in every blueprint instance of this setup. -/
 structure DualTransposeData
     (S : X0Setup F)
     {E E' : Type*} [AddCommGroup E] [Module F E]
@@ -199,6 +203,13 @@ structure DualTransposeData
   pairing_eq :
     ∀ (v : S.V0) (a' : L1'),
       lambda (Tdual v) (a' : E') = - S.formV0 v ((T a' : S.Vplus) : S.V0)
+  /-- Lagrangian condition: the dual transpose lands in `L1`. (In the slice
+  setup, `L1 = (L0)^⊥_lambda`, and `Tdual w ∈ L1` follows from the joint
+  isotropy of `L0`, `L0'` together with `pairing_eq`.) -/
+  range_le_L1 : LinearMap.range Tdual ≤ L1
+  /-- Dimensional condition: `L1` and `L1'` have equal finite dimension.
+  (In the slice setup, this follows from `IsPaired lambda L1 L1'`.) -/
+  finrank_L1_eq : Module.finrank F L1 = Module.finrank F L1'
 
 /-- Under the hypotheses of `lem:x0-geometry`, the dual transpose `T^∨` of an
 isomorphism `T : L1' ≃ₗ S.Vplus` restricts to an isomorphism
@@ -248,20 +259,13 @@ theorem sDual_restrict_ker_isIso (S : X0Setup F)
     simp only [LinearMap.flip_apply, vplusKerPairing,
       LinearMap.domRestrict₁₂_apply, LinearMap.zero_apply, map_zero]
     exact h_pair' v
-  -- The two missing inputs below are not implied by `DualTransposeData` alone.
-  -- Blueprint context: in the slice setup, `L1 ⊆ E` and `L1' ⊆ E'` are paired
-  -- by `lambda`, and `L0 ⊆ E` is jointly isotropic with `L0' ⊆ E'`. Together
-  -- these force `D.Tdual` to map `ker X0` into `L1` and `dim L1 = dim L1'`.
-  -- The autoformalized signature does not yet expose these conditions, so we
-  -- carry them as scoped `sorry`s. The plan agent should either strengthen
-  -- `DualTransposeData` (e.g. add `Tdual_mem_L1 : ∀ w ∈ ker X0, Tdual w ∈ L1`
-  -- and `lambda_pair_L1 : IsPaired lambda L1 L1'`) or weaken the conclusion.
-  -- Step B: `D.Tdual` maps `ker S.X0` into `L1`.
-  have h_in_L1 : ∀ w : LinearMap.ker S.X0, D.Tdual (w : S.V0) ∈ L1 := by
-    sorry
-  -- Step C: `dim L1 = c S`.
-  have h_dim_L1 : Module.finrank F L1 = c S := by
-    sorry
+  -- Step B: `D.Tdual` maps `ker S.X0` into `L1`. Immediate from
+  -- `range_le_L1` (a Lagrangian condition baked into `DualTransposeData`).
+  have h_in_L1 : ∀ w : LinearMap.ker S.X0, D.Tdual (w : S.V0) ∈ L1 := fun w =>
+    D.range_le_L1 ⟨_, rfl⟩
+  -- Step C: `dim L1 = c S`. Combine `finrank_L1_eq : finrank L1 = finrank L1'`
+  -- (from `DualTransposeData`) with `hL1' : finrank L1' = c S`.
+  have h_dim_L1 : Module.finrank F L1 = c S := D.finrank_L1_eq.trans hL1'
   -- Step D: cod-restrict `f` to land in `L1`.
   have hf_in_L1 : ∀ w : LinearMap.ker S.X0, f w ∈ L1 := by
     intro w

@@ -6,7 +6,7 @@ prover
 ## Stages
 - [x] init
 - [x] autoformalize
-- [ ] prover  ← current
+- [ ] prover  ← current (round 2)
 - [ ] polish
 
 ## Authoritative Sources
@@ -14,191 +14,240 @@ prover
 - Blueprint: `references/blueprint_verified.md` (1049 lines).
 - Module split + scope decisions: `references/formalization_plan.md`.
 - Per-file informal sketches: `.archon/informal/{slice,normalform,localforms,orbits}.md`.
-- Latest review: `.archon/proof-journal/sessions/session_2/summary.md`
-  and `.archon/proof-journal/sessions/session_2/recommendations.md`.
+- Latest review: `.archon/proof-journal/sessions/session_3/summary.md`
+  and `.archon/proof-journal/sessions/session_3/recommendations.md`.
+- Cumulative state: `.archon/PROJECT_STATUS.md`.
 
-## Verified State (independent checks)
+## Verified State (independent checks, 2026-04-27)
 
 - `lake build` succeeds; only `sorry` warnings.
 - Custom `axiom` declarations: 0 (verified by inspection of all 6 .lean files).
-- `Basic.lean :: c_eq_finrank_quotient` is proved.
-- `Orbits.lean :: multiplicityNonDeg` and `multiplicityOddCase` are proved
-  from the abstract `MultiplicityTheory` package; the previous false
-  `Multiplicity := 0` blocker is gone.
-- Remaining actual `sorry` occurrences: 22.
-  - `InducedOrbitToy/X0Geometry.lean`: 2  (lines 114, 154)
-  - `InducedOrbitToy/Slice.lean`: 9       (lines 51, 58, 137, 146, 156, 169, 177, 187, 201)
-  - `InducedOrbitToy/NormalForm.lean`: 5  (lines 155, 167, 187, 204, 213)
-  - `InducedOrbitToy/LocalForms.lean`: 3  (lines 73, 88, 103)
-  - `InducedOrbitToy/Orbits.lean`: 3      (lines 124, 137, 187)
+- Round-1 progress: 22 → 8 declaration-use `sorry` warnings.
+- Remaining declaration-use `sorry` lines (verified by `lake build`):
+  - `InducedOrbitToy/X0Geometry.lean`: 1 (line 206 — `sDual_restrict_ker_isIso`,
+    body still contains 2 scoped `sorry` at lines 261, 264).
+  - `InducedOrbitToy/Slice.lean`: 2 (line 232 — `parametrizeX0PlusU_existence`;
+    line 391 — `uD_isParabolic`). Both documented as autoformalization bugs;
+    do **not** retry until upstream data fixes land.
+  - `InducedOrbitToy/NormalForm.lean`: 4 (line 167 — `pNormalForm`;
+    line 199 — `pNormalForm_residual_orbit_iso`;
+    line 302 — `kernelImage_ker` (body contains 2 scoped `sorry` at 344, 350);
+    line 397 — `kernelImage_im`).
+  - `InducedOrbitToy/LocalForms.lean`: 0 ✅
+  - `InducedOrbitToy/Orbits.lean`: 1 (line 242 — `sIndependenceAndOrbitCriterion`,
+    body contains 2 scoped `sorry` at 260, 268).
 
-## Prover Strategy
+## Round Plan
 
-Prioritise local linear-algebra sorries before topology / orbit statements.
-Keep the existing public theorem statements fixed; add `private` helper
-lemmas inside the owning file as needed. Do not introduce `axiom`. Do not
-edit any file other than the one assigned. Each prover should consult the
-matching `.archon/informal/<file>.md` before drafting a strategy and emit
-`.archon/task_results/<File>.md` on completion.
+The remaining 8 sorries split into four tiers (see session 3
+recommendations). This round (Round 2) handles only **Tier A** —
+proofs that are provable now without any upstream data refactor.
 
-## Current Objectives
+| Tier | Targets | Status |
+|---|---|---|
+| A | `pNormalForm`, `pNormalForm_residual_orbit_iso` (NormalForm.lean) — provable now | **assigned this round** |
+| A (deferred) | `sIndependenceAndOrbitCriterion` (Orbits.lean) — depends on Tier A NormalForm targets | round 3 (after this lands) |
+| B | `sDual_restrict_ker_isIso` (X0Geometry.lean) — needs `Basic.lean :: DualTransposeData` to expose `range Tdual ≤ L1` and `finrank L1 = finrank ker S.X0` | round 4 (data refactor) |
+| C | `kernelImage_ker`, `kernelImage_im` (NormalForm.lean) — needs `SliceSetup` to expose Lagrangian condition `λ(L1, L0') = 0` and `Sₕ` typed as `LinearEquiv` | round 4/5 (data refactor) |
+| D | `parametrizeX0PlusU_existence`, `uD_isParabolic` (Slice.lean) — autoformalization statement bugs (`UnipotentRadical` too loose; `IsAdjointPair` self-adjoint vs isometry) | round 5+ (statement refactor by directive) |
 
-Five objectives, one per file. Each prover may add `private` helper lemmas
-in its own file but must not touch others.
+This split keeps each round atomic (one file per agent, no cross-file
+edits in flight) and avoids cascading data-refactor breakage.
 
-### 1. `InducedOrbitToy/X0Geometry.lean` — 2 sorries
+## Current Objectives (Round 2)
 
-Informal: `.archon/informal/` (no separate file; goal is rooted in this
-module's docstring and the structure of already-proved lemmas).
+**One objective.** All other files are blocked on upstream data refactors
+or downstream of the NormalForm targets below; do not assign them this
+round.
 
-Targets:
-- `vplusKerPairing_isPerfPair` (line 111).
-  Strategy:
-  * Use `LinearMap.IsPerfPair.of_injective`.
-  * **Left injectivity** (`vplusKerPairing` injective on `S.Vplus`): if
-    `v ∈ S.Vplus` pairs to zero against every `x ∈ ker S.X0`, then
-    `v ∈ S.formV0.orthogonal (LinearMap.ker S.X0)`. Use the already-proved
-    `orthogonal_range_eq_ker` (combined with `S.epsSymm`-driven `IsRefl`)
-    to deduce `v ∈ LinearMap.range S.X0`. Finish via
-    `S.isCompl.disjoint`: `S.Vplus ⊓ LinearMap.range S.X0 = ⊥`.
-  * **Right injectivity** (the flipped pairing injective on `ker S.X0`): if
-    `x ∈ ker S.X0` pairs to zero against every `v ∈ S.Vplus`, decompose an
-    arbitrary `y ∈ S.V0` through the complement (`S.isCompl.codisjoint` →
-    `S.Vplus ⊔ LinearMap.range S.X0 = ⊤`); the `LinearMap.range S.X0`
-    component pairs to zero against `x` by `ker_le_orthogonal_range`.
-    Conclude using `hnondeg`.
-- `sDual_restrict_ker_isIso` (line 142).
-  Strategy:
-  * `D.pairing_eq` together with `vplusKerPairing_isPerfPair` (above)
-    determines `D.Tdual w` for `w ∈ ker S.X0` uniquely as a functional that
-    pairs against `T (a' : L1')` via `S.formV0`. This places
-    `D.Tdual w ∈ E` in the image of the perfect pairing `lambda`.
-  * Via `hlambda` (`lambda.IsPerfPair`) and `hL1'` (`finrank L1' = c S`),
-    construct the equivalence `(LinearMap.ker S.X0) ≃ₗ[F] L1` componentwise
-    and check the pointwise identity.
+### 1. `InducedOrbitToy/NormalForm.lean` — fill 2 of 4 sorries
 
-Already proved in this file (do not redo):
-`ker_le_orthogonal_range`, `orthogonal_range_eq_ker`,
-`finrank_quotient_range_eq_finrank_ker`, `finrank_Vplus_eq_c`,
-`VplusEquivQuotientRange`, `vplusKerPairing` (sorry-free def),
-the aggregate `x0Geometry` (sorry-free; reduces to the two targets).
+Targets (Tier A — both provable now, no data refactor required):
 
-### 2. `InducedOrbitToy/Slice.lean` — 9 sorries
+- `pNormalForm` (line 167)
+- `pNormalForm_residual_orbit_iso` (line 199)
 
-Informal: `.archon/informal/slice.md` (covers all 9 sorries, including
-the `Cdual` and `uD` term-mode placeholders and the explicit
-block-matrix formula for `uD`).
+Do **not** touch `kernelImage_ker` (line 302) or `kernelImage_im`
+(line 397) — they are blocked on upstream `SliceSetup` data and will be
+re-decomposed in a later round. Leave them as-is (their bodies already
+have helpful scoped `sorry`s and outline comments).
 
-Order of attack (matches the informal doc's recommendations):
-1. Replace `Cdual`'s term-mode `sorry` (line 51) using
-   `S.paired.isPerfect : (S.paired.pairing).IsPerfPair`. Concretely the
-   functional `e' ↦ - S.formV0 v (C e')` is in `Module.Dual F S.E'`; its
-   inverse image under the perfect pairing's flip lives in `S.E`.
-2. Prove `Cdual_pairing_eq` (line 58) — direct unfolding once `Cdual` is
-   constructed.
-3. Replace `uD`'s term-mode `sorry` (line 169) with the explicit
-   block-matrix formula
-   `(e + Cdual D v + ½ Cdual D (D e'), v + D e', e')`. Bring in
-   `(2 : F) ≠ 0` as `Invertible (2 : F)` via `invertibleOfNonzero`.
-4. Discharge the seven theorem sorries (`parametrizeX0PlusU_mem`,
-   `_existence`, `_uniqueness`, `uD_neg_inverse`, `uD_isParabolic`,
-   `uD_conj_XCB`) by `Prod`-API block-matrix calculation on
-   `S.V = S.E × S.V0 × S.E'`. Use `LinearMap.fst/snd/inl/inr`,
-   `Submodule.linearProjOfIsCompl` (with `S.isComplL'`),
-   `LinearMap.ext_iff` for endomorphism equalities.
+#### Informal content
 
-Reusable Mathlib hints from session 2: `LinearMap.IsAdjointPair` lives in
-the bare `LinearMap` namespace, **not** `LinearMap.BilinForm.IsAdjointPair`.
+The blueprint outline is already inline as docstrings above each
+declaration in `NormalForm.lean`. The prover should re-read those before
+drafting. Cross-references:
 
-### 3. `InducedOrbitToy/NormalForm.lean` — 5 sorries
+- `references/blueprint_verified.md §prop:p-normal-form` — items 1–3 for
+  `pNormalForm`; "residual-orbit isometry" for `pNormalForm_residual_orbit_iso`.
+- `.archon/informal/normalform.md` — per-file informal sketch.
 
-Informal: `.archon/informal/normalform.md`.
+#### Strategy for `pNormalForm` (line 167)
 
-Recommended order: kernel/image first (they are concrete `Submodule`
-equalities on `S.V = S.E × S.V0 × S.E'`), then dimension, then the
-classifying theorems.
+The hypothesis bundle is
+`(_hNondeg, _hChar, C, B, _hB : IsSkewB B, _hRank)`. The conclusion
+asks for `(Sₕ, T, hSkewT, p, hPara, hConj)` such that
+`p ∘ XCB C B = XST Sₕ T ∘ p`.
 
-1. `kernelImage_ker` (line 187): `LinearMap.ker (XST S Sₕ T) = kerXST_submod S Sₕ T`.
-   Use `LinearMap.mem_ker`, the explicit `Prod` decomposition of `XST`, and
-   `Submodule.prod_mem` / `Submodule.mem_map`.
-2. `kernelImage_im` (line 204): symmetric, using
-   `LinearMap.mem_range_iff` and `Submodule.sup_mem`.
-3. `kernelImage_dim` (line 213): combine the two above with
-   `Module.finrank_prod`, `Submodule.finrank_map_subtype`,
-   `Submodule.finrank_quotient_add_finrank` (or
-   `LinearMap.finrank_range_add_finrank_ker`), and `omega`.
-4. `pNormalForm` (line 155) and `pNormalForm_residual_orbit_iso`
-   (line 167): heavier blueprint material; defer until 1–3 are stable.
-   These rely on `IsParabolicElement`, `Bilinear.AreIsometric` and the
-   blueprint's normal-form construction. If progress on these stalls,
-   extract sub-lemmas and surface them through `task_results` so the plan
-   agent can re-decompose.
+1. **Construct `Sₕ : L1' →ₗ[F] Vplus`.** Use `_hRank` (rank `Cbar S C =
+   c S`) plus the rank-nullity bridge `c_eq_finrank_quotient` and
+   `finrank_Vplus_eq_c` (both already in scope from `X0Geometry.lean` /
+   `Basic.lean`) to obtain a linear map whose rank matches the dimension
+   of `Vplus`. The simplest route is:
+   - factor `Cbar S C` through its image inside `S.V0 ⧸ range S.X0`,
+   - identify the image with `S.Vplus` via `VplusEquivQuotientRange`
+     (already proved in `X0Geometry.lean`),
+   - precompose with the (unique) factorisation of `Cbar S C` from
+     `_hRank` to obtain `Sₕ : L1' →ₗ[F] Vplus`.
+   This is the Levi factor adjustment — the `C|_{L1'} = Sₕ`,
+   `C|_{L0'} = 0` decomposition the blueprint describes.
 
-### 4. `InducedOrbitToy/LocalForms.lean` — 3 sorries
+2. **Pick `D : E' →ₗ[F] V0`** that absorbs the `B|_{L1'}` block via the
+   unipotent conjugation `uD S D` (from `Slice.lean`, sorry-free this
+   round). The blueprint specifies `D` as the unique solution of
+   `λ(D e', v) = formV0 v (C e')` for `e' ∈ L1'`, `v ∈ S.Vplus`.
+   Concretely, define `D : E' →ₗ[F] V0` componentwise on the `L1' ⊕ L0'`
+   decomposition (`S.isComplL'`):
+   - on `L0'`: zero,
+   - on `L1'`: the dual transpose of `C` along `lambda` (the same
+     `Cdual` construction that `Slice.lean` uses, but in the opposite
+     direction — invoke `S.lambda.toPerfPair` directly).
 
-Informal: `.archon/informal/localforms.md`. The current
-`ClassifyBilinearForms F` typeclass has a vacuous `∃ _ : ℕ, True` body —
-**this is intentional** for autoformalize and is a soft blocker for
-non-trivial proofs.
+3. **Set `T := projL0' (B - Cdual D ∘ C)`** (the residual `L0' →ₗ[F] L0`
+   block after absorbing `B|_{L1'}` and `Cdual D C` cross-terms). Verify
+   `IsSkewT T` from `_hB : IsSkewB B`, `Cdual_X0_apply`, `S.epsSymm`,
+   and `S.skew` — the same identity used in `uD_conj_XCB`.
 
-Path A (preferred for this iteration): enrich `ClassifyBilinearForms F`
-inside this file so its content is strong enough to discharge
-`localFormClasses_finite` (`∃ Finset of representatives`) and
-`localFormClasses_open`. The natural enrichment is to require:
-* a finite set of `Bilinear.AreIsometric` representatives for non-degenerate
-  ε-symmetric forms on `S.L0'`-shaped modules, and
-* a "locally constant" property of the classifying invariants under
-  `[TopologicalSpace _] [ContinuousAdd _]`.
+4. **Set `p := uD S D`** (parabolic from Slice.lean). The conjugation
+   `p ∘ XCB C B = XST Sₕ T ∘ p` is exactly `uD_conj_XCB` once the
+   parameters are aligned.
 
-Keep the public theorem names stable. Do **not** introduce concrete
-instances for `ℝ` / non-archimedean locals — that is out of scope.
+5. **`IsParabolicElement p`** is an open obligation — its
+   `IsAdjointPair B B p p` conjunct is currently `sorry` (Tier D).
+   For *this* round, build `IsParabolicElement` using:
+   - `IsUnit p` from `uD_neg_inverse` (proved): `uD D` and `uD (-D)`
+     are mutual inverses, hence each is a unit;
+   - flag preservation from `uD_isParabolic` (the two non-Tier-D
+     conjuncts are proved);
+   - the `IsAdjointPair B B p p` conjunct: the prover may either
+     (a) attempt a direct proof here (it is *false in general* per the
+     `uD_isParabolic` doc; do not waste cycles on this), or
+     (b) leave a single scoped `sorry` and document that this conjunct
+     of `pNormalForm` inherits the Tier D blocker. Option (b) is
+     **preferred**.
 
-If enriching the typeclass turns out to break downstream files, fall back
-to writing a `private` strengthened typeclass and use the existing
-`ClassifyBilinearForms` as a shim.
+#### Strategy for `pNormalForm_residual_orbit_iso` (line 199)
 
-### 5. `InducedOrbitToy/Orbits.lean` — 3 sorries
+Bidirectional iff between (a) existence of a parabolic `p` with
+`p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` and (b) `Bilinear.AreIsometric (BT T₁) (BT T₂)`.
 
-Informal: `.archon/informal/orbits.md`. `multiplicityNonDeg` and
-`multiplicityOddCase` are already proved via `MultiplicityTheory`.
+- **(→)** Given parabolic `p`, the action descends to a Levi factor
+  `h : L0' ≃ₗ[F] L0'` (use `S.isComplL'` to extract the `L0'` block of
+  `p`). Compute `BT T₂ (h u) (h v) = BT T₁ u v` from
+  `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` and the `XST_apply` formula
+  (already proved in `NormalForm.lean`).
+- **(←)** Given `h : L0' ≃ₗ[F] L0'` an isometry of `BT T₁ ↦ BT T₂`,
+  build `p` as `(h⁻¹)^∨ ⊕ id ⊕ h` on the block decomposition
+  `S.V = E × V₀ × E'` (with `E = L1 ⊕ L0`, `E' = L1' ⊕ L0'`). The
+  conjugation calculation reduces to the diagonal blocks via
+  `XST_apply` and the isometry hypothesis.
 
-Targets:
-1. `inducedOrbits` (line 118).  This is the *containment* form
-   `GOrbit S (XST S Sₕ T) ⊆ IndPG S` — **do not weaken further and do not
-   try to lift to the maximal-orbit classification** (that is polish-stage
-   work). Strategy: `IndPG` is `closure (G · (O₀ + 𝔲))`, so any `g · XST`
-   is in `G · (O₀ + 𝔲)` once `XST - X0Lift ∈ UnipotentRadical`; reuse
-   `parametrizeX0PlusU_mem` from `Slice.lean` (will be available after
-   objective 2 lands; if Slice is still pending, pull just the statement
-   and apply via `parametrizeX0PlusU_mem` as an external hypothesis).
-2. `sIndependenceAndOrbitCriterion` (line 128). Both directions:
-   - `→`: if `g ∈ G` conjugates `XST Sₕ₁ T₁` to `XST Sₕ₂ T₂`, then `g`
-     is a `P`-element (preserves `flagE`) and the residual block is an
-     isometry between `BT T₁` and `BT T₂`.
-   - `←`: build a conjugating `g ∈ G` from any
-     `Bilinear.AreIsometric (BT T₁) (BT T₂)` witness.
-   `pNormalForm_residual_orbit_iso` from `NormalForm.lean` is the
-   needed bridge.
-3. `main` (line 171). Quadruple conjunction; discharge each conjunct via
-   the previous lemmas.
+For the `IsParabolicElement p` part of the (←) direction, apply the
+same option (b) above: leave the `IsAdjointPair B B p p` conjunct as a
+scoped `sorry` if needed and document the Tier D inheritance.
 
-Do **not** revert the `MultiplicityTheory` refactor.
+#### Acceptance criteria for this objective
 
-## Reusable Gotchas (carry forward)
+- Both `pNormalForm` and `pNormalForm_residual_orbit_iso` either
+  - close completely, or
+  - close everything *except* the `IsAdjointPair B B p p` conjunct of
+    `IsParabolicElement` (which inherits the Slice.lean Tier D bug).
+    Use a clearly-scoped internal `sorry` for *only* that conjunct, with
+    an explicit comment naming the upstream blocker.
+- File compiles in isolation (`lake env lean InducedOrbitToy/NormalForm.lean`).
+- `lake build` is still green (only `sorry` warnings).
+- No new `axiom` declarations.
+- Helpers introduced are `private` and live inside `NormalForm.lean`.
+
+#### Reusable Mathlib lemmas confirmed available (carry forward)
+
+- `LinearMap.IsPerfPair.of_injective`, `LinearMap.toPerfPair`,
+  `LinearMap.toPerfPair_apply`, `LinearMap.apply_symm_toPerfPair_self`.
+- `LinearMap.injective_iff_surjective_of_finrank_eq_finrank`,
+  `Subspace.dual_finrank_eq`.
+- `LinearMap.IsAdjointPair`, `LinearMap.IsAdjointPair.eq` (note the bare
+  `LinearMap` namespace, **not** `LinearMap.BilinForm`).
+- `Submodule.linearProjOfIsCompl`, `IsCompl.disjoint`, `IsCompl.codisjoint`,
+  `Disjoint.eq_bot`, `Codisjoint.eq_top`.
+- `Module.finrank_prod`, `Submodule.finrank_map_subtype_eq`,
+  `LinearMap.finrank_range_add_finrank_ker`,
+  `Submodule.finrank_quotient_add_finrank`.
+- `submoduleProdEquiv` and `finrank_submodule_prod` already exist as
+  `private` helpers in `NormalForm.lean` — reuse, do not duplicate.
+
+#### Reusable Slice.lean lemmas (already proved this stage)
+
+All of the following are sorry-free in `Slice.lean` and may be invoked
+freely:
+- `Cdual` (def), `Cdual_pairing_eq`, `Cdual_neg`, `Cdual_X0_apply`.
+- `lambda_isPerfPair`.
+- `XCB_apply`, `X0Lift_apply`, `uD_apply`.
+- `parametrizeX0PlusU_mem`, `parametrizeX0PlusU_uniqueness`.
+- `uD`, `uD_neg_inverse`, `uD_conj_XCB`.
+
+(`parametrizeX0PlusU_existence` and `uD_isParabolic` are *not* in this
+list — they are Tier D and remain `sorry`.)
+
+#### Anti-patterns (do not retry — discovered in earlier rounds)
+
+- `XCB_apply ... := rfl` — fails on multi-`let` definitions; the
+  pre-existing `show ...; rfl` form is required.
+- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise — use
+  `open Classical in if … then … else …` *inside* the def body.
+- `omega` cannot see `S.E = S.paired.E` (abbrev boundary) — insert
+  `change Module.finrank F S.paired.E + _ = _` first.
+- `field_simp` leaves residual `1 + 1 = 2` for `(2 : F)⁻¹ + (2 : F)⁻¹ = 1`
+  — use `rw [← two_mul, mul_inv_cancel₀ hChar]` instead.
+
+### Files NOT assigned this round
+
+The following files have remaining sorries but are blocked. **Do not
+assign provers to them this round.** Their objectives will be created
+once the upstream refactors are scoped.
+
+- `InducedOrbitToy/X0Geometry.lean` — `sDual_restrict_ker_isIso` blocked
+  on `Basic.lean :: DualTransposeData` refactor.
+- `InducedOrbitToy/Slice.lean` — `parametrizeX0PlusU_existence` blocked
+  on `Basic.lean :: UnipotentRadical` refactor; `uD_isParabolic` blocked
+  on autoformalization statement fix.
+- `InducedOrbitToy/Orbits.lean` — `sIndependenceAndOrbitCriterion`
+  depends on this round's Tier A NormalForm targets landing first.
+- `InducedOrbitToy/LocalForms.lean` — done; no work.
+
+## Reusable Gotchas (carry forward, augmented)
 
 - `LinearMap.IsAdjointPair`, **not** `LinearMap.BilinForm.IsAdjointPair`.
-- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise — use
-  `open Classical in if … then … else …` *inside* the def body, or
-  `haveI : Decidable _ := Classical.dec _`.
+- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise.
 - Trim `simp` argument lists; lints-as-errors reject unused simp args.
 - `lean_diagnostic_messages` MCP needs absolute file paths.
 - `[TopologicalSpace (Module.End F S.V)]` cannot be a file-level
-  `variable` instance binder; thread it as an explicit hypothesis on each
-  theorem that needs it.
-- `Submodule.linearProjOfIsCompl` is the right tool for the `L1' ⊕ L0'`
+  `variable` instance binder; thread it as an explicit hypothesis.
+- `Submodule.linearProjOfIsCompl` is the right tool for `L1' ⊕ L0'`
   / `L1 ⊕ L0` decompositions.
-- Term-mode `sorry`s (e.g. `Cdual`, `uD`) must be replaced with a real
-  construction before any downstream theorem about them can be discharged.
+- Term-mode `sorry`s must be replaced with a real construction before
+  any downstream theorem about them can be discharged.
+- Polymorphic typeclass over multi-universe structures: declare with
+  explicit `class C.{u, v, w, x} ...`; `Type*` placeholders in class
+  fields do not unify across uses (lesson from session 3 LocalForms).
+- `change Module.finrank F S.paired.E + _ = _` to bridge `S.E ≡ S.paired.E`
+  abbrev boundary before `omega`.
+- Block-matrix `_apply` helpers: write the fully unfolded RHS in a
+  `show` clause before `rfl` (multi-`let` defs aren't definitionally
+  equal to their RHS without the `show`).
+- `(2 : F)⁻¹ + (2 : F)⁻¹ = 1`: `rw [← two_mul, mul_inv_cancel₀ hChar]`
+  (do **not** `field_simp` — leaves residual `1 + 1 = 2`).
+- `Ring.inverse` on `Module.End F V` is the right packaging for
+  "best-effort inverse" in orbit predicates (no division-ring needed).
 
 ## Reporting
 

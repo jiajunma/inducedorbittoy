@@ -244,13 +244,64 @@ theorem parametrizeX0PlusU_existence (S : SliceSetup F)
     (LinearMap.fst F S.V0 S.paired.E') ∘ₗ
       (LinearMap.snd F S.paired.E (S.V0 × S.paired.E'))
   refine ⟨projV0 ∘ₗ Y ∘ₗ inE', projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩
-  · -- IsSkewB B: requires `Y` skew-adjoint w.r.t. `S.ambientForm`,
-    -- which the loose `UnipotentRadical` definition does NOT supply.
+  · -- IsSkewB B: `λ(B u, v) + ε λ(B v, u) = 0` for `B := projE ∘ Y ∘ inE'`.
+    -- Unfolding `B` and substituting the projections, this expands to
+    -- `λ(projE (Y inE'(u)), v) + ε λ(projE (Y inE'(v)), u) = 0`, which is
+    -- precisely the `(E', E')`-block of the skew-adjointness identity for
+    -- `Y` w.r.t. `S.ambientForm`. The loose `UnipotentRadical` definition
+    -- does NOT enforce skew-adjointness on `Y`. (Tier D blocker.)
+    intro u v
+    show S.lambda ((projE ∘ₗ Y ∘ₗ inE') u) v
+        + S.eps * S.lambda ((projE ∘ₗ Y ∘ₗ inE') v) u = 0
     sorry
-  · -- The equality `XCB S C B - X0Lift S = Y` requires that the
-    -- `(E, V0)`-block of `Y` equal `Cdual` of the `(V0, E')`-block,
-    -- which again follows only from skew-adjointness.
-    sorry
+  · -- The equality `XCB S C B - X0Lift S = Y`.
+    -- We can prove the V₀ and E' components without further hypotheses;
+    -- the E component requires `Y` to be skew-adjoint w.r.t.
+    -- `S.ambientForm` (so that the V₀→E block of `Y` is `Cdual` of the
+    -- E'→V₀ block), which the loose `UnipotentRadical` does NOT supply.
+    apply LinearMap.ext
+    rintro ⟨e, v, e'⟩
+    obtain ⟨hflagE, hflagEV0, hAll⟩ := _hY
+    -- Y vanishes on `flagE`.
+    have hY_e0 : Y (e, 0, 0) = 0 :=
+      hflagE _ ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
+    -- Decompose `(e, v, e') = (e, 0, 0) + (0, v, 0) + (0, 0, e')`.
+    have hsum : ((e, v, e') : S.V) = (e, 0, 0) + (0, v, 0) + (0, 0, e') := by
+      ext <;> simp
+    have hY_sum : Y (e, v, e') = Y (0, v, 0) + Y (0, 0, e') := by
+      rw [hsum, map_add, map_add, hY_e0]; abel
+    -- `Y (0, v, 0) ∈ flagE`: V₀ and E' components are 0.
+    have hY_v_flagE : Y (0, v, 0) ∈ S.flagE :=
+      hflagEV0 _ ⟨trivial, trivial, Submodule.zero_mem _⟩
+    obtain ⟨_, hY_v_V0, hY_v_E'⟩ := hY_v_flagE
+    have hY_v_V0_eq : (Y (0, v, 0)).2.1 = 0 := by
+      simpa [Submodule.mem_bot] using hY_v_V0
+    have hY_v_E'_eq : (Y (0, v, 0)).2.2 = 0 := by
+      simpa [Submodule.mem_bot] using hY_v_E'
+    -- `Y (0, 0, e') ∈ flagEV0`: E' component is 0.
+    have hY_e'_flagEV0 : Y (0, 0, e') ∈ S.flagEV0 := hAll _
+    obtain ⟨_, _, hY_e'_E'⟩ := hY_e'_flagEV0
+    have hY_e'_E'_eq : (Y (0, 0, e')).2.2 = 0 := by
+      simpa [Submodule.mem_bot] using hY_e'_E'
+    -- Reduce LHS via `XCB_apply` and `X0Lift_apply`.
+    rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply, hY_sum]
+    -- Decompose into (E, V₀, E') components.
+    refine Prod.mk.injEq .. |>.mpr
+      ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+    · -- E component: requires `(Cdual S C) v = (Y (0, v, 0)).1` (V₀→E
+      -- block of Y), which only holds if Y is skew-adjoint w.r.t.
+      -- `S.ambientForm`. (Tier D blocker.)
+      sorry
+    · -- V₀ component: `X0 v + (projV0 ∘ Y ∘ inE') e' - X0 v
+      --   = (Y (0, v, 0)).2.1 + (Y (0, 0, e')).2.1`.
+      -- Reduces to `(Y (0, 0, e')).2.1 = (Y (0, 0, e')).2.1` via the
+      -- definitions of `projV0` and `inE'`.
+      simp only [hY_v_V0_eq, zero_add]
+      -- Goal: `X0 v + (projV0 ∘ Y ∘ inE') e' - X0 v = (Y (0, 0, e')).2.1`.
+      simp [projV0, inE', LinearMap.comp_apply]
+    · -- E' component: `0 - 0 = (Y (0, v, 0)).2.2 + (Y (0, 0, e')).2.2`.
+      -- Both addends are 0.
+      simp [hY_v_E'_eq, hY_e'_E'_eq]
 
 /-- Uniqueness in `lem:parametrize-x0-plus-u`: the parameters `(C, B)`
 attached to `Y ∈ X₀ + 𝔲` are determined by `Y`. -/
@@ -397,6 +448,15 @@ theorem uD_isParabolic (S : SliceSetup F)
       Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 := by
   refine ⟨?_, ?_, ?_⟩
   · -- IsAdjointPair conjunct: false as stated; see docstring above.
+    -- Direct calculation: take `x = (0, v, 0)` and `y = (0, 0, e₁')`.
+    -- Then `S.ambientForm (uD D x) y - S.ambientForm x (uD D y)`
+    -- evaluates to `-2 · S.formV0 v (D e₁')`, which is non-zero in
+    -- general (e.g. choose `D` non-zero and `S.formV0` non-degenerate).
+    -- The blueprint claim is that `uD` is an *isometry*, equivalent to
+    -- `IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`; the
+    -- present autoformalised statement asks for self-adjointness instead,
+    -- which fails. (Tier D blocker — awaiting plan-agent statement fix.)
+    intro x y
     sorry
   · -- `u_D` maps `flagE` into itself.
     rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩

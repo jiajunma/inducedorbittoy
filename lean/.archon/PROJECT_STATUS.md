@@ -2,87 +2,140 @@
 
 ## Overall Progress
 
-- **Stage:** prover (round 1 complete).
-- **Build state:** `lake build` succeeds.
+- **Stage:** prover (round 2 complete; 9 declaration-use sorries remain).
+- **Build state:** `lake build` succeeds (green, end of session 4).
 - **Custom axiom declarations:** 0. All public theorems depend only on
   `[propext, Classical.choice, Quot.sound]` (`sorryAx` appears only on
   declarations that still embed an explicit `sorry`).
-- **Remaining declaration-use `sorry` warnings:** 8 (down from 22 at session
-  start; ≈63% reduction this session).
+- **Cumulative reduction:** 22 (start of session 3) → 8 (end of session 3) → 9 (end of session 4).
+  Net session 4: +1 declaration count, but with one Tier-B target resolved
+  (X0Geometry) and two Tier-A targets restructured into focused helpers
+  (NormalForm), shrinking the genuinely missing surface area.
 
-## Solved this session (session 3)
+## Solved this session (session 4)
 
-- `LocalForms.lean :: localFormClasses_finite` (typeclass projection)
-- `LocalForms.lean :: localFormClasses_open` (typeclass projection)
-- `LocalForms.lean :: localFormClasses` (composition)
-- `NormalForm.lean :: kernelImage_dim` (rank-nullity + `submoduleProdEquiv` helper)
-- `Orbits.lean :: inducedOrbits` (block-matrix point lemmas + `Ring.inverse`)
-- `Orbits.lean :: main` (composition of the four sub-claims)
-- `Slice.lean :: Cdual` (term-mode, via `lambda.toPerfPair.symm`)
-- `Slice.lean :: Cdual_pairing_eq` (via `apply_symm_toPerfPair_self`)
-- `Slice.lean :: parametrizeX0PlusU_mem` (block-matrix lift)
-- `Slice.lean :: parametrizeX0PlusU_uniqueness` (probe at `(0, 0, e')`)
-- `Slice.lean :: uD` (term-mode, explicit block-matrix with `½ • Cdual D (D e')`)
-- `Slice.lean :: uD_neg_inverse` (`½ + ½ = 1` + `linear_combination`)
-- `Slice.lean :: uD_conj_XCB` (block-matrix expansion + 4 helper lemmas)
-- `X0Geometry.lean :: vplusKerPairing_isPerfPair` (`IsRefl` + orthogonal eq)
+- `X0Geometry.lean :: sDual_restrict_ker_isIso` — resolved by enriching
+  `DualTransposeData` (in this file, not `Basic.lean` as previously
+  thought) with two new fields `range_le_L1` and `finrank_L1_eq`.
+- `NormalForm.lean :: isUnit_uD` (helper) — `IsUnit (uD S D)` via
+  `Units.mkOfMulEqOne` (avoiding the deprecated `LinearMap.mul_eq_one_of_mul_eq_one`).
+- `NormalForm.lean :: map_uD_eq_of_le` (helper) — `Submodule.map (uD D) F = F`
+  from inclusions both ways.
+- Two flag-preservation conjuncts of `Slice.lean :: uD_isParabolic`
+  (lines ≈462, ≈468) — newly proven this session.
+- V₀ and E' Prod components of `Slice.lean :: parametrizeX0PlusU_existence`
+  — newly closed (only the false E component remains as sorry).
+- Forward and reverse witness extraction in `Orbits.lean :: sIndependenceAndOrbitCriterion`
+  — both directions now have explicit `obtain` lines extracting the
+  conjugating isometry / bilinear isometry from the hypothesis.
 
-## Remaining sorries (8 declaration warnings)
+## Solved earlier (sessions 1–3, carry-forward)
 
-| File | Line | Theorem | Status |
-|---|---|---|---|
-| `X0Geometry.lean` | 206 | `sDual_restrict_ker_isIso` | partial — 2 scoped sorries; needs `Basic.lean :: DualTransposeData` refactor |
-| `Slice.lean` | 232 | `parametrizeX0PlusU_existence` | **DO NOT RETRY** — statement is mathematically false in current generality |
-| `Slice.lean` | 391 | `uD_isParabolic` | **DO NOT RETRY** — autoformalization statement bug |
-| `NormalForm.lean` | 167 | `pNormalForm` | provable now; deferred |
-| `NormalForm.lean` | 199 | `pNormalForm_residual_orbit_iso` | provable now; deferred |
-| `NormalForm.lean` | 302 | `kernelImage_ker` | needs SliceSetup Lagrangian refactor |
-| `NormalForm.lean` | 397 | `kernelImage_im` | needs SliceSetup Lagrangian refactor |
-| `Orbits.lean` | 242 | `sIndependenceAndOrbitCriterion` | partial — unblocked by `pNormalForm_residual_orbit_iso` |
+(See `proof-journal/sessions/session_3/summary.md` for full detail.)
+
+- All of `LocalForms.lean` (3 theorems via `ClassifyBilinearForms` typeclass).
+- `NormalForm.lean :: kernelImage_dim` (rank-nullity).
+- `Orbits.lean :: inducedOrbits`, `main` (block-matrix point lemmas).
+- 7 of 9 sorries in `Slice.lean` (`Cdual`, `Cdual_pairing_eq`, `parametrizeX0PlusU_mem`, `parametrizeX0PlusU_uniqueness`, `uD`, `uD_neg_inverse`, `uD_conj_XCB`).
+- `X0Geometry.lean :: vplusKerPairing_isPerfPair`.
+
+## Remaining sorries (9 declaration warnings)
+
+| File | Line | Theorem | Tier | Status |
+|---|---|---|---|---|
+| `Slice.lean` | 232 | `parametrizeX0PlusU_existence` | D | **DO NOT RETRY** — needs `Basic.lean :: UnipotentRadical` tightened to enforce skew-adjointness |
+| `Slice.lean` | 442 | `uD_isParabolic` | D | **DO NOT RETRY** — needs IsAdjointPair conjunct changed from `(uD D, uD D)` to `(uD D, uD (-D))` |
+| `NormalForm.lean` | 196 | `pNormalForm_witnesses` (private helper) | A | needs Levi-action machinery added to `Slice.lean` |
+| `NormalForm.lean` | 237 | `pNormalForm` (IsAdjointPair conjunct only, internal sorry) | D inheritance | unblocked when `uD_isParabolic` IsAdjointPair statement is fixed |
+| `NormalForm.lean` | 307 | `residual_levi_extract` (private helper) | A | needs Levi-decomposition lemma + Levi machinery |
+| `NormalForm.lean` | 336 | `residual_levi_build` (private helper) | A | needs Lagrangian condition `λ(L0, L0') = 0` added to `SliceSetup` |
+| `NormalForm.lean` | 482 | `kernelImage_ker` | C | needs Lagrangian + `Sₕ` typed as `LinearEquiv` |
+| `NormalForm.lean` | 577 | `kernelImage_im` | C | same blocker as `kernelImage_ker` |
+| `Orbits.lean` | 242 | `sIndependenceAndOrbitCriterion` | A (deferred) | unblocked once `pNormalForm_residual_orbit_iso` is sorry-free |
 
 ## Knowledge Base
 
 ### Proof patterns (reusable across targets)
 
+(Augments session 3 list.)
+
 - **Polymorphic typeclass over multi-universe structures:** declare with
   explicit `class C.{u, v, w, x} ...`; `Type*` placeholders in class fields
   do not unify across uses.
-- **`change` for `omega` across `abbrev` boundaries:** insert
-  `change Module.finrank F S.paired.E + _ = Module.finrank F S.paired.E + _`
-  before `omega` when `S.E := S.paired.E` is an `abbrev`.
+- **`change` for `omega` across `abbrev` boundaries.**
 - **Block-matrix pointwise lemmas:** `XCB_apply ... := rfl` fails on
   multi-`let` definitions; insert a `show` with the fully unfolded RHS first.
-- **Dual transpose via `toPerfPair`:** the canonical "transpose along a
-  perfect pairing" pattern uses `lambda.toPerfPair.symm.toLinearMap.comp` plus
-  `(-C.dualMap.comp formV0)`. Pairing equation follows from
-  `LinearMap.apply_symm_toPerfPair_self`.
-- **`Ring.inverse` for endomorphism orbits:** dodges the need for a
-  division-ring structure on `Module.End`.
-- **`(2 : F)⁻¹ + (2 : F)⁻¹ = 1`:** use `rw [← two_mul, mul_inv_cancel₀ hChar]`
-  (do *not* use `field_simp` — leaves residual `1 + 1 = 2`).
-- **`Submodule.prod p q ≃ₗ ↥p × ↥q`:** not in Mathlib; helper written this
-  session (`NormalForm.lean :: submoduleProdEquiv`); worth upstreaming.
+- **Dual transpose via `toPerfPair`.**
+- **`Ring.inverse` for endomorphism orbits.**
+- **`(2 : F)⁻¹ + (2 : F)⁻¹ = 1`:** use `rw [← two_mul, mul_inv_cancel₀ hChar]`.
+- **`Submodule.prod p q ≃ₗ ↥p × ↥q`** (helper — not in Mathlib).
+- **(NEW session 4) `Units.mkOfMulEqOne` for `IsUnit` from one-sided inverse:**
+  `(Units.mkOfMulEqOne _ _ h).isUnit`. Replaces the deprecated chain;
+  works because `Module.End F V` is `IsDedekindFiniteMonoid` for finite-dim V.
+- **(NEW session 4) Helper-lemma decomposition** for "cannot fully close,
+  but can articulate the obligation precisely": extract missing
+  infrastructure as a focused helper with a targeted signature, sorry it,
+  use it from the public theorem. Increases raw sorry count short-term but
+  lets the next prover round attack a named lemma.
+- **(NEW session 4) Avoid `obtain` from existentials when downstream needs
+  `let`-bound contents.** `obtain` makes destructured fields opaque,
+  breaking later `show` patterns that reference let-bound values. Package
+  the equation directly in the helper's conclusion.
 
-### Known blockers (do not retry — statement-level bugs)
+### Known blockers
 
-- `Slice.lean :: parametrizeX0PlusU_existence` — needs `Basic.lean :: UnipotentRadical` tightened to the Lie subalgebra that preserves `ambientForm`.
-- `Slice.lean :: uD_isParabolic` — needs the `IsAdjointPair` conjunct changed from `(uD D, uD D)` to `(uD D, uD (-D))`.
+#### Tier S — Plan-agent-only (statement corrections required)
 
-### Soft blockers (need upstream data refactor before reassignment)
+- `Slice.lean :: uD_isParabolic` IsAdjointPair conjunct — change `(uD D, uD D)` to `(uD D, uD (-D))`.
+- `Basic.lean :: UnipotentRadical` — tighten to enforce skew-adjointness w.r.t. `S.ambientForm`.
+- `SliceSetup` (in `Slice.lean`) — add Lagrangian condition `L0_paired : IsPaired paired.pairing L0 L0'`.
+- `NormalForm.lean :: kernelImage_ker` signature — re-type `Sₕ` from `LinearMap` to `LinearEquiv`.
 
-- `NormalForm.lean :: kernelImage_ker` and `kernelImage_im` — need `SliceSetup` to expose a Lagrangian condition `λ(L1, L0') = 0` plus `Sₕ` typed as `LinearEquiv` not `LinearMap`.
-- `X0Geometry.lean :: sDual_restrict_ker_isIso` — need `DualTransposeData` to expose `range(Tdual) ⊆ L1` and `finrank L1 = finrank ker S.X0`.
+#### Soft blockers (awaiting infrastructure additions, not statement fixes)
+
+- All of `pNormalForm_witnesses`, `residual_levi_extract`, `residual_levi_build`
+  — need Levi-action machinery (`leviGL_E`, `leviGL_V0`, `levi_conj_XCB`)
+  added to `Slice.lean`. Mechanical, ~60–100 lines.
+
+### Inter-target dependency graph
+
+```
+[Tier S statement fixes]
+    │
+    ├──► uD_isParabolic ────┐
+    ├──► UnipotentRadical ──┼──► parametrizeX0PlusU_existence
+    │                       └──► (cleared) Tier-D inheritance in pNormalForm
+    │
+    ├──► SliceSetup Lagrangian ──┬──► kernelImage_ker
+    │                            ├──► kernelImage_im
+    │                            └──► residual_levi_build
+    │
+    └──► Sₕ as LinearEquiv  ─────► kernelImage_ker
+
+[Levi-action machinery in Slice.lean (new code)]
+    │
+    ├──► pNormalForm_witnesses ──► pNormalForm
+    │
+    └──► residual_levi_extract ──┬
+                                 ├──► pNormalForm_residual_orbit_iso ──► sIndependenceAndOrbitCriterion
+        residual_levi_build ─────┘
+```
 
 ## Notes
 
-- The two top-priority next-round targets are `pNormalForm` and
-  `pNormalForm_residual_orbit_iso` — both provable now without upstream
-  changes; both unblock additional sorries (`sIndependenceAndOrbitCriterion`).
-- All session 3 work landed without breaking the build. `Slice.lean` ended
-  the session with one transient build break (mid-round), self-corrected
-  before round end.
-- Session 2 produced no `sorryAx`-free theorems; session 3 produced 14.
+- Session 4 dispatched **6 parallel provers** despite PROGRESS.md only
+  assigning 1 file. The harness's broader dispatch turned out net-positive:
+  X0Geometry's Tier B target was unlocked early (via intra-file refactor
+  the plan agent had not anticipated). NormalForm took two attempts to
+  recover from a mid-round `show`-pattern build break introduced by
+  parallel ordering.
+- The two top-priority next-round actions are **plan-agent statement
+  fixes** (Tier S) and **Levi-action machinery in `Slice.lean`**. After
+  both land, six of the nine remaining sorries close mechanically.
+- Build is green, but the `pNormalForm` body's `show` patterns are
+  fragile under parallel-prover ordering. Future Levi-machinery additions
+  to `Slice.lean` should be **strictly additive**.
 
 ## Last Updated
 
-2026-04-27T09:30:00Z
+2026-04-27T15:10:00Z

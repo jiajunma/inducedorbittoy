@@ -256,7 +256,23 @@ theorem sIndependenceAndOrbitCriterion (S : SliceSetup F)
     -- `pNormalForm_residual_orbit_iso`.  The slice-stability step
     -- requires `Nondegenerate` and `(2 : F) ≠ 0` which are not in the
     -- current hypothesis list.
-    intro _horbit
+    intro horbit
+    -- Partial progress: extract a witness `g : Module.End F S.V`
+    -- conjugating `XST T₁` to `XST T₂`. The remaining work — showing
+    -- `g ∈ P` (i.e. `IsParabolicElement S g`) and applying
+    -- `pNormalForm_residual_orbit_iso` — needs hypotheses
+    -- `Nondegenerate`/`(2 : F) ≠ 0` and equality `Sₕ₁ = Sₕ₂` that are
+    -- absent from the current statement (Tier A item 3 blocker).
+    have h_self : XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁ ∈
+        GOrbit S (XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁) :=
+      ⟨1, ⟨isUnit_one, fun _ _ => rfl⟩,
+        by rw [Ring.inverse_one]; rfl⟩
+    rw [horbit] at h_self
+    obtain ⟨_g, _hg, _hyeq⟩ := h_self
+    -- `_hg : IsometryEnd S _g`,
+    -- `_hyeq : XST S Sₕ₁ T₁ = _g ∘ₗ XST S Sₕ₂ T₂ ∘ₗ Ring.inverse _g`.
+    -- Inheritance: needs `pNormalForm_residual_orbit_iso` (NormalForm.lean
+    -- line 199, currently sorry; round 2 Tier A target).
     sorry
   · -- Reverse: bilinear isometry → orbit equality.  Plan: invoke
     -- `pNormalForm_residual_orbit_iso` to obtain a `P`-element `p`
@@ -264,7 +280,17 @@ theorem sIndependenceAndOrbitCriterion (S : SliceSetup F)
     -- (parabolic ⊂ isometry group); use this to show that the two
     -- orbits coincide via mutual inclusion.  Same hypothesis gap as
     -- above (`Nondegenerate`, `(2 : F) ≠ 0`).
-    intro _hiso
+    intro hiso
+    -- Partial progress: unfold the isometry-relation hypothesis to
+    -- expose the bilinear-isometry witness `h : L0' ≃ₗ[F] L0'`.
+    unfold IsometryRel Bilinear.AreIsometric at hiso
+    obtain ⟨_h, _h_isom⟩ := hiso
+    -- `_h : ↥S.L0' ≃ₗ[F] ↥S.L0'`,
+    -- `_h_isom : ∀ u v, BT S T₂ (_h u) (_h v) = BT S T₁ u v`.
+    -- Inheritance: lifting `_h` to a `P`-element `p` requires
+    -- `pNormalForm_residual_orbit_iso` (NormalForm.lean line 199,
+    -- currently sorry) plus the missing `Nondegenerate`/`(2 : F) ≠ 0`
+    -- hypotheses and `Sₕ₁ = Sₕ₂`.
     sorry
 
 /-- `prop:multiplicity`, non-degenerate case.  When `T` has full rank
