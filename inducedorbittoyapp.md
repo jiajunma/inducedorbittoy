@@ -56,7 +56,7 @@ and $C^\vee:V_0\to E$ is determined by
 $$
 \langle C^\vee v,a'\rangle=-\langle v,Ca'\rangle_0.
 $$
-Equivalently,
+On vectors,
 $$
 X_{C,B}(e+v+a')=C^\vee v+Ba'+X_0v+Ca'.              \tag{2}
 $$
@@ -130,11 +130,11 @@ $$
 \langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0
 \qquad(u,v\in L'_0).                                  \tag{5}
 $$
-Equivalently,
+The residual form is
 $$
-B_T(u,v):=\langle Tu,v\rangle
+B_T(u,v):=\langle Tu,v\rangle.
 $$
-is a $(-\epsilon)$-Hermitian form on $L'_0$.  Let $B(T):E'\to E$ be the map which is $T$ on $L'_0$ and is zero on $L'_1$.  Define
+Let $B(T):E'\to E$ be the map which is $T$ on $L'_0$ and is zero on $L'_1$.  Define
 $$
 Y_{S,T}:=Y_{C_S,B(T)},
 \qquad
@@ -165,7 +165,7 @@ $$
 \operatorname{Form}_r(L'_0)
 :=\{T\in\mathscr T:\operatorname{rank}_D T=r\}.
 $$
-Thus $\operatorname{Form}_r(L'_0)$ is the maximal-rank locus for the residual form $B_T$.  Equivalently, $B_T$ is non-degenerate except in the real alternating odd case, where it has one-dimensional radical.
+Thus $\operatorname{Form}_r(L'_0)$ is the maximal-rank locus for the residual form $B_T$.
 
 ## Lemma A.1: the general induced-orbit calculation
 
@@ -177,14 +177,14 @@ is non-degenerate of dimension $r$, and we denote its class by
 $$
 [B_T]\in\operatorname{Iso}_{r,-\epsilon}.             \tag{8}
 $$
-Thus the residual block $B_T$ is identified with an element of $\operatorname{Iso}_{r,-\epsilon}$.  When $B_T$ is non-degenerate, this is simply the isomorphism class of $(L'_0,B_T)$.
+We regard $B_T$ as the class $[B_T]\in\operatorname{Iso}_{r,-\epsilon}$.
 
 **Lemma A.1.**  Assume that
 $$
 \dim_D E\ge \dim_D\ker X
 \qquad\text{for }X\in\mathcal O_0.
 $$
-Equivalently, for the fixed element $X_0\in\mathcal O_0$, this says $\kappa\ge c$.  Then the open $G$-orbits in
+Then the open $G$-orbits in
 $$
 \operatorname{Ind}_P^G(\mathcal O_0)
 :=\overline{G\cdot(\mathcal O_0+\mathfrak u)}
@@ -204,7 +204,7 @@ $$
 [B_{T_1}]=[B_{T_2}]
 \qquad\text{in }\operatorname{Iso}_{r,-\epsilon}.
 $$
-Equivalently, the open orbits are indexed by the classes in $\operatorname{Iso}_{r,-\epsilon}$ which occur as $[B_T]$ for $T\in\operatorname{Form}_r(L'_0)$.  The multiplicity is
+The multiplicity is
 $$
 m(G\cdot X_{S,T},P)=
 \begin{cases}
