@@ -108,19 +108,6 @@ class MultiplicityTheory (S : SliceSetup F)
       Odd (Module.finrank F S.L0') →
       Multiplicity S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) = 2
 
-/-- Abstract package for the orbit-independence and orbit-criterion step.
-It isolates the remaining passage from global `G`-conjugacy to the residual
-isometry relation. -/
-class OrbitCriterionTheory (S : SliceSetup F)
-    [TopologicalSpace (Module.End F S.V)] : Prop where
-  orbitCriterion :
-    ∀ (Sₕ₁ Sₕ₂ : S.L1' ≃ₗ[F] S.Vplus)
-      (T₁ T₂ : S.L0' →ₗ[F] S.L0),
-      T₁ ∈ S.Tset_circ → T₂ ∈ S.Tset_circ →
-      (GOrbit S (XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁) =
-          GOrbit S (XST S (Sₕ₂ : S.L1' →ₗ[F] S.Vplus) T₂) ↔
-        IsometryRel S T₁ T₂)
-
 /-! ## Helper lemmas (private) -/
 
 /-- `embO0` applied to `S.X0` is exactly `X0Lift`. -/
@@ -250,17 +237,35 @@ iff requires the additional hypotheses
 `S.formV0.Nondegenerate` and `(2 : F) ≠ 0` (to invoke
 `pNormalForm_residual_orbit_iso`) and a parabolic-decomposition argument
 showing every `g ∈ G` conjugating `XST T₁` to `XST T₂` is itself a
-`P`-element. These ingredients are supplied by `OrbitCriterionTheory`. -/
+`P`-element. Both pieces are out of scope for the current prover round
+and are recorded as scoped sorries below. -/
 theorem sIndependenceAndOrbitCriterion (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
-    [ClassifyBilinearForms F] [OrbitCriterionTheory S]
+    [ClassifyBilinearForms F]
     (Sₕ₁ Sₕ₂ : S.L1' ≃ₗ[F] S.Vplus)
     (T₁ T₂ : S.L0' →ₗ[F] S.L0)
     (_hT₁ : T₁ ∈ S.Tset_circ) (_hT₂ : T₂ ∈ S.Tset_circ) :
     GOrbit S (XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁) =
         GOrbit S (XST S (Sₕ₂ : S.L1' →ₗ[F] S.Vplus) T₂) ↔
       IsometryRel S T₁ T₂ := by
-  exact OrbitCriterionTheory.orbitCriterion Sₕ₁ Sₕ₂ T₁ T₂ _hT₁ _hT₂
+  constructor
+  · -- Forward: orbit equality → bilinear isometry of `BT T₁` and `BT T₂`.
+    -- Plan: extract `g ∈ G` with `g ∘ₗ XST T₁ = XST T₂ ∘ₗ g` (using
+    -- `XST T₂ ∈ GOrbit (XST T₁)` from the hypothesis); show that `g`
+    -- preserves the slice `X₀ + 𝔲` and hence is a `P`-element; apply
+    -- `pNormalForm_residual_orbit_iso`.  The slice-stability step
+    -- requires `Nondegenerate` and `(2 : F) ≠ 0` which are not in the
+    -- current hypothesis list.
+    intro _horbit
+    sorry
+  · -- Reverse: bilinear isometry → orbit equality.  Plan: invoke
+    -- `pNormalForm_residual_orbit_iso` to obtain a `P`-element `p`
+    -- satisfying `p ∘ₗ XST T₁ = XST T₂ ∘ₗ p`; deduce `p ∈ G`
+    -- (parabolic ⊂ isometry group); use this to show that the two
+    -- orbits coincide via mutual inclusion.  Same hypothesis gap as
+    -- above (`Nondegenerate`, `(2 : F) ≠ 0`).
+    intro _hiso
+    sorry
 
 /-- `prop:multiplicity`, non-degenerate case.  When `T` has full rank
 (`im T = L0'`), the multiplicity equals `1`. -/
@@ -297,7 +302,7 @@ of the main theorem of the blueprint:
 theorem main (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
-    [ClassifyBilinearForms F] [OrbitCriterionTheory S] [MultiplicityTheory S]
+    [ClassifyBilinearForms F] [MultiplicityTheory S]
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus) :
     (∀ T : S.L0' →ₗ[F] S.L0, S.IsSkewT T →
         XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T - X0Lift S ∈ UnipotentRadical S)
