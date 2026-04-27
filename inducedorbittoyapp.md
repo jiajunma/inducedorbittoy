@@ -99,7 +99,11 @@ C_S|_{L'_0}=0,                                      \tag{2}
 $$
 and write $S^\vee:=C_S^\vee:V_0\to L_1$.
 
-For a map $T:L'_0\to L_0$, let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$.  Let $\mathscr T$ be the space of those $T$ for which $B(T)$ satisfies (B).  For $T\in\mathscr T$, put
+For a map $T:L'_0\to L_0$, let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$, and set
+$$
+\mathscr T:=\{T:L'_0\to L_0:\ B(T)\text{ satisfies (B)}\}.
+$$
+For $T\in\mathscr T$, put
 $$
 B_T(u,v):=\langle Tu,v\rangle,
 \qquad
@@ -305,11 +309,11 @@ The pairing between $V_+$ and $\ker X_0$ is perfect, so
 $$
 S^\vee|_{\ker X_0}:\ker X_0\xrightarrow{\sim}L_1
 $$
-is an isomorphism.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block of $B$; then (B) forces the opposite $L'_1\to L_0$ cross-block.  After the cross-blocks are killed, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$, using the term $R_1^\vee S-S^\vee R_1$ in (14).  Thus the only surviving block is
+is an isomorphism.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block of $B$; the adjoint cross-block then vanishes by (B).  After the cross-blocks are killed, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$, using the term $R_1^\vee S-S^\vee R_1$ in (14).  Thus the only surviving block comes from some
 $$
-T:L'_0\to L_0,
+T\in\mathscr T,
 $$
-and the skew-adjointness condition (B) gives $T\in\mathscr T$.  Therefore the normal form is $X_{S,T}$.
+and the normal form is $X_{S,T}$.
 
 In the older notation using $n_u$, the middle-right block denoted $B$ is the present $C$, the top-right block denoted $C$ is the present $B$, and the parameter $u$ is the present $R$.
 
