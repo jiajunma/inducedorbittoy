@@ -123,7 +123,7 @@ $$
 :=\{T\in\mathscr T:\operatorname{rank}_D T=r\}.
 $$
 
-## Lemma A.1: the general induced-orbit calculation
+## Lemma A.1: classification of the open induced orbits
 
 Define $\operatorname{Iso}_{r,-\epsilon}$ to be the set of isomorphism classes of non-degenerate $(-\epsilon)$-Hermitian $D$-spaces of $D$-dimension $r$.  If $T\in\operatorname{Form}_r(L'_0)$, let $\operatorname{rad}(B_T)$ be the radical of $B_T$.  The induced form on
 $$
@@ -135,7 +135,7 @@ $$
 $$
 We regard $B_T$ as the class $[B_T]\in\operatorname{Iso}_{r,-\epsilon}$.
 
-**Lemma A.1.**  Assume that
+**Lemma A.1 (classification of the open induced orbits).**  Assume that
 $$
 \dim_D E\ge \dim_D\ker X
 \qquad\text{for }X\in\mathcal O_0.
@@ -145,13 +145,14 @@ $$
 \operatorname{Ind}_P^G(\mathcal O_0)
 :=\overline{G\cdot(\mathcal O_0+\mathfrak u)}
 $$
-are precisely
+are classified by $\operatorname{Iso}_{r,-\epsilon}$.  More precisely, the assignment
 $$
-G\cdot X_{S,T},
+\operatorname{Iso}_{r,-\epsilon}\longrightarrow
+\{\text{open }G\text{-orbits in }\operatorname{Ind}_P^G(\mathcal O_0)\},
 \qquad
-T\in\operatorname{Form}_r(L'_0).                      \tag{6}
+[B_T]\longmapsto G\cdot X_{S,T}                       \tag{6}
 $$
-The $G$-orbit is independent of the auxiliary choice of $S$.  Moreover,
+is a bijection.  Here $T\in\operatorname{Form}_r(L'_0)$ represents the given class.  The resulting orbit is independent of the auxiliary choice of $S$ and of the representative $T$.  Thus
 $$
 G\cdot X_{S,T_1}=G\cdot X_{S,T_2}
 $$
@@ -344,13 +345,14 @@ Then (9), with $s=1$, sends $X_{S_1,T}$ to $X_{S_2,T}$.
 $$
 T\in\operatorname{Form}_r(L'_0).
 $$
-By (8), the corresponding open $G$-orbits in $\operatorname{Ind}_P^G(\mathcal O_0)$ are precisely
+By (8), the assignment
 $$
-G\cdot X_{S,T},
+\operatorname{Iso}_{r,-\epsilon}\longrightarrow
+\{\text{open }G\text{-orbits in }\operatorname{Ind}_P^G(\mathcal O_0)\},
 \qquad
-T\in\operatorname{Form}_r(L'_0).
+[B_T]\longmapsto G\cdot X_{S,T}
 $$
-The orbit criterion in terms of the class $[B_T]\in\operatorname{Iso}_{r,-\epsilon}$ follows from Step 5.
+is the claimed classification map, and Step 5 shows that it is a bijection.
 
 **Step 7: the multiplicity.**  Let $x=X_{S,T}$ with $T\in\operatorname{Form}_r(L'_0)$.  We first record
 $$
