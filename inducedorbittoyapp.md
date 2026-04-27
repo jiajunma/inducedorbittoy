@@ -97,21 +97,20 @@ C_S|_{L'_1}=S,
 \qquad
 C_S|_{L'_0}=0,                                      \tag{3}
 $$
-and write $S^\vee:=C_S^\vee:V_0\to L_1$.  For $T:L'_0\to L_0$ satisfying
+and write $S^\vee:=C_S^\vee:V_0\to L_1$.
+
+Let $\mathscr T$ be the space of all $T:L'_0\to L_0$ satisfying
 $$
 \langle Tu,v\rangle+\epsilon\overline{\langle Tv,u\rangle}=0
-\qquad(u,v\in L'_0),                                  \tag{4}
+\qquad(u,v\in L'_0).                                  \tag{4}
 $$
-put
+For $T\in\mathscr T$, put
 $$
-B_T(u,v):=\langle Tu,v\rangle.
+B_T(u,v):=\langle Tu,v\rangle,
+\qquad
+X_{S,T}:=X_0+Y_{C_S,B(T)},                            \tag{5}
 $$
-Let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$, and set
-$$
-X_{S,T}:=X_0+Y_{C_S,B(T)}.                            \tag{5}
-$$
-
-Let $\mathscr T$ be the space of all $T$ satisfying (4).  Put
+where $B(T):E'\to E$ is $T$ on $L'_0$ and zero on $L'_1$.  Put
 $$
 r=
 \begin{cases}
