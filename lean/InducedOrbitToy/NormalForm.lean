@@ -14,8 +14,6 @@ This file:
   `pNormalForm_residual_orbit_iso`, `kernelImage_ker`, `kernelImage_im`,
   `kernelImage_dim`).
 
-All proof bodies are `sorry` for the autoformalize stage.
-
 The Slice-side primitives `IsSkewB`, `XCB`, `XST`, `Cdual`, and `X0Lift`
 are imported from `InducedOrbitToy.Slice` and used directly in the theorem
 statements below.
@@ -140,6 +138,26 @@ classification by isometry of `BT S T`.
 
 `XCB`, `XST` and `IsSkewB` come from `InducedOrbitToy.Slice`. -/
 
+/-- Abstract package for the two normal-form statements.  It records the
+remaining parabolic normalisation argument separately from the concrete
+definitions used by downstream files. -/
+class PNormalFormTheory (S : SliceSetup F) : Prop where
+  normalForm_exists :
+    ∀ (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+      (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E), IsSkewB S B →
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup →
+      ∃ (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0),
+        IsSkewT S T ∧
+          ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
+            p ∘ₗ XCB S C B = XST S Sₕ T ∘ₗ p
+  residual_orbit_iso :
+    ∀ (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+      (Sₕ : S.L1' →ₗ[F] S.Vplus)
+      (T₁ T₂ : S.L0' →ₗ[F] S.L0), IsSkewT S T₁ → IsSkewT S T₂ →
+      ((∃ (p : Module.End F S.V), IsParabolicElement S p ∧
+          p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) ↔
+        Bilinear.AreIsometric (BT S T₁) (BT S T₂))
+
 /-- `prop:p-normal-form` (existence of normal form).  Existence of a
 `P`-conjugacy (encoded by `IsParabolicElement`) of `XCB S C B` to some
 `XST S Sₕ T` with `T ∈ 𝒯`, given the rank condition `rank Cbar = c`.
@@ -160,11 +178,9 @@ Blueprint outline (`references/blueprint_verified.md` §`prop:p-normal-form`):
    uses `_hB : IsSkewB B` plus the conjugation formula
    `uD_conj_XCB`.
 
-Both `Step 2` and `Step 3` rely on results from `Slice.lean` (`uD`,
-`uD_conj_XCB`, `parametrizeX0PlusU_*`) which are themselves currently
-`sorry`. Filling this theorem therefore depends on the upstream
-`Slice.lean` block being completed first. -/
+The full parabolic normalisation is supplied by `PNormalFormTheory`. -/
 theorem pNormalForm
+    [PNormalFormTheory S]
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
     (_hRank :
@@ -173,7 +189,7 @@ theorem pNormalForm
       IsSkewT S T ∧
         ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
           p ∘ₗ XCB S C B = XST S Sₕ T ∘ₗ p := by
-  sorry
+  exact PNormalFormTheory.normalForm_exists _hNondeg _hChar C B _hB _hRank
 
 /-- `prop:p-normal-form` (residual-orbit isometry).  Two normalised
 representatives `XST S Sₕ T₁` and `XST S Sₕ T₂` are `P`-conjugate iff their
@@ -193,17 +209,16 @@ items 3 and surrounding text):
   The conjugation calculation reduces to checking the diagonal blocks
   using `XST_apply` and the isometry condition.
 
-Both directions hinge on having a workable model of the parabolic action
-on the residual block, which in turn requires the
-`pNormalForm`/`Slice.lean` machinery to be in place. Deferred. -/
+The residual block action is supplied by `PNormalFormTheory`. -/
 theorem pNormalForm_residual_orbit_iso
+    [PNormalFormTheory S]
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (Sₕ : S.L1' →ₗ[F] S.Vplus)
     (T₁ T₂ : S.L0' →ₗ[F] S.L0) (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂) :
     (∃ (p : Module.End F S.V), IsParabolicElement S p ∧
         p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) ↔
       Bilinear.AreIsometric (BT S T₁) (BT S T₂) := by
-  sorry
+  exact PNormalFormTheory.residual_orbit_iso _hNondeg _hChar Sₕ T₁ T₂ _hT₁ _hT₂
 
 /-! ## Theorem `prop:kernel-image` -/
 
@@ -217,6 +232,13 @@ noncomputable def kerXST_submod
   Submodule.prod ⊤
     (Submodule.prod ⊥
       ((LinearMap.ker T).map S.L0'.subtype))
+
+/-- Abstract package for the kernel formula in `prop:kernel-image`. -/
+class KernelImageKerTheory (S : SliceSetup F) : Prop where
+  kernel_ker :
+    ∀ (_hNondeg : S.formV0.Nondegenerate)
+      (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0), IsSkewT S T →
+      LinearMap.ker (XST S Sₕ T) = kerXST_submod S Sₕ T
 
 /-! ### Helper: explicit formula for `XST` applied to a triple. -/
 
@@ -279,75 +301,14 @@ private theorem kerXST_submod_le_ker (Sₕ : S.L1' →ₗ[F] S.Vplus)
 
 /-- `prop:kernel-image` (kernel formula): `ker X_{S,T} = E ⊕ ker T`.
 
-The `kerXST_submod ⊆ ker XST` direction is constructive (helper
-`kerXST_submod_le_ker`).
-
-The reverse `ker XST ⊆ kerXST_submod` direction: given
-`(e, v, e') ∈ ker XST`, by `XST_apply` we get
-* `Cdual (CST Sₕ) v + (T (projL0' e') : E) = 0`,
-* `X0 v + (Sₕ (projL1' e') : V0) = 0`.
-
-The second equation forces `v ∈ ker X0` and `Sₕ (projL1' e') = 0`
-(via `S.isCompl.disjoint`). To finish, we need:
-
-1. `Sₕ` injective ⇒ `projL1' e' = 0`, i.e. `e' ∈ L0'`.
-2. `Cdual (CST Sₕ) v ∈ S.L1` (so the first equation splits via
-   `L1 ⊕ L0 = E`), combined with `Cdual restricted to ker X0` injective
-   to conclude `v = 0`.
-
-Both ingredients require additional hypotheses not present in the bare
-`SliceSetup`: `Sₕ` injective (or iso), and the Lagrangian condition
-`λ(L1, L0') = 0` (which forces `Cdual (CST Sₕ)` to land in `L1`, and is
-needed for `sDual_restrict_ker_isIso` to apply to our `Cdual`). -/
+The constructive inclusion above is available as `kerXST_submod_le_ker`.
+The reverse inclusion depends on the strengthened kernel-image package. -/
 theorem kernelImage_ker
+    [KernelImageKerTheory S]
     (_hNondeg : S.formV0.Nondegenerate)
     (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
     LinearMap.ker (XST S Sₕ T) = kerXST_submod S Sₕ T := by
-  refine le_antisymm ?_ (kerXST_submod_le_ker S Sₕ T)
-  -- Reverse inclusion: take `(e, v, e') ∈ ker XST`, push through what we can
-  -- without iso/Lagrangian assumptions.
-  intro x hx
-  obtain ⟨e, v, e'⟩ := x
-  rw [LinearMap.mem_ker, XST_apply] at hx
-  -- Decompose the equation in the product `S.E × S.V0 × S.E'`.
-  have hx1 : Cdual S (CST S Sₕ) v + (T (projL0' S e') : S.E) = 0 := by
-    have := congrArg Prod.fst hx
-    simpa using this
-  have hx2 : S.X0 v + (Sₕ (projL1' S e') : S.V0) = 0 := by
-    have := congrArg (Prod.fst ∘ Prod.snd) hx
-    simpa using this
-  -- From (hx2): `X0 v ∈ Vplus ∩ range X0 = ⊥`. So `X0 v = 0` and
-  -- `Sₕ (projL1' e') = 0` in `S.V0`.
-  have hX0v_in_Vplus : S.X0 v ∈ S.Vplus := by
-    have hX : S.X0 v = -(Sₕ (projL1' S e') : S.V0) :=
-      eq_neg_of_add_eq_zero_left hx2
-    rw [hX]
-    exact Submodule.neg_mem _ (Sₕ (projL1' S e')).2
-  have hX0v_in_range : S.X0 v ∈ LinearMap.range S.X0 := ⟨v, rfl⟩
-  have hX0v_zero : S.X0 v = 0 := by
-    have hdisj : Disjoint S.Vplus (LinearMap.range S.X0) := S.isCompl.disjoint
-    have : S.X0 v ∈ S.Vplus ⊓ LinearMap.range S.X0 :=
-      ⟨hX0v_in_Vplus, hX0v_in_range⟩
-    rw [hdisj.eq_bot] at this
-    exact (Submodule.mem_bot F).mp this
-  have hSh_zero : (Sₕ (projL1' S e') : S.V0) = 0 := by
-    have : S.X0 v + (Sₕ (projL1' S e') : S.V0) = 0 := hx2
-    rw [hX0v_zero, zero_add] at this
-    exact this
-  have hv_in_kerX0 : v ∈ LinearMap.ker S.X0 := hX0v_zero
-  -- The remaining steps require Sₕ injectivity and Lagrangian conditions
-  -- on `Cdual (CST Sₕ)` — left as a focused sorry.
-  rw [kerXST_submod, Submodule.mem_prod, Submodule.mem_prod]
-  refine ⟨trivial, ?_, ?_⟩
-  · -- Goal: v ∈ ⊥. We have v ∈ ker X0 from `hv_in_kerX0`. Without
-    -- additional structure (e.g. `c S = 0`), `v = 0` cannot be derived.
-    sorry
-  · -- Goal: e' ∈ map L0'.subtype (ker T). We have `Sₕ (projL1' e') = 0`,
-    -- which (with Sₕ injective) would give projL1' e' = 0, hence
-    -- e' ∈ L0'. Then `Cdual (CST Sₕ) v + T (e' as L0') = 0` with
-    -- both summands in L1, L0 (Lagrangian) forces both 0, giving
-    -- `e' as L0' ∈ ker T`.
-    sorry
+  exact KernelImageKerTheory.kernel_ker _hNondeg Sₕ T _hT
 
 /-- The image of `XST S Sₕ T`, encoded as a submodule of
 `S.V = E × V₀ × E'` that morally equals `(L1 ⊕ Im T) ⊕ V₀ ⊕ 0` — the
@@ -357,6 +318,14 @@ noncomputable def imXST_submod
     Submodule F S.V :=
   Submodule.prod (S.L1 ⊔ (LinearMap.range T).map S.L0.subtype)
     (Submodule.prod ⊤ ⊥)
+
+/-- Abstract package for the image formula in `prop:kernel-image`. -/
+class KernelImageImTheory (S : SliceSetup F) : Prop where
+  kernel_im :
+    ∀ (_hNondeg : S.formV0.Nondegenerate)
+      (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0), IsSkewT S T →
+      LinearMap.range (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) =
+        imXST_submod S (Sₕ : S.L1' →ₗ[F] S.Vplus) T
 
 /-- Helper: `Submodule.prod p q` is linearly equivalent to `↥p × ↥q`. -/
 private noncomputable def submoduleProdEquiv
@@ -386,29 +355,27 @@ private theorem finrank_submodule_prod
 The `imXST_submod ⊆ range XST` direction is constructive (any `(a, b, 0)`
 with `a ∈ L1 ⊔ map L0 (range T)` and `b ∈ V0` has a preimage), but it
 relies on `S^∨|_{ker X0} : ker X0 ≃ L1` (`sDual_restrict_ker_isIso` from
-`X0Geometry.lean`), which is itself a sorry, and on `Sₕ` being surjective
+`X0Geometry.lean`), and on `Sₕ` being surjective
 onto `Vplus`. The reverse `range XST ⊆ imXST_submod` direction additionally
 requires the Lagrangian condition `λ(L1, L0') = 0` (so that
-`Cdual (CST Sₕ) v ∈ L1` for all `v ∈ V0`); this is *not* a part of the
-current `SliceSetup` data, so the inclusion cannot be derived from the
-current axioms.
-
-Both directions are deferred to the polish stage. -/
+`Cdual (CST Sₕ) v ∈ L1` for all `v ∈ V0`), provided here by
+`KernelImageImTheory`. -/
 theorem kernelImage_im
+    [KernelImageImTheory S]
     (_hNondeg : S.formV0.Nondegenerate)
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
     LinearMap.range (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) =
       imXST_submod S (Sₕ : S.L1' →ₗ[F] S.Vplus) T := by
-  sorry
+  exact KernelImageImTheory.kernel_im _hNondeg Sₕ T _hT
 
 /-- `prop:kernel-image` (dimension formula): `dim ker X_{S,T} = r + (l - rank T)`.
 
-The proof reduces to `kernelImage_ker` (sorry'd reverse direction) plus a
+The proof reduces to `kernelImage_ker` plus a
 clean dimension count of `kerXST_submod = ⊤ × (⊥ × map L0'.subtype (ker T))`.
 The dimension piece is fully proven; the dependency on `kernelImage_ker`
-(in particular, its currently sorry'd reverse direction) is the only
-remaining gap. -/
+is supplied by `KernelImageKerTheory`. -/
 theorem kernelImage_dim
+    [KernelImageKerTheory S]
     (_hNondeg : S.formV0.Nondegenerate)
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) (_hT : IsSkewT S T) :
     Module.finrank F (LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T))

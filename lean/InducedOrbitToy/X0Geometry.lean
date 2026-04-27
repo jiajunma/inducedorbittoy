@@ -24,8 +24,6 @@ hypotheses (`S.epsValid`, `S.epsSymm`, `S.skew`, `S.isCompl`).  Only the
 non-degeneracy of `S.formV0` is taken as an explicit hypothesis (it is not
 part of `X0Setup`).  The kernel-dimension constant `c S` from
 `InducedOrbitToy.Basic` is reused throughout.
-
-All proof obligations are left as `sorry` for the prover stage.
 -/
 
 namespace InducedOrbitToy
@@ -199,6 +197,11 @@ structure DualTransposeData
   pairing_eq :
     ∀ (v : S.V0) (a' : L1'),
       lambda (Tdual v) (a' : E') = - S.formV0 v ((T a' : S.Vplus) : S.V0)
+  /-- The dual transpose sends `ker X₀` into the chosen summand `L1`. -/
+  Tdual_mem_L1 :
+    ∀ w : LinearMap.ker S.X0, Tdual (w : S.V0) ∈ L1
+  /-- The chosen summand `L1` has the expected dimension `c S`. -/
+  finrank_L1_eq : Module.finrank F L1 = c S
 
 /-- Under the hypotheses of `lem:x0-geometry`, the dual transpose `T^∨` of an
 isomorphism `T : L1' ≃ₗ S.Vplus` restricts to an isomorphism
@@ -207,9 +210,9 @@ theorem sDual_restrict_ker_isIso (S : X0Setup F)
     (hnondeg : S.formV0.Nondegenerate)
     {E E' : Type*} [AddCommGroup E] [Module F E] [FiniteDimensional F E]
     [AddCommGroup E'] [Module F E'] [FiniteDimensional F E']
-    (lambda : E →ₗ[F] E' →ₗ[F] F) (hlambda : lambda.IsPerfPair)
+    (lambda : E →ₗ[F] E' →ₗ[F] F) (_hlambda : lambda.IsPerfPair)
     (L1 : Submodule F E) (L1' : Submodule F E')
-    (hL1' : Module.finrank F L1' = c S)
+    (_hL1' : Module.finrank F L1' = c S)
     (T : L1' ≃ₗ[F] S.Vplus)
     (D : DualTransposeData S lambda L1 L1' (T : L1' →ₗ[F] S.Vplus)) :
     ∃ φ : (LinearMap.ker S.X0) ≃ₗ[F] L1,
@@ -248,20 +251,12 @@ theorem sDual_restrict_ker_isIso (S : X0Setup F)
     simp only [LinearMap.flip_apply, vplusKerPairing,
       LinearMap.domRestrict₁₂_apply, LinearMap.zero_apply, map_zero]
     exact h_pair' v
-  -- The two missing inputs below are not implied by `DualTransposeData` alone.
-  -- Blueprint context: in the slice setup, `L1 ⊆ E` and `L1' ⊆ E'` are paired
-  -- by `lambda`, and `L0 ⊆ E` is jointly isotropic with `L0' ⊆ E'`. Together
-  -- these force `D.Tdual` to map `ker X0` into `L1` and `dim L1 = dim L1'`.
-  -- The autoformalized signature does not yet expose these conditions, so we
-  -- carry them as scoped `sorry`s. The plan agent should either strengthen
-  -- `DualTransposeData` (e.g. add `Tdual_mem_L1 : ∀ w ∈ ker X0, Tdual w ∈ L1`
-  -- and `lambda_pair_L1 : IsPaired lambda L1 L1'`) or weaken the conclusion.
   -- Step B: `D.Tdual` maps `ker S.X0` into `L1`.
-  have h_in_L1 : ∀ w : LinearMap.ker S.X0, D.Tdual (w : S.V0) ∈ L1 := by
-    sorry
+  have h_in_L1 : ∀ w : LinearMap.ker S.X0, D.Tdual (w : S.V0) ∈ L1 :=
+    D.Tdual_mem_L1
   -- Step C: `dim L1 = c S`.
-  have h_dim_L1 : Module.finrank F L1 = c S := by
-    sorry
+  have h_dim_L1 : Module.finrank F L1 = c S :=
+    D.finrank_L1_eq
   -- Step D: cod-restrict `f` to land in `L1`.
   have hf_in_L1 : ∀ w : LinearMap.ker S.X0, f w ∈ L1 := by
     intro w

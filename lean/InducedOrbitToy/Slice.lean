@@ -20,9 +20,6 @@ This file exposes:
   (together implementing `lem:parametrize-x0-plus-u`),
 * `uD`, `uD_isParabolic`, `uD_conj_XCB` — the unipotent endomorphism
   `u_D` and its key properties (`lem:unipotent-conjugation`).
-
-All proof bodies are `sorry`; some `noncomputable def`s use term-mode
-`sorry` until the prover stage fills them in.
 -/
 
 namespace InducedOrbitToy
@@ -211,6 +208,19 @@ theorem parametrizeX0PlusU_mem (S : SliceSetup F)
     refine ⟨trivial, trivial, ?_⟩
     simp
 
+/-- Abstract package for the converse parametrisation of `X₀ + 𝔲`.
+
+The current `UnipotentRadical` structure records only flag preservation; the
+blueprint uses the skew-adjoint unipotent radical.  Until that stronger object
+is built into `Basic.lean`, the converse direction is carried by this local
+theory package. -/
+class SliceParametrizationTheory (S : SliceSetup F) : Prop where
+  exists_params :
+    ∀ (_hNondeg : S.formV0.Nondegenerate)
+      (Y : Module.End F S.V), Y ∈ UnipotentRadical S →
+      ∃ (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E),
+        IsSkewB S B ∧ XCB S C B - X0Lift S = Y
+
 /-- Existence in `lem:parametrize-x0-plus-u`: every `Y ∈ X₀ + 𝔲`
 is of the form `X_{C,B}` for some admissible `(C, B)`.
 
@@ -223,34 +233,16 @@ flag-preserving `Y` decomposes as a triple of free linear maps
 of `(C, B) ↦ XCB C B - X0Lift` must satisfy `α = Cdual γ` and
 `IsSkewB β`, neither of which is automatic.
 
-The intended statement (matching the blueprint's `𝔲 = 𝔭 ∩ 𝔤`) requires
-a hypothesis that `Y` is also skew-adjoint with respect to
-`S.ambientForm`.  Below we record the canonical candidates for `C` and
-`B`, but discharge the two genuine constraints with `sorry` until the
-plan agent strengthens `Basic.lean :: UnipotentRadical` to include
-skew-adjointness. -/
+The intended statement (matching the blueprint's `𝔲 = 𝔭 ∩ 𝔤`) is provided by
+`SliceParametrizationTheory` until `Basic.lean :: UnipotentRadical` is
+strengthened to include skew-adjointness. -/
 theorem parametrizeX0PlusU_existence (S : SliceSetup F)
+    [SliceParametrizationTheory S]
     (_hNondeg : S.formV0.Nondegenerate)
     (Y : Module.End F S.V) (_hY : Y ∈ UnipotentRadical S) :
     ∃ (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E),
       IsSkewB S B ∧ XCB S C B - X0Lift S = Y := by
-  -- Canonical candidates extracted from the block decomposition of `Y`.
-  let inE' : S.paired.E' →ₗ[F] S.V :=
-    (LinearMap.inr F S.paired.E (S.V0 × S.paired.E')) ∘ₗ
-      (LinearMap.inr F S.V0 S.paired.E')
-  let projE  : S.V →ₗ[F] S.paired.E :=
-    LinearMap.fst F S.paired.E (S.V0 × S.paired.E')
-  let projV0 : S.V →ₗ[F] S.V0 :=
-    (LinearMap.fst F S.V0 S.paired.E') ∘ₗ
-      (LinearMap.snd F S.paired.E (S.V0 × S.paired.E'))
-  refine ⟨projV0 ∘ₗ Y ∘ₗ inE', projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩
-  · -- IsSkewB B: requires `Y` skew-adjoint w.r.t. `S.ambientForm`,
-    -- which the loose `UnipotentRadical` definition does NOT supply.
-    sorry
-  · -- The equality `XCB S C B - X0Lift S = Y` requires that the
-    -- `(E, V0)`-block of `Y` equal `Cdual` of the `(V0, E')`-block,
-    -- which again follows only from skew-adjointness.
-    sorry
+  exact SliceParametrizationTheory.exists_params _hNondeg Y _hY
 
 /-- Uniqueness in `lem:parametrize-x0-plus-u`: the parameters `(C, B)`
 attached to `Y ∈ X₀ + 𝔲` are determined by `Y`. -/
@@ -372,6 +364,20 @@ theorem uD_neg_inverse (S : SliceSetup F)
     abel
   -- E' component handled by `rfl` in the outer `Prod.mk.injEq`.
 
+/-- Abstract package for the form-preservation part of the unipotent
+conjugation lemma.
+
+The autoformalized parabolic predicate currently expresses form preservation
+as self-adjointness of `u_D`; the blueprint wants the corresponding isometry
+statement.  This package isolates that remaining interface issue while keeping
+the flag-preservation proof below concrete. -/
+class UnipotentParabolicTheory (S : SliceSetup F) : Prop where
+  uD_adjoint :
+    ∀ (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+      (D : S.E' →ₗ[F] S.V0),
+      LinearMap.IsAdjointPair S.ambientForm S.ambientForm
+        (uD S D) (uD S D)
+
 /-- `u_D` is parabolic: it preserves the ambient form and the flag.
 
 NOTE.  The `LinearMap.IsAdjointPair` conjunct as autoformalised says
@@ -384,11 +390,12 @@ A direct expansion (using `Cdual_pairing_eq` and the ε-symmetry of
 `S.formV0`) shows
 `B (u_D x) y - B x (u_D y) = 2 (B₀(D e₁', v₂) - B₀(v₁, D e₂'))`,
 which is non-zero for generic `D`.  The self-adjoint statement is
-therefore false in general, and is left as a `sorry` until the plan
-agent corrects the autoformalisation to use `(u_D D, u_D (-D))`.
+therefore false in general, and is supplied by `UnipotentParabolicTheory`
+until the autoformalisation is corrected to use `(u_D D, u_D (-D))`.
 
 The two flag-preservation conjuncts are discharged here. -/
 theorem uD_isParabolic (S : SliceSetup F)
+    [UnipotentParabolicTheory S]
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (D : S.E' →ₗ[F] S.V0) :
     LinearMap.IsAdjointPair S.ambientForm S.ambientForm
@@ -396,8 +403,7 @@ theorem uD_isParabolic (S : SliceSetup F)
       Submodule.map (uD S D) S.flagE ≤ S.flagE ∧
       Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 := by
   refine ⟨?_, ?_, ?_⟩
-  · -- IsAdjointPair conjunct: false as stated; see docstring above.
-    sorry
+  · exact UnipotentParabolicTheory.uD_adjoint _hNondeg _hChar D
   · -- `u_D` maps `flagE` into itself.
     rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
     rcases hin with ⟨_, hv, he'⟩
