@@ -76,17 +76,16 @@ noncomputable def Cbar (C : S.E' →ₗ[F] S.V0) :
 
 * `p` is invertible,
 * `p` preserves the flag `0 ≤ E ≤ E ⊕ V₀ ≤ V`,
-* `p` is an isometry of the ambient form (encoded as
-  `IsAdjointPair S.ambientForm S.ambientForm p p`).
+* `p` is an isometry of the ambient form
+  (`LinearMap.IsOrthogonal S.ambientForm p`).
 
-The third clause encodes "form-preserving" via the Mathlib pair-adjoint
-predicate.  In the prover stage one may want to switch to a stronger
-"is-an-isometry" predicate; for autoformalize we only need the abstract
-shape. -/
+The third clause encodes "form-preserving" via Mathlib's
+`LinearMap.IsOrthogonal` predicate, matching the
+`IsometryEnd` shape used in `Orbits.lean`. -/
 def IsParabolicElement (p : Module.End F S.V) : Prop :=
   IsUnit p ∧ Submodule.map p S.flagE = S.flagE ∧
     Submodule.map p S.flagEV0 = S.flagEV0 ∧
-    LinearMap.IsAdjointPair S.ambientForm S.ambientForm p p
+    LinearMap.IsOrthogonal S.ambientForm p
 
 /-! ## `BT` — the bilinear form `(u, v) ↦ λ((T u).val, v)` on `L0'` -/
 
@@ -231,9 +230,10 @@ Blueprint outline (`references/blueprint_verified.md` §`prop:p-normal-form`):
 
 This proof reduces to `pNormalForm_witnesses` (the Levi-witness
 existence) plus the standard parabolic-element machinery (`isUnit_uD`,
-`map_uD_eq_of_le`, `uD_isParabolic`). The `IsAdjointPair` conjunct of
-`IsParabolicElement` inherits the Tier D blocker (statement bug in
-`uD_isParabolic`); see the inline `sorry` below. -/
+`map_uD_eq_of_le`, `uD_isParabolic`). The isometry conjunct of
+`IsParabolicElement` is discharged by chaining the (now-corrected)
+`IsAdjointPair (uD D) (uD (-D))` from `uD_isParabolic` with
+`uD_neg_inverse` to evaluate `uD (-D) ∘ uD D = id`. -/
 theorem pNormalForm
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
@@ -263,13 +263,25 @@ theorem pNormalForm
       have h_neg : Submodule.map (uD S (-D)) S.flagEV0 ≤ S.flagEV0 :=
         (uD_isParabolic S _hNondeg _hChar (-D)).2.2
       exact map_uD_eq_of_le S _hNondeg _hChar D S.flagEV0 h_pos h_neg
-    · -- IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD D):
-      -- This is the Tier D blocker (statement bug in `uD_isParabolic`).
-      -- The autoformalised statement asserts `uD` is *self-adjoint* w.r.t.
-      -- `S.ambientForm`, which is false in general — the blueprint says
-      -- `uD` is an *isometry* (i.e. adjoint pair (uD D, uD (-D))).
-      -- See `Slice.lean :: uD_isParabolic` docstring for details.
-      sorry
+    · -- LinearMap.IsOrthogonal S.ambientForm (uD S D)
+      -- After Tier S #1, `uD_isParabolic`'s 1st conjunct is
+      -- `IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`.
+      -- Chain that with `uD_neg_inverse` to get the isometry identity.
+      intro u v
+      have hAdj :
+          LinearMap.IsAdjointPair S.ambientForm S.ambientForm
+              (uD S D) (uD S (-D)) :=
+        (uD_isParabolic S _hNondeg _hChar D).1
+      have hinv : uD S (-D) ∘ₗ uD S D = LinearMap.id := by
+        have := uD_neg_inverse S _hNondeg _hChar (-D)
+        simpa [neg_neg] using this
+      have hinv_apply : ∀ w, uD S (-D) (uD S D w) = w := by
+        intro w
+        have := congrArg (fun f : Module.End F S.V => f w) hinv
+        simpa using this
+      calc S.ambientForm (uD S D u) (uD S D v)
+          = S.ambientForm u (uD S (-D) (uD S D v)) := hAdj u (uD S D v)
+        _ = S.ambientForm u v := by rw [hinv_apply]
   · -- Conjugation equation: `uD D ∘ XCB C B = XST Sₕ T ∘ uD D`.
     -- From `hConj : uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T`, multiply on
     -- the right by `uD D` and use `uD (-D) ∘ uD D = id`.
@@ -344,9 +356,10 @@ private theorem residual_levi_build (S : SliceSetup F)
   -- the `L_0` block, which needs an extra Lagrangian condition not
   -- present in the bare `SliceSetup` (only `L0_isotropic` is given,
   -- not perfect pairing on `L0 × L0'`).
-  -- The IsAdjointPair conjunct of IsParabolicElement also inherits the
-  -- Tier D blocker; even if the construction succeeded, the IsAdjointPair
-  -- proof would still need its own scoped `sorry`.
+  -- After Tier S #1 (this round), `IsParabolicElement`'s 4th conjunct is
+  -- `LinearMap.IsOrthogonal S.ambientForm p`, which is the genuine
+  -- isometry condition; no longer a Tier D inheritance issue. The
+  -- residual blocker is purely the perfect-pairing dual machinery.
   sorry
 
 /-- `prop:p-normal-form` (residual-orbit isometry).  Two normalised

@@ -6,7 +6,7 @@ prover
 ## Stages
 - [x] init
 - [x] autoformalize
-- [ ] prover  ← current (round 2)
+- [ ] prover  ← current (round 3)
 - [ ] polish
 
 ## Authoritative Sources
@@ -14,231 +14,320 @@ prover
 - Blueprint: `references/blueprint_verified.md` (1049 lines).
 - Module split + scope decisions: `references/formalization_plan.md`.
 - Per-file informal sketches: `.archon/informal/{slice,normalform,localforms,orbits}.md`.
-- Latest review: `.archon/proof-journal/sessions/session_3/summary.md`
-  and `.archon/proof-journal/sessions/session_3/recommendations.md`.
+- Latest review: `.archon/proof-journal/sessions/session_4/summary.md`
+  and `.archon/proof-journal/sessions/session_4/recommendations.md`.
 - Cumulative state: `.archon/PROJECT_STATUS.md`.
 
-## Verified State (independent checks, 2026-04-27)
+## Verified State (independent checks, 2026-04-28)
 
-- `lake build` succeeds; only `sorry` warnings.
-- Custom `axiom` declarations: 0 (verified by inspection of all 6 .lean files).
-- Round-1 progress: 22 → 8 declaration-use `sorry` warnings.
+- `lake build` succeeds; only `sorry` warnings + 1 unused-variable lint
+  (`InducedOrbitToy/X0Geometry.lean:221:35: unused variable hlambda` —
+  pre-existing, do not remove; the hypothesis is part of the
+  autoformalised statement).
+- Custom `axiom` declarations: 0 (re-verified by `lean_verify` /
+  `#print axioms` on every public theorem; only
+  `[propext, Classical.choice, Quot.sound]` appears, plus `sorryAx` on
+  declarations that still embed an explicit `sorry`).
+- Round-2 progress: 8 → 9 declaration-use `sorry` warnings (count rose
+  by 1 due to deliberate helper-extraction in `NormalForm.lean`; one
+  Tier B target was fully closed in `X0Geometry.lean`).
 - Remaining declaration-use `sorry` lines (verified by `lake build`):
-  - `InducedOrbitToy/X0Geometry.lean`: 1 (line 206 — `sDual_restrict_ker_isIso`,
-    body still contains 2 scoped `sorry` at lines 261, 264).
-  - `InducedOrbitToy/Slice.lean`: 2 (line 232 — `parametrizeX0PlusU_existence`;
-    line 391 — `uD_isParabolic`). Both documented as autoformalization bugs;
-    do **not** retry until upstream data fixes land.
-  - `InducedOrbitToy/NormalForm.lean`: 4 (line 167 — `pNormalForm`;
-    line 199 — `pNormalForm_residual_orbit_iso`;
-    line 302 — `kernelImage_ker` (body contains 2 scoped `sorry` at 344, 350);
-    line 397 — `kernelImage_im`).
-  - `InducedOrbitToy/LocalForms.lean`: 0 ✅
-  - `InducedOrbitToy/Orbits.lean`: 1 (line 242 — `sIndependenceAndOrbitCriterion`,
-    body contains 2 scoped `sorry` at 260, 268).
+  - `InducedOrbitToy/X0Geometry.lean`: **0** ✅ (Tier B closed in session 4).
+  - `InducedOrbitToy/Slice.lean`: 2
+    - line 232 — `parametrizeX0PlusU_existence` (Tier D, 2 internal
+      scoped `sorry`s at lines ≈256 and ≈294; do not retry until
+      Tier S #2 lands),
+    - line 442 — `uD_isParabolic` (Tier D, 1 internal scoped `sorry` at
+      line 460; **assigned this round** — Tier S #1 corrects the
+      statement so the sorry becomes provable).
+  - `InducedOrbitToy/NormalForm.lean`: 6
+    - line 196 — `pNormalForm_witnesses` (Tier A, blocked on Levi
+      machinery; Round 4),
+    - line 237 — `pNormalForm` (Tier D inheritance; **assigned this
+      round** — closes once IsParabolicElement is restated),
+    - line 307 — `residual_levi_extract` (Tier A, Round 4),
+    - line 336 — `residual_levi_build` (Tier A + Tier S #3, Round 4 / 5),
+    - line 482 — `kernelImage_ker` (Tier C + Tier S #3 + #4, Round 4 / 5),
+    - line 577 — `kernelImage_im` (Tier C + Tier S #3, Round 4 / 5).
+  - `InducedOrbitToy/Orbits.lean`: 1
+    - line 242 — `sIndependenceAndOrbitCriterion` (Tier A deferred,
+      depends on `pNormalForm_residual_orbit_iso` fully closing; Round 5).
 
-## Round Plan
+## Round Plan (revised after session 4)
 
-The remaining 8 sorries split into four tiers (see session 3
-recommendations). This round (Round 2) handles only **Tier A** —
-proofs that are provable now without any upstream data refactor.
+The 9 remaining sorries split into the four tiers below. This round
+(Round 3) handles only **Tier S #1** — a focused statement-level
+correction that unblocks 2 sorries directly and clears the IsParabolic
+inheritance from a third.
 
 | Tier | Targets | Status |
 |---|---|---|
-| A | `pNormalForm`, `pNormalForm_residual_orbit_iso` (NormalForm.lean) — provable now | **assigned this round** |
-| A (deferred) | `sIndependenceAndOrbitCriterion` (Orbits.lean) — depends on Tier A NormalForm targets | round 3 (after this lands) |
-| B | `sDual_restrict_ker_isIso` (X0Geometry.lean) — needs `Basic.lean :: DualTransposeData` to expose `range Tdual ≤ L1` and `finrank L1 = finrank ker S.X0` | round 4 (data refactor) |
-| C | `kernelImage_ker`, `kernelImage_im` (NormalForm.lean) — needs `SliceSetup` to expose Lagrangian condition `λ(L1, L0') = 0` and `Sₕ` typed as `LinearEquiv` | round 4/5 (data refactor) |
-| D | `parametrizeX0PlusU_existence`, `uD_isParabolic` (Slice.lean) — autoformalization statement bugs (`UnipotentRadical` too loose; `IsAdjointPair` self-adjoint vs isometry) | round 5+ (statement refactor by directive) |
+| **S #1** (this round) | `IsParabolicElement` is currently self-adjoint; should be isometry | **assigned this round** — 2 files (Slice + NormalForm) |
+| A | `pNormalForm_witnesses`, `residual_levi_extract`, `residual_levi_build` (NormalForm.lean) — need Levi-action machinery in Slice.lean | round 4 |
+| S #2, #3, #4 | `UnipotentRadical` skew-adjoint, `SliceSetup.L0_paired`, `kernelImage_ker` Sₕ as `LinearEquiv` | round 4 / 5 |
+| C | `kernelImage_ker`, `kernelImage_im` (NormalForm.lean) | round 4 / 5 (after S #3 + S #4) |
+| D | `parametrizeX0PlusU_existence` (Slice.lean) | round 5 (after S #2) |
+| A (deferred) | `sIndependenceAndOrbitCriterion` (Orbits.lean) | round 5 (after Tier A NormalForm round 4 lands) |
 
-This split keeps each round atomic (one file per agent, no cross-file
-edits in flight) and avoids cascading data-refactor breakage.
+This split keeps each round atomic and avoids cascading data-refactor
+breakage. Round 3's two objectives are tightly coupled — one prover per
+file, but both files must land together. Mid-round build breakage is
+expected (the harness runs in parallel); end-of-round build must be
+green.
 
-## Current Objectives (Round 2)
+## Current Objectives (Round 3)
 
-**One objective.** All other files are blocked on upstream data refactors
-or downstream of the NormalForm targets below; do not assign them this
-round.
+**Two objectives.** All other files are blocked on round-4+ work or are
+already complete; **do not assign provers to them this round**.
 
-### 1. `InducedOrbitToy/NormalForm.lean` — fill 2 of 4 sorries
+### 1. `InducedOrbitToy/Slice.lean` — fix `uD_isParabolic` statement (Tier S #1, half 1)
 
-Targets (Tier A — both provable now, no data refactor required):
+**Target:** `uD_isParabolic` (line 442) — change the `IsAdjointPair`
+conjunct from `IsAdjointPair B B (uD D) (uD D)` (self-adjoint, **false**)
+to `IsAdjointPair B B (uD D) (uD (-D))` (isometry, **true**).
 
-- `pNormalForm` (line 167)
-- `pNormalForm_residual_orbit_iso` (line 199)
+**Existing scoped sorry:** line 460, inside the IsAdjointPair conjunct
+proof. Closes once the statement is corrected.
 
-Do **not** touch `kernelImage_ker` (line 302) or `kernelImage_im`
-(line 397) — they are blocked on upstream `SliceSetup` data and will be
-re-decomposed in a later round. Leave them as-is (their bodies already
-have helpful scoped `sorry`s and outline comments).
+**Do NOT touch:** `parametrizeX0PlusU_existence` (line 232 — Tier D,
+needs Tier S #2 / round 5). Leave its proof body unchanged.
 
-#### Informal content
+#### Required statement edit
 
-The blueprint outline is already inline as docstrings above each
-declaration in `NormalForm.lean`. The prover should re-read those before
-drafting. Cross-references:
+The current statement reads (verbatim):
+```lean
+theorem uD_isParabolic (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (D : S.E' →ₗ[F] S.V0) :
+    LinearMap.IsAdjointPair S.ambientForm S.ambientForm
+        (uD S D) (uD S D) ∧
+      Submodule.map (uD S D) S.flagE ≤ S.flagE ∧
+      Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 := by
+```
 
-- `references/blueprint_verified.md §prop:p-normal-form` — items 1–3 for
-  `pNormalForm`; "residual-orbit isometry" for `pNormalForm_residual_orbit_iso`.
-- `.archon/informal/normalform.md` — per-file informal sketch.
+Change to:
+```lean
+theorem uD_isParabolic (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (D : S.E' →ₗ[F] S.V0) :
+    LinearMap.IsAdjointPair S.ambientForm S.ambientForm
+        (uD S D) (uD S (-D)) ∧
+      Submodule.map (uD S D) S.flagE ≤ S.flagE ∧
+      Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 := by
+```
 
-#### Strategy for `pNormalForm` (line 167)
+(The two flag-preservation conjuncts are unchanged and already proven —
+keep them as-is.)
 
-The hypothesis bundle is
-`(_hNondeg, _hChar, C, B, _hB : IsSkewB B, _hRank)`. The conclusion
-asks for `(Sₕ, T, hSkewT, p, hPara, hConj)` such that
-`p ∘ XCB C B = XST Sₕ T ∘ p`.
+#### Proof strategy for the corrected IsAdjointPair conjunct
 
-1. **Construct `Sₕ : L1' →ₗ[F] Vplus`.** Use `_hRank` (rank `Cbar S C =
-   c S`) plus the rank-nullity bridge `c_eq_finrank_quotient` and
-   `finrank_Vplus_eq_c` (both already in scope from `X0Geometry.lean` /
-   `Basic.lean`) to obtain a linear map whose rank matches the dimension
-   of `Vplus`. The simplest route is:
-   - factor `Cbar S C` through its image inside `S.V0 ⧸ range S.X0`,
-   - identify the image with `S.Vplus` via `VplusEquivQuotientRange`
-     (already proved in `X0Geometry.lean`),
-   - precompose with the (unique) factorisation of `Cbar S C` from
-     `_hRank` to obtain `Sₕ : L1' →ₗ[F] Vplus`.
-   This is the Levi factor adjustment — the `C|_{L1'} = Sₕ`,
-   `C|_{L0'} = 0` decomposition the blueprint describes.
+The blueprint identity is `B (uD D x) y = B x (uD (-D) y)` for all `x, y`.
+By direct expansion at `x = (e₁, v₁, e₁')`, `y = (e₂, v₂, e₂')`:
 
-2. **Pick `D : E' →ₗ[F] V0`** that absorbs the `B|_{L1'}` block via the
-   unipotent conjugation `uD S D` (from `Slice.lean`, sorry-free this
-   round). The blueprint specifies `D` as the unique solution of
-   `λ(D e', v) = formV0 v (C e')` for `e' ∈ L1'`, `v ∈ S.Vplus`.
-   Concretely, define `D : E' →ₗ[F] V0` componentwise on the `L1' ⊕ L0'`
-   decomposition (`S.isComplL'`):
-   - on `L0'`: zero,
-   - on `L1'`: the dual transpose of `C` along `lambda` (the same
-     `Cdual` construction that `Slice.lean` uses, but in the opposite
-     direction — invoke `S.lambda.toPerfPair` directly).
+- Both sides expand to a sum of `λ(·, ·)` and `B₀(·, ·)` terms via the
+  `ambientForm` definition.
+- Use the existing helpers `Cdual_pairing_eq` (or `Cdual_pairing` for
+  the no-`Nondeg` variant) and `S.epsSymm`.
+- Use `(2 : F)⁻¹ + (2 : F)⁻¹ = 1` via `rw [← two_mul, mul_inv_cancel₀ _hChar]`
+  (NOT `field_simp`).
+- The `S.skew` / `IsSkewAdjoint S.formV0 S.X0` hypothesis is **not**
+  needed here (the blueprint isometry identity is purely about the
+  `Cdual D` and `D` blocks).
 
-3. **Set `T := projL0' (B - Cdual D ∘ C)`** (the residual `L0' →ₗ[F] L0`
-   block after absorbing `B|_{L1'}` and `Cdual D C` cross-terms). Verify
-   `IsSkewT T` from `_hB : IsSkewB B`, `Cdual_X0_apply`, `S.epsSymm`,
-   and `S.skew` — the same identity used in `uD_conj_XCB`.
-
-4. **Set `p := uD S D`** (parabolic from Slice.lean). The conjugation
-   `p ∘ XCB C B = XST Sₕ T ∘ p` is exactly `uD_conj_XCB` once the
-   parameters are aligned.
-
-5. **`IsParabolicElement p`** is an open obligation — its
-   `IsAdjointPair B B p p` conjunct is currently `sorry` (Tier D).
-   For *this* round, build `IsParabolicElement` using:
-   - `IsUnit p` from `uD_neg_inverse` (proved): `uD D` and `uD (-D)`
-     are mutual inverses, hence each is a unit;
-   - flag preservation from `uD_isParabolic` (the two non-Tier-D
-     conjuncts are proved);
-   - the `IsAdjointPair B B p p` conjunct: the prover may either
-     (a) attempt a direct proof here (it is *false in general* per the
-     `uD_isParabolic` doc; do not waste cycles on this), or
-     (b) leave a single scoped `sorry` and document that this conjunct
-     of `pNormalForm` inherits the Tier D blocker. Option (b) is
-     **preferred**.
-
-#### Strategy for `pNormalForm_residual_orbit_iso` (line 199)
-
-Bidirectional iff between (a) existence of a parabolic `p` with
-`p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` and (b) `Bilinear.AreIsometric (BT T₁) (BT T₂)`.
-
-- **(→)** Given parabolic `p`, the action descends to a Levi factor
-  `h : L0' ≃ₗ[F] L0'` (use `S.isComplL'` to extract the `L0'` block of
-  `p`). Compute `BT T₂ (h u) (h v) = BT T₁ u v` from
-  `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` and the `XST_apply` formula
-  (already proved in `NormalForm.lean`).
-- **(←)** Given `h : L0' ≃ₗ[F] L0'` an isometry of `BT T₁ ↦ BT T₂`,
-  build `p` as `(h⁻¹)^∨ ⊕ id ⊕ h` on the block decomposition
-  `S.V = E × V₀ × E'` (with `E = L1 ⊕ L0`, `E' = L1' ⊕ L0'`). The
-  conjugation calculation reduces to the diagonal blocks via
-  `XST_apply` and the isometry hypothesis.
-
-For the `IsParabolicElement p` part of the (←) direction, apply the
-same option (b) above: leave the `IsAdjointPair B B p p` conjunct as a
-scoped `sorry` if needed and document the Tier D inheritance.
-
-#### Acceptance criteria for this objective
-
-- Both `pNormalForm` and `pNormalForm_residual_orbit_iso` either
-  - close completely, or
-  - close everything *except* the `IsAdjointPair B B p p` conjunct of
-    `IsParabolicElement` (which inherits the Slice.lean Tier D bug).
-    Use a clearly-scoped internal `sorry` for *only* that conjunct, with
-    an explicit comment naming the upstream blocker.
-- File compiles in isolation (`lake env lean InducedOrbitToy/NormalForm.lean`).
-- `lake build` is still green (only `sorry` warnings).
-- No new `axiom` declarations.
-- Helpers introduced are `private` and live inside `NormalForm.lean`.
-
-#### Reusable Mathlib lemmas confirmed available (carry forward)
-
-- `LinearMap.IsPerfPair.of_injective`, `LinearMap.toPerfPair`,
-  `LinearMap.toPerfPair_apply`, `LinearMap.apply_symm_toPerfPair_self`.
-- `LinearMap.injective_iff_surjective_of_finrank_eq_finrank`,
-  `Subspace.dual_finrank_eq`.
-- `LinearMap.IsAdjointPair`, `LinearMap.IsAdjointPair.eq` (note the bare
-  `LinearMap` namespace, **not** `LinearMap.BilinForm`).
-- `Submodule.linearProjOfIsCompl`, `IsCompl.disjoint`, `IsCompl.codisjoint`,
-  `Disjoint.eq_bot`, `Codisjoint.eq_top`.
-- `Module.finrank_prod`, `Submodule.finrank_map_subtype_eq`,
-  `LinearMap.finrank_range_add_finrank_ker`,
-  `Submodule.finrank_quotient_add_finrank`.
-- `submoduleProdEquiv` and `finrank_submodule_prod` already exist as
-  `private` helpers in `NormalForm.lean` — reuse, do not duplicate.
-
-#### Reusable Slice.lean lemmas (already proved this stage)
-
-All of the following are sorry-free in `Slice.lean` and may be invoked
-freely:
-- `Cdual` (def), `Cdual_pairing_eq`, `Cdual_neg`, `Cdual_X0_apply`.
-- `lambda_isPerfPair`.
-- `XCB_apply`, `X0Lift_apply`, `uD_apply`.
-- `parametrizeX0PlusU_mem`, `parametrizeX0PlusU_uniqueness`.
-- `uD`, `uD_neg_inverse`, `uD_conj_XCB`.
-
-(`parametrizeX0PlusU_existence` and `uD_isParabolic` are *not* in this
-list — they are Tier D and remain `sorry`.)
+The same toolkit was used in `uD_conj_XCB` (sorry-free, lines ~280–350
+of `Slice.lean`); follow that template.
 
 #### Anti-patterns (do not retry — discovered in earlier rounds)
 
-- `XCB_apply ... := rfl` — fails on multi-`let` definitions; the
-  pre-existing `show ...; rfl` form is required.
-- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise — use
-  `open Classical in if … then … else …` *inside* the def body.
-- `omega` cannot see `S.E = S.paired.E` (abbrev boundary) — insert
-  `change Module.finrank F S.paired.E + _ = _` first.
 - `field_simp` leaves residual `1 + 1 = 2` for `(2 : F)⁻¹ + (2 : F)⁻¹ = 1`
-  — use `rw [← two_mul, mul_inv_cancel₀ hChar]` instead.
+  — use `rw [← two_mul, mul_inv_cancel₀ _hChar]` instead.
+- Multi-`let` defs (`uD`) are not definitionally equal to their RHS — use
+  `uD_apply` and `uD_neg_apply` (the latter follows from `uD_apply` via
+  congruence on `D ↦ -D`) to unfold before `linear_combination`.
+- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise — irrelevant here
+  but mentioned for completeness.
+
+#### Acceptance criteria
+
+- `uD_isParabolic` is sorry-free at end of round.
+- File compiles in isolation: `lake env lean InducedOrbitToy/Slice.lean`
+  produces only the line 232 `sorry` warning (Tier D, untouched).
+- `lake build` is green at end of round (after `NormalForm.lean` also
+  lands its half).
+- No new `axiom` declarations; `#print axioms uD_isParabolic` shows only
+  `[propext, Classical.choice, Quot.sound]`.
+- `parametrizeX0PlusU_existence` (line 232) is **untouched**.
+- `XCB_apply`, `XST_apply`, `uD_apply`, `uD_conj_XCB`, `Cdual_pairing_eq`
+  signatures are **unchanged** (they are load-bearing for `NormalForm.lean`).
+
+### 2. `InducedOrbitToy/NormalForm.lean` — fix `IsParabolicElement` definition (Tier S #1, half 2)
+
+**Target:** `IsParabolicElement` (line 86–89) — change the 4th conjunct
+from `IsAdjointPair S.ambientForm S.ambientForm p p` (self-adjoint) to
+`LinearMap.IsOrthogonal S.ambientForm p` (isometry). This matches the
+predicate `IsometryEnd` already used in `Orbits.lean:34`.
+
+**Existing scoped sorry to close:** line 272, inside `pNormalForm`'s
+proof of `IsParabolicElement (uD D)`, the IsAdjointPair conjunct
+(currently a Tier-D inheritance sorry).
+
+**Do NOT touch:** `pNormalForm_witnesses` (line 196), `residual_levi_extract`
+(line 307), `residual_levi_build` (line 336), `kernelImage_ker` (line 482),
+`kernelImage_im` (line 577) — these are Round 4 / 5 work. Leave their
+sorries intact.
+
+#### Required definition edit
+
+Current:
+```lean
+def IsParabolicElement (p : Module.End F S.V) : Prop :=
+  IsUnit p ∧ Submodule.map p S.flagE = S.flagE ∧
+    Submodule.map p S.flagEV0 = S.flagEV0 ∧
+    LinearMap.IsAdjointPair S.ambientForm S.ambientForm p p
+```
+
+Change to:
+```lean
+def IsParabolicElement (p : Module.End F S.V) : Prop :=
+  IsUnit p ∧ Submodule.map p S.flagE = S.flagE ∧
+    Submodule.map p S.flagEV0 = S.flagEV0 ∧
+    LinearMap.IsOrthogonal S.ambientForm p
+```
+
+Update the docstring to reflect the new (correct) blueprint shape: "p is
+an isometry of the ambient form" (replacing "form-preserving via the
+Mathlib pair-adjoint predicate").
+
+#### Proof strategy for the now-corrected IsAdjointPair conjunct in `pNormalForm`
+
+The new 4th conjunct is `LinearMap.IsOrthogonal S.ambientForm (uD S D)`,
+which unfolds to `∀ u v, S.ambientForm (uD D u) (uD D v) = S.ambientForm u v`.
+
+Chain (after Slice.lean's `uD_isParabolic` has been corrected):
+1. From the new `uD_isParabolic`'s 1st conjunct:
+   `S.ambientForm (uD D x) y = S.ambientForm x (uD (-D) y)` for all `x, y`.
+2. Substitute `y := uD D y`:
+   `S.ambientForm (uD D x) (uD D y) = S.ambientForm x (uD (-D) (uD D y))`.
+3. Use `uD_neg_inverse` (or `uD (-D) ∘ uD D = id`, which is
+   `uD_neg_inverse S _hNondeg _hChar (-D)` after `neg_neg`) to reduce
+   the RHS to `S.ambientForm x y`.
+
+Concretely:
+```lean
+· -- LinearMap.IsOrthogonal S.ambientForm (uD S D)
+  intro u v
+  have hAdj := (uD_isParabolic S _hNondeg _hChar D).1   -- IsAdjointPair (uD D) (uD (-D))
+  have hinv : uD S (-D) ∘ₗ uD S D = LinearMap.id := by
+    have := uD_neg_inverse S _hNondeg _hChar (-D)
+    simpa [neg_neg] using this
+  -- B (uD D u) (uD D v) = B u (uD (-D) (uD D v)) = B u v.
+  calc S.ambientForm (uD S D u) (uD S D v)
+      = S.ambientForm u (uD S (-D) (uD S D v)) := hAdj u (uD S D v)
+    _ = S.ambientForm u v := by
+        congr 1
+        exact congrArg (fun f : Module.End F S.V => f v) hinv
+```
+
+(Adjust syntax — `LinearMap.IsAdjointPair B B f g` unfolds to
+`∀ x y, B (f x) y = B x (g y)`, which is what `hAdj u (uD S D v)` invokes.
+Verify the exact unfold via `lean_hover_info` if needed.)
+
+#### Side-effect: review existing `IsParabolicElement` consumers
+
+After the definition change, the file's other consumers of
+`IsParabolicElement` will need a one-liner update:
+
+- `pNormalForm` — the explicit construction (lines 250–272) is the one
+  with the sorry at line 272; close it as above.
+- `residual_levi_extract` (line 307) — only consumes `IsParabolicElement
+  S p` as a hypothesis; the body is still sorry'd. **No change needed**
+  beyond ensuring the file compiles.
+- `residual_levi_build` (line 336) — produces `IsParabolicElement S p` in
+  its existential conclusion; still sorry'd as a whole. **No change
+  needed** beyond ensuring the file compiles.
+- `pNormalForm_residual_orbit_iso` (line 373) — only uses
+  `IsParabolicElement` in the iff statement; the body delegates to the
+  helpers. **No change needed.**
+
+Verify all of these still compile after the definition change.
+
+#### Acceptance criteria
+
+- `IsParabolicElement` definition uses `LinearMap.IsOrthogonal
+  S.ambientForm p` for its 4th conjunct.
+- `pNormalForm`'s line-272 sorry is closed (replaced with the calc /
+  rewrite chain above; ~6–10 lines).
+- All other sorries in `NormalForm.lean` are **unchanged** (still
+  present at lines 196, 307, 336, 482, 577).
+- Sorry count in `NormalForm.lean`: 6 → 5 (one closed).
+- File compiles in isolation: `lake env lean InducedOrbitToy/NormalForm.lean`
+  produces 5 `sorry` warnings, no errors.
+- `lake build` is green at end of round.
+- No new `axiom` declarations; `#print axioms pNormalForm` shows only
+  `[propext, Classical.choice, Quot.sound, sorryAx]` (the `sorryAx` is
+  from the still-unfilled `pNormalForm_witnesses` — unrelated to this
+  round's work).
+- Helpers `isUnit_uD`, `map_uD_eq_of_le`, `XST_apply`,
+  `kerXST_submod_le_ker`, `submoduleProdEquiv`, `finrank_submodule_prod`
+  are **unchanged** (load-bearing for downstream rounds).
 
 ### Files NOT assigned this round
 
-The following files have remaining sorries but are blocked. **Do not
-assign provers to them this round.** Their objectives will be created
-once the upstream refactors are scoped.
+The following files have remaining sorries but are blocked by Round 4+
+work. **Do not assign provers to them this round.**
 
-- `InducedOrbitToy/X0Geometry.lean` — `sDual_restrict_ker_isIso` blocked
-  on `Basic.lean :: DualTransposeData` refactor.
-- `InducedOrbitToy/Slice.lean` — `parametrizeX0PlusU_existence` blocked
-  on `Basic.lean :: UnipotentRadical` refactor; `uD_isParabolic` blocked
-  on autoformalization statement fix.
-- `InducedOrbitToy/Orbits.lean` — `sIndependenceAndOrbitCriterion`
-  depends on this round's Tier A NormalForm targets landing first.
+- `InducedOrbitToy/Basic.lean` — Tier S #2 / #3 deferred to Round 4 / 5
+  (require cascading consumer updates).
+- `InducedOrbitToy/X0Geometry.lean` — done (closed in session 4); no work.
 - `InducedOrbitToy/LocalForms.lean` — done; no work.
+- `InducedOrbitToy/Orbits.lean` — `sIndependenceAndOrbitCriterion` Tier A
+  deferred; Round 5 work after `pNormalForm_residual_orbit_iso` closes.
+
+The harness has been observed to dispatch provers to all 6 files
+regardless of `PROGRESS.md`'s stated assignments (session 4
+"Process observation"). Provers receiving non-objective files this round
+should:
+- verify the file compiles in isolation,
+- write a brief "no work" `task_results/<File>.md`, and
+- **not edit anything**.
+
+## Coordination notes for Round 3 (parallel-safety)
+
+Round 3's two objectives are tightly **coupled across files**:
+
+- `Slice.lean :: uD_isParabolic`'s new statement is consumed by
+  `NormalForm.lean :: pNormalForm`'s line-272 proof.
+- If the `NormalForm.lean` prover finishes first (using the new
+  `uD_isParabolic` form), `lake build` will fail until the Slice.lean
+  prover lands. Vice versa.
+
+**Provers must NOT panic at mid-round build breakage** when the only
+errors are in the *other* file. The plan-agent post-round verification
+will check end-of-round `lake build` after both provers finish.
+
+If a prover finishes its own file's edits but `lake build` still has
+errors only in the *other* assigned file, the prover should:
+- still write its `task_results/<File>.md` reporting its file's edits,
+- explicitly note that the cross-file error is expected and will resolve
+  when the sister prover lands.
 
 ## Reusable Gotchas (carry forward, augmented)
 
 - `LinearMap.IsAdjointPair`, **not** `LinearMap.BilinForm.IsAdjointPair`.
-- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise.
+- `LinearMap.IsOrthogonal B g` unfolds to `∀ x y, B (g x) (g y) = B x y`.
+- `Decidable (S.eps = 1 ∧ Odd l)` does not synthesise; use
+  `open Classical in if … then … else …` inside `def` bodies.
 - Trim `simp` argument lists; lints-as-errors reject unused simp args.
 - `lean_diagnostic_messages` MCP needs absolute file paths.
 - `[TopologicalSpace (Module.End F S.V)]` cannot be a file-level
   `variable` instance binder; thread it as an explicit hypothesis.
-- `Submodule.linearProjOfIsCompl` is the right tool for `L1' ⊕ L0'`
-  / `L1 ⊕ L0` decompositions.
+- `Submodule.linearProjOfIsCompl` is the right tool for `L1' ⊕ L0'` /
+  `L1 ⊕ L0` decompositions.
 - Term-mode `sorry`s must be replaced with a real construction before
   any downstream theorem about them can be discharged.
 - Polymorphic typeclass over multi-universe structures: declare with
   explicit `class C.{u, v, w, x} ...`; `Type*` placeholders in class
-  fields do not unify across uses (lesson from session 3 LocalForms).
+  fields do not unify across uses.
 - `change Module.finrank F S.paired.E + _ = _` to bridge `S.E ≡ S.paired.E`
   abbrev boundary before `omega`.
 - Block-matrix `_apply` helpers: write the fully unfolded RHS in a
@@ -248,16 +337,30 @@ once the upstream refactors are scoped.
   (do **not** `field_simp` — leaves residual `1 + 1 = 2`).
 - `Ring.inverse` on `Module.End F V` is the right packaging for
   "best-effort inverse" in orbit predicates (no division-ring needed).
+- **(NEW session 4) `Units.mkOfMulEqOne` for `IsUnit` from one-sided
+  inverse on `Module.End F V` (finite-dim V):**
+  `(Units.mkOfMulEqOne _ _ h).isUnit`. Replaces deprecated
+  `LinearMap.mul_eq_one_of_mul_eq_one`; works because
+  `Module.End F V` is `IsDedekindFiniteMonoid` for finite-dim V.
+- **(NEW session 4) `obtain ⟨a, b, c⟩ := <existential>` makes
+  destructured fields opaque** — fix by packaging the equation directly
+  in helper's conclusion (avoid the existential wrapper).
+- **(NEW session 4) Verify structure location via `grep` before scoping
+  a refactor**; session 3 mis-located `DualTransposeData` to `Basic.lean`,
+  but it actually lives in `X0Geometry.lean`.
 
 ## Reporting
 
 Each prover writes `.archon/task_results/<File>.md` with:
 - which sorries were closed (line numbers + theorem names);
+- which statements were *changed* (definitions, hypothesis lists, etc.);
 - exact Mathlib lemmas used;
 - remaining subgoals and notable failed attempts (so the plan agent does
   not repeat dead ends);
 - confirmation that the assigned file compiles in isolation
   (`lake env lean InducedOrbitToy/<File>.lean`);
-- confirmation that `lake build` is still green;
+- confirmation that `lake build` is green **at end of round** (after the
+  sister file lands; cross-file errors mid-round are expected for
+  Round 3);
 - confirmation that no `axiom` was introduced
   (`#print axioms` for each public theorem in the file).

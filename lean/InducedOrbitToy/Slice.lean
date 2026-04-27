@@ -423,41 +423,49 @@ theorem uD_neg_inverse (S : SliceSetup F)
     abel
   -- E' component handled by `rfl` in the outer `Prod.mk.injEq`.
 
-/-- `u_D` is parabolic: it preserves the ambient form and the flag.
+/-- `u_D` is parabolic: it is an isometry of the ambient form and
+preserves the flag `0 ≤ E ≤ E ⊕ V₀ ≤ V`.
 
-NOTE.  The `LinearMap.IsAdjointPair` conjunct as autoformalised says
-`B (u_D x) y = B x (u_D y)`, i.e. that `u_D` is *self-adjoint* with
-respect to the ambient form.  The blueprint actually asserts that
-`u_D` is an *isometry* (`B (u_D x) (u_D y) = B (x, y)`), or
-equivalently, the adjoint pair `(u_D, u_D⁻¹) = (u_D D, u_D (-D))`.
-
-A direct expansion (using `Cdual_pairing_eq` and the ε-symmetry of
-`S.formV0`) shows
-`B (u_D x) y - B x (u_D y) = 2 (B₀(D e₁', v₂) - B₀(v₁, D e₂'))`,
-which is non-zero for generic `D`.  The self-adjoint statement is
-therefore false in general, and is left as a `sorry` until the plan
-agent corrects the autoformalisation to use `(u_D D, u_D (-D))`.
-
-The two flag-preservation conjuncts are discharged here. -/
+The isometry conjunct is encoded as
+`LinearMap.IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`,
+which (via `uD_neg_inverse`) is equivalent to
+`B (u_D x) (u_D y) = B (x, y)` — the blueprint statement.  Direct
+expansion uses `Cdual_pairing_eq`, the ε-symmetry of `S.formV0`, and
+`(2 : F)⁻¹ + (2 : F)⁻¹ = 1`. -/
 theorem uD_isParabolic (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (D : S.E' →ₗ[F] S.V0) :
     LinearMap.IsAdjointPair S.ambientForm S.ambientForm
-        (uD S D) (uD S D) ∧
+        (uD S D) (uD S (-D)) ∧
       Submodule.map (uD S D) S.flagE ≤ S.flagE ∧
       Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 := by
   refine ⟨?_, ?_, ?_⟩
-  · -- IsAdjointPair conjunct: false as stated; see docstring above.
-    -- Direct calculation: take `x = (0, v, 0)` and `y = (0, 0, e₁')`.
-    -- Then `S.ambientForm (uD D x) y - S.ambientForm x (uD D y)`
-    -- evaluates to `-2 · S.formV0 v (D e₁')`, which is non-zero in
-    -- general (e.g. choose `D` non-zero and `S.formV0` non-degenerate).
-    -- The blueprint claim is that `uD` is an *isometry*, equivalent to
-    -- `IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`; the
-    -- present autoformalised statement asks for self-adjointness instead,
-    -- which fails. (Tier D blocker — awaiting plan-agent statement fix.)
+  · -- IsAdjointPair: B (uD D x) y = B x (uD (-D) y) for all x, y.
+    -- Direct expansion: write `uD D` and `uD (-D)` block-wise via
+    -- `uD_apply`, distribute through the bilinear `ambientForm`, and
+    -- apply `Cdual_pairing_eq` to each `λ(Cdual D v, e')` term.  The
+    -- resulting identity in `B₀` and `λ` closes via ε-symmetry,
+    -- `ε² = 1`, and `(2 : F)⁻¹ + (2 : F)⁻¹ = 1`.
     intro x y
-    sorry
+    obtain ⟨e₁, v₁, e₁'⟩ := x
+    obtain ⟨e₂, v₂, e₂'⟩ := y
+    rw [uD_apply S D e₁ v₁ e₁', uD_apply S (-D) e₂ v₂ e₂', Cdual_neg]
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, LinearMap.map_add,
+      LinearMap.add_apply, LinearMap.map_smul, LinearMap.smul_apply,
+      smul_eq_mul, LinearMap.neg_apply, LinearMap.map_neg, neg_neg]
+    rw [Cdual_pairing_eq S _hNondeg D v₁ e₂',
+        Cdual_pairing_eq S _hNondeg D (D e₁') e₂',
+        Cdual_pairing_eq S _hNondeg D v₂ e₁',
+        Cdual_pairing_eq S _hNondeg D (D e₂') e₁']
+    have hε := S.epsSymm
+    have hε2 : S.eps * S.eps = 1 := by
+      rcases S.epsValid with h | h <;> simp [h]
+    have hC : S.formV0 v₂ (D e₁') = S.eps * S.formV0 (D e₁') v₂ := hε _ _
+    have hD' : S.formV0 (D e₂') (D e₁') = S.eps * S.formV0 (D e₁') (D e₂') :=
+      hε _ _
+    linear_combination
+      (-S.eps) * hC + (S.eps * (2 : F)⁻¹) * hD'
+        + (S.formV0 (D e₁') (D e₂') * (2 : F)⁻¹ - S.formV0 (D e₁') v₂) * hε2
   · -- `u_D` maps `flagE` into itself.
     rintro x ⟨⟨e, v, e'⟩, hin, rfl⟩
     rcases hin with ⟨_, hv, he'⟩

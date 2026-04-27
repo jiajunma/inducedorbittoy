@@ -1,214 +1,161 @@
 # InducedOrbitToy/Slice.lean
 
-## Round 2 (prover) — partial-progress refinement
+## Round 3 (prover) — Tier S #1 half 1: corrected `uD_isParabolic`
 
-**File assigned despite PROGRESS.md flagging as "do not retry until upstream
-fix lands."** PROGRESS.md (Round 2 plan) lists the two remaining
-`Slice.lean` sorries as Tier D (autoformalization statement bugs):
+**Assigned objective**: change the `IsAdjointPair` conjunct of
+`uD_isParabolic` from `IsAdjointPair B B (uD D) (uD D)` (self-adjoint,
+**false**) to `IsAdjointPair B B (uD D) (uD (-D))` (isometry, **true**),
+then discharge the (now-true) sorry at line 460.
 
-- `parametrizeX0PlusU_existence` (line 232) — `Basic.lean :: UnipotentRadical`
-  is too loose; doesn't enforce skew-adjointness w.r.t. `S.ambientForm`.
-- `uD_isParabolic` (line 391 / now 442) — `IsAdjointPair B B (uD D) (uD D)`
-  asks for self-adjointness of `uD`, but `uD` is an *isometry* (the
-  blueprint claim is `IsAdjointPair B B (uD D) (uD (-D))`).
+### Result: RESOLVED
 
-Both statements are **mathematically false as autoformalized**, so closing
-them outright is impossible. This round therefore refines the existing
-scoped sorries to expose the precise obstructions and discharge every
-sub-goal that *is* provable from the current data.
+- Statement edited per `PROGRESS.md` Round 3 §1.
+- The internal `IsAdjointPair` sorry is fully closed by ε-symmetry +
+  `(2 : F)⁻¹ + (2 : F)⁻¹ = 1` toolkit (no new helper lemmas, no axioms).
+- File compiles in isolation: `lake env lean InducedOrbitToy/Slice.lean`
+  produces only the `parametrizeX0PlusU_existence` line 232 warning
+  (Tier D, **untouched** as instructed).
+- `lake build` is green at end of round (NormalForm.lean's half landed
+  in parallel).
+- `#print axioms uD_isParabolic` (via `lean_verify`):
+  `[propext, Classical.choice, Quot.sound]`.  No `sorryAx`.
+- All previously sorry-free declarations untouched. Helpers
+  `XCB_apply`, `XST_apply`, `uD_apply`, `uD_conj_XCB`,
+  `Cdual_pairing_eq` signatures **unchanged**.
 
-### Result
+### Statement edit (lines 426–441)
 
-- File compiles in isolation
-  (`lake env lean InducedOrbitToy/Slice.lean` — only the two documented
-  `sorry` warnings, no errors).
-- `lake build` for `InducedOrbitToy.Slice` is green (only `sorry`
-  warnings). NormalForm.lean has a separate build error introduced by
-  another agent's helper (`IsUnit.of_mul_eq_one _ _ h1` arity bug at
-  line 151) — outside the scope of this prover.
-- No `axiom` declarations introduced (`#print axioms` for
-  `uD_conj_XCB` shows only `propext`, `Classical.choice`, `Quot.sound`;
-  `parametrizeX0PlusU_existence` and `uD_isParabolic` additionally use
-  `sorryAx`, as expected).
-- All previously sorry-free declarations remain untouched.
+Docstring updated to reflect the (correct) isometry semantics; the
+4th-conjunct argument list went from `(uD S D) (uD S D)` to
+`(uD S D) (uD S (-D))`. The two flag-preservation conjuncts are
+unchanged.
 
-## `parametrizeX0PlusU_existence` (line 232)
-
-### Mathematical assessment (re-verified this round)
-
-The hypothesis `_hY : Y ∈ UnipotentRadical S` unfolds to:
-
-1. Y vanishes on `flagE` (i.e. on `(e, 0, 0)`),
-2. Y maps `flagEV0` into `flagE` (i.e. `Y(e, v, 0) = (·, 0, 0)`),
-3. Y maps all of `V` into `flagEV0` (i.e. the E'-component of `Y x` is 0).
-
-So `Y(e, v, e') = (α₁(v) + β(e'), γ(e'), 0)` for some block components
-`α₁ : V₀ →ₗ E`, `β : E' →ₗ E`, `γ : E' →ₗ V₀`. The required factorisation
-`Y = XCB S C B - X0Lift S` forces `C = γ`, `B = β`, **and**
-`α₁ = Cdual S γ`. The latter identity follows iff `Y` is skew-adjoint
-w.r.t. `S.ambientForm`, which `UnipotentRadical S` does **not** enforce.
-
-Similarly, `IsSkewB B = β` reduces to the `(E', E')`-block of the
-skew-adjointness identity for `Y`, again unprovable from the loose
-`UnipotentRadical`.
-
-### Refinement applied this round
-
-Replaced the bare scoped sorries with a structured proof that closes the
-two provable Prod-component subgoals (V₀ and E'), exposing only the
-genuinely false E-component as `sorry`. The first conjunct (`IsSkewB B`)
-is also opened up by `intro u v` plus a `show` for the unfolded goal,
-making the precise obligation visible to the next agent.
+### Proof of the IsAdjointPair conjunct (lines 449–467)
 
 ```lean
-refine ⟨projV0 ∘ₗ Y ∘ₗ inE', projE ∘ₗ Y ∘ₗ inE', ?_, ?_⟩
-· -- IsSkewB B (Tier D blocker)
-  intro u v
-  show S.lambda ((projE ∘ₗ Y ∘ₗ inE') u) v
-      + S.eps * S.lambda ((projE ∘ₗ Y ∘ₗ inE') v) u = 0
-  sorry
-· -- The equality `XCB S C B - X0Lift S = Y`.
-  apply LinearMap.ext
-  rintro ⟨e, v, e'⟩
-  obtain ⟨hflagE, hflagEV0, hAll⟩ := _hY
-  -- Y vanishes on flagE; decompose the input.
-  have hY_e0 : Y (e, 0, 0) = 0 := …
-  have hsum  : ((e, v, e') : S.V) = (e, 0, 0) + (0, v, 0) + (0, 0, e') := …
-  have hY_sum : Y (e, v, e') = Y (0, v, 0) + Y (0, 0, e') := …
-  -- Y (0, v, 0) ∈ flagE so its V₀ and E' components vanish.
-  have hY_v_V0_eq : (Y (0, v, 0)).2.1 = 0 := …
-  have hY_v_E'_eq : (Y (0, v, 0)).2.2 = 0 := …
-  -- Y (0, 0, e') ∈ flagEV0 so its E' component vanishes.
-  have hY_e'_E'_eq : (Y (0, 0, e')).2.2 = 0 := …
-  rw [LinearMap.sub_apply, XCB_apply, X0Lift_apply, hY_sum]
-  refine Prod.mk.injEq .. |>.mpr
-    ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
-  · -- E component (Tier D blocker — needs `α₁ = Cdual S γ`).
-    sorry
-  · -- V₀ component: closes via `simp [projV0, inE']`.
-    simp only [hY_v_V0_eq, zero_add]
-    simp [projV0, inE', LinearMap.comp_apply]
-  · -- E' component: closes via `simp [hY_v_E'_eq, hY_e'_E'_eq]`.
-    simp [hY_v_E'_eq, hY_e'_E'_eq]
+intro x y
+obtain ⟨e₁, v₁, e₁'⟩ := x
+obtain ⟨e₂, v₂, e₂'⟩ := y
+rw [uD_apply S D e₁ v₁ e₁', uD_apply S (-D) e₂ v₂ e₂', Cdual_neg]
+simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, LinearMap.map_add,
+  LinearMap.add_apply, LinearMap.map_smul, LinearMap.smul_apply,
+  smul_eq_mul, LinearMap.neg_apply, LinearMap.map_neg, neg_neg]
+rw [Cdual_pairing_eq S _hNondeg D v₁ e₂',
+    Cdual_pairing_eq S _hNondeg D (D e₁') e₂',
+    Cdual_pairing_eq S _hNondeg D v₂ e₁',
+    Cdual_pairing_eq S _hNondeg D (D e₂') e₁']
+have hε := S.epsSymm
+have hε2 : S.eps * S.eps = 1 := by rcases S.epsValid with h | h <;> simp [h]
+have hC : S.formV0 v₂ (D e₁') = S.eps * S.formV0 (D e₁') v₂ := hε _ _
+have hD' : S.formV0 (D e₂') (D e₁') = S.eps * S.formV0 (D e₁') (D e₂') := hε _ _
+linear_combination
+  (-S.eps) * hC + (S.eps * (2 : F)⁻¹) * hD'
+    + (S.formV0 (D e₁') (D e₂') * (2 : F)⁻¹ - S.formV0 (D e₁') v₂) * hε2
 ```
 
-### Reusable structural facts proved inside this proof
+### Mathematical derivation (verified by `linear_combination`)
 
-These are now visible in the proof body and could be hoisted to private
-helpers if the plan agent wants to reuse them in `pNormalForm` or
-`Orbits.lean`:
+Set abbreviations
+`A := B₀(D e₁', D e₂')`, `B := B₀(D e₁', v₂)`,
+`C := B₀(v₂, D e₁')`,    `D' := B₀(D e₂', D e₁')`.
 
-- `Y ∈ UnipotentRadical S → Y (e, 0, 0) = 0`.
-- `Y ∈ UnipotentRadical S → (Y (0, v, 0)).2.1 = 0` and `(Y (0, v, 0)).2.2 = 0`.
-- `Y ∈ UnipotentRadical S → (Y (0, 0, e')).2.2 = 0`.
-- `(0, 0, e') = inE' e'` definitionally (used in the `simp [projV0, inE']`
-  step).
-
-### What still requires upstream fix
-
-To close the two remaining sorries, **`Basic.lean :: UnipotentRadical`
-must be tightened** to a Lie subalgebra that *also* preserves
-`S.ambientForm`. With that, the E-component identity
-`Cdual S C v = (Y (0, v, 0)).1` and the IsSkewB obligation both become
-provable by direct expansion of the skew-adjointness condition.
-
-## `uD_isParabolic` (now line 442)
-
-### Mathematical assessment (re-verified this round)
-
-Pick `x = (0, v, 0)` and `y = (0, 0, e₁')`. Then:
-
-- `uD D x = (Cdual D v, v, 0)`,
-- `uD D y = (½ Cdual D (D e₁'), D e₁', e₁')`,
-- `S.ambientForm (uD D x, y) = λ(Cdual D v, e₁')
-       = -B₀(v, D e₁')` (by `Cdual_pairing_eq`),
-- `S.ambientForm (x, uD D y) = B₀(v, D e₁')`.
-
-Difference: `-2 · B₀(v, D e₁')`, non-zero in general. So the
-`IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD D)` conjunct is
-**genuinely false** — it asserts self-adjointness but `uD` is an
-isometry. The blueprint statement should read
+After `uD_apply` on both sides and applying `Cdual_pairing_eq` to all
+`λ(Cdual D ·, ·)` atoms, the LHS − RHS reduces to
 
 ```
-LinearMap.IsAdjointPair S.ambientForm S.ambientForm (uD S D) (uD S (-D))
+−A/2 + B − ε·C + (ε/2)·D'.
 ```
 
-(equivalent to `B (uD D x, uD D y) = B (x, y)`).
+Use ε-symmetry `C = ε·B`, `D' = ε·A`, then `ε² = 1` to obtain
+`(1 − ε²)·(B − A/2) = 0`. The `linear_combination` coefficients
+`(−ε)·hC, (ε/2)·hD', (A/2 − B)·hε2` give exactly this cancellation;
+the residual is closed by `ring`.
 
-### Refinement applied this round
+### Mathlib lemmas used (none new)
 
-Replaced the bare sorry with `intro x y` plus a docstring-level comment
-giving the explicit witness for falsity, so the next agent can pick up
-the precise obstruction.
+- `LinearMap.mk₂_apply` — peels `SliceSetup.ambientForm` (a `mk₂`) into
+  its underlying scalar formula `λ + B₀ + ε·λ`.
+- `LinearMap.map_add`, `LinearMap.add_apply`, `LinearMap.map_smul`,
+  `LinearMap.smul_apply`, `smul_eq_mul`, `LinearMap.neg_apply`,
+  `LinearMap.map_neg`, `neg_neg` — distribute the bilinear form
+  through the block-vector arithmetic emitted by `uD_apply`.
+- `linear_combination` (with default `ring` norm) — close the final
+  scalar identity.
 
-```lean
-· -- IsAdjointPair conjunct (Tier D — autoformalisation statement bug):
-  -- For x = (0, v, 0), y = (0, 0, e₁'), the obstruction evaluates to
-  -- −2 · S.formV0 v (D e₁'), which is non-zero in general. Replace the
-  -- statement with `IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`.
-  intro x y
-  sorry
-```
+### Anti-patterns avoided
 
-### What still requires upstream fix
+- Did **not** use `field_simp` (would have left residual `1 + 1 = 2`).
+- Did **not** introduce term-mode `sorry`.
+- Did **not** modify any other sorry-free declaration.
+- Did **not** use `private` `Cdual_pairing` (defined later in the file
+  at line 478, so out of scope at line 442). Used the equivalent
+  `Cdual_pairing_eq` (defined at line 78) with the in-scope `_hNondeg`
+  hypothesis.
+- Did **not** rely on `eps_sq_eq_one` (also defined later at line 511).
+  Inlined the two-line `rcases S.epsValid with h | h <;> simp [h]`.
 
-The plan agent must rewrite the autoformalised statement to
-`IsAdjointPair … (uD D) (uD (-D))` (matching the blueprint isometry
-claim). Once that lands, the proof should be a direct expansion using
-`Cdual_pairing_eq`, `S.epsSymm`, `eps_sq_eq_one`, and `S.skew` — exactly
-the toolkit already used in `uD_conj_XCB` (which is sorry-free).
+### Not touched (per `PROGRESS.md` instructions)
 
-## Files touched
+- `parametrizeX0PlusU_existence` (line 232) — Tier D, blocked on
+  Tier S #2 (`UnipotentRadical` skew-adjoint tightening). Two internal
+  scoped sorries at lines 256 (IsSkewB component) and 294 (E component
+  of the equality) remain as left by the round-2 prover.
+- All declarations before line 426 (`uD_neg_inverse`, `uD_apply`,
+  `Cdual_neg`, `Cdual_pairing_eq`, `XCB_apply`, `X0Lift_apply`,
+  `parametrizeX0PlusU_mem`, `parametrizeX0PlusU_uniqueness`,
+  `Cdual`, `uD`, `XCB`, `XST`, `XST_apply`-helpers, `BST`, `CST`,
+  `projL0'`, `projL1'`).
+- All declarations after line 467 in the same block
+  (`uD_isParabolic` flag-preservation conjuncts, `Cdual_pairing`,
+  `Cdual_X0_apply`, `eps_sq_eq_one`, `uD_conj_XCB`).
 
-Only `InducedOrbitToy/Slice.lean`. No other `.lean` file modified.
-
-## Diagnostic (final)
+### Final diagnostic
 
 ```
 $ lake env lean InducedOrbitToy/Slice.lean
 warning: InducedOrbitToy/Slice.lean:232:8: declaration uses `sorry`
-warning: InducedOrbitToy/Slice.lean:442:8: declaration uses `sorry`
 ```
 
 ```
-$ lake build  # for InducedOrbitToy.Slice
-⚠ Built InducedOrbitToy.Slice (13s)
+$ lake build
+⚠ [8028/8033] Replayed InducedOrbitToy.Slice
 warning: InducedOrbitToy/Slice.lean:232:8: declaration uses `sorry`
-warning: InducedOrbitToy/Slice.lean:442:8: declaration uses `sorry`
+⚠ [8029/8033] Built InducedOrbitToy.NormalForm (10s)
+warning: InducedOrbitToy/NormalForm.lean:195:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:319:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:348:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:495:8: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:590:8: declaration uses `sorry`
+✔ [8030/8033] Built InducedOrbitToy.LocalForms (8.2s)
+⚠ [8031/8033] Built InducedOrbitToy.Orbits (10s)
+warning: InducedOrbitToy/Orbits.lean:242:8: declaration uses `sorry`
+✔ [8032/8033] Built InducedOrbitToy (7.9s)
+Build completed successfully (8033 jobs).
 ```
 
-(Aggregate `lake build` currently fails on `NormalForm.lean` due to a
-separate prover's helper-lemma arity bug at line 151 —
-`IsUnit.of_mul_eq_one _ _ h1` — which is outside the scope of this
-prover. Reported here for visibility only; do not edit `NormalForm.lean`.)
+End-of-round sorry counts:
+- Slice.lean: **1** declaration-use warning (was 2; `uD_isParabolic`
+  closed). Two internal scoped sorries inside
+  `parametrizeX0PlusU_existence` are unchanged.
+- NormalForm.lean: 5 (was 6; sister prover landed its half — Tier D
+  inheritance sorry in `pNormalForm` closed).
+- Orbits.lean: 1 (unchanged, blocked).
 
-## Summary
+### Summary
 
-| Sorry | Status before | Status after |
+| Sorry | Status before round 3 | Status after round 3 |
 |---|---|---|
-| `parametrizeX0PlusU_existence` IsSkewB B | bare scoped sorry, comment | structured: `intro u v; show …; sorry` exposing the unfolded goal |
-| `parametrizeX0PlusU_existence` equality | bare scoped sorry, comment | structured: 2 of 3 Prod components closed (V₀ ✓, E' ✓); only E component sorry, with explicit obstruction stated |
-| `uD_isParabolic` IsAdjointPair | bare scoped sorry, comment | structured: `intro x y; sorry` with explicit (x, y) falsity witness in the comment |
+| `uD_isParabolic` IsAdjointPair (line 460) | scoped sorry, statement was self-adjoint (false) | **CLOSED** — statement corrected to isometry-pair, proof via `Cdual_pairing_eq` + ε-symmetry + ε² = 1 |
+| `parametrizeX0PlusU_existence` E-component (line 256) | scoped sorry (Tier D) | unchanged (not assigned this round) |
+| `parametrizeX0PlusU_existence` IsSkewB (line 294) | scoped sorry (Tier D) | unchanged (not assigned this round) |
 
-Net work: **0 sorries closed** (all three are genuinely false as stated;
-upstream statement / data refactor required), **3 sub-obligations
-discharged** (V₀ component, E' component of the equality; goal exposed
-on the IsSkewB side), **0 axioms introduced**. The remaining sorries are
-now narrowly scoped on the precise impossible obligation, with explicit
-mathematical witnesses for the obstruction inline.
+Net work: **1 sorry closed**, 1 statement corrected, **0 axioms
+introduced**, 0 helper lemmas added (all toolkit was already in scope).
 
-## Next steps (for plan agent)
+### Next steps (for plan agent)
 
-1. **Tighten `UnipotentRadical`** in `Basic.lean` to additionally enforce
-   `IsSkewAdjoint S.ambientForm Y`. Once landed, the IsSkewB sorry and
-   E-component sorry of `parametrizeX0PlusU_existence` should both close
-   by a direct expansion of `Cdual_pairing_eq` plus the new hypothesis.
-2. **Rewrite the `uD_isParabolic` statement** to use
-   `IsAdjointPair … (uD D) (uD (-D))` instead of `(uD D) (uD D)`. Then
-   the remaining sorry closes by the same expansion already used in
-   `uD_conj_XCB`.
-3. The structural facts about `Y ∈ UnipotentRadical S`
-   (vanishing on flagE, V₀ component vanishing on `(0, v, 0)`, E'
-   component always vanishing) are now inline in the proof body — if
-   reused elsewhere, hoist them to a `private lemma Y_block_structure`
-   alongside the other helpers.
+- Round 4: address Tier S #2 (`UnipotentRadical` skew-adjoint) which
+  unblocks `parametrizeX0PlusU_existence`'s two internal sorries.
+- The `Cdual_pairing` (private, line 478) and `Cdual_pairing_eq` (line
+  78) duplicate each other up to the `_hNondeg` hypothesis; future
+  rounds may want to consolidate them. Out of scope here.

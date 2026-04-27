@@ -95,3 +95,86 @@ placeholders in class fields do not unify across uses.
   `XST_mem_O0PlusU`. Uses `Ring.inverse_one (M₀ := Module.End F S.V0)`.
 - `main` — direct decomposition into the four conjuncts, forwarding to
   `inducedOrbits`, `sIndependenceAndOrbitCriterion`, `multiplicityNonDeg`.
+
+## Prover Round 2 (session 4 — six-file parallel dispatch)
+
+Net: 8 → 9 declaration-use `sorry` (count rose by 1 due to deliberate
+helper-extraction in NormalForm.lean), but **one Tier B target fully
+resolved** and the remaining structural skeleton for Tier A is now in
+place. `lake build` ✅ at end of round; 0 custom axioms.
+
+### `InducedOrbitToy/X0Geometry.lean` (1 → 0 declaration warnings) ✅ Tier B closed
+- `sDual_restrict_ker_isIso` — resolved by enriching `DualTransposeData`
+  in this file (the structure was misattributed to `Basic.lean` in the
+  session-3 plan; it actually lives in `X0Geometry.lean`).
+- Two new fields added: `range_le_L1 : LinearMap.range Tdual ≤ L1` and
+  `finrank_L1_eq : finrank L1 = finrank L1'`.
+- The two scoped sorries closed in one line each:
+  `h_in_L1 := fun w => D.range_le_L1 ⟨_, rfl⟩` and
+  `h_dim_L1 := D.finrank_L1_eq.trans hL1'`.
+- Lesson: **verify structure location via grep before scoping a refactor**.
+- Side benefit: also unblocks the dimension argument in `kernelImage_im`.
+
+### `InducedOrbitToy/NormalForm.lean` — structural decomposition (4 → 6)
+Tier A targets `pNormalForm` and `pNormalForm_residual_orbit_iso` had
+their bare sorries restructured into focused, named helper lemmas
+exposing exactly the missing infrastructure. The two public theorems'
+proof bodies are now mechanical assemblies; only the helpers carry
+sorry. Specific work:
+
+- `isUnit_uD` (private helper, sorry-free) — `IsUnit (uD S D)` via
+  `(Units.mkOfMulEqOne _ _ h).isUnit`.
+- `map_uD_eq_of_le` (private helper, sorry-free) — `Submodule.map (uD D) F = F`
+  from inclusions both ways using `uD (-D) ∘ uD D = id`.
+- `pNormalForm` body — assembles `Sₕ, T, hT, uD D, parabolic-element,
+  conjugation` from `pNormalForm_witnesses` plus the helpers above.
+  Conjugation falls out by post-composing `hConj` with `uD D` and using
+  `uD (-D) ∘ uD D = id`.
+- `pNormalForm_residual_orbit_iso` body — trivial `refine ⟨?_, ?_⟩` plus
+  dispatch to `residual_levi_extract` / `residual_levi_build`.
+
+Net: 2 bare sorries → 6 focused, named sorries (`pNormalForm_witnesses`,
+`pNormalForm` IsAdjointPair conjunct, `residual_levi_extract`,
+`residual_levi_build`, plus the unchanged Tier C `kernelImage_ker`,
+`kernelImage_im`). The 6 sorries are each pinned to a specific upstream
+blocker.
+
+### `InducedOrbitToy/Slice.lean` — body refinement (2 → 2)
+Both Tier D sorries (`parametrizeX0PlusU_existence`, `uD_isParabolic`)
+were re-confirmed false-as-stated this round, but the proof bodies were
+refined to expose the precise impossible obligation:
+
+- `parametrizeX0PlusU_existence` — V₀ and E' Prod-components fully
+  closed; only the E component remains as sorry (false without
+  skew-adjointness on `Y`). The `IsSkewB` conjunct is opened up via
+  `intro u v` + `show` of the unfolded goal.
+- `uD_isParabolic` — flag-preservation conjuncts (lines ≈462, 468) now
+  fully proven; only the IsAdjointPair conjunct (line 460) remains as
+  sorry (false self-adjoint statement; blueprint says isometry).
+
+These remain Tier D blockers awaiting plan-agent statement fixes.
+
+### `InducedOrbitToy/Orbits.lean` — body refinement (1 → 1)
+`sIndependenceAndOrbitCriterion`'s two scoped sorries got real proof
+prefixes:
+- Forward direction: `obtain ⟨_g, _hg, _hyeq⟩` extracts the conjugating
+  isometry from orbit-equality + `Ring.inverse_one` self-membership.
+- Reverse direction: `obtain ⟨_h, _h_isom⟩` extracts the bilinear-isometry
+  witness via `unfold IsometryRel Bilinear.AreIsometric`.
+
+Both directions remain blocked on `pNormalForm_residual_orbit_iso` (this
+file is downstream).
+
+### Cross-cutting wins (session 4)
+- **`Units.mkOfMulEqOne` for `IsUnit` from one-sided inverse** on
+  `Module.End F V` (finite-dim V). Replaces the deprecated
+  `LinearMap.mul_eq_one_of_mul_eq_one` chain.
+- **Helper-lemma decomposition pattern** for "cannot fully close, but can
+  articulate the obligation precisely" — extract as focused helper with
+  targeted signature, sorry it, use from the public theorem.
+- **`obtain` from existential makes destructured fields opaque** — fix by
+  packaging the equation directly in helper's conclusion (avoid the
+  existential wrapper).
+- All public theorems audited via `#print axioms` / `lean_verify`:
+  only `[propext, Classical.choice, Quot.sound]` plus `sorryAx` on
+  declarations that still embed an explicit `sorry`. **No custom axioms.**
