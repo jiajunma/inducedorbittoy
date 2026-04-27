@@ -1,233 +1,214 @@
-# InducedOrbitToy/Slice.lean — Round 6 (Levi machinery)
+# InducedOrbitToy/Slice.lean
 
-**Result: IN PROGRESS** — helpers 1–7 RESOLVED (sorry-free); helper 8
-(`parabolic_decompose`) DEFERRED to Round 7 with sorry + documented gap.
+## Round 6 status: COMPLETE — no further work needed this round
 
-End-of-round state:
-- `lake env lean InducedOrbitToy/Slice.lean` — compiles (no errors).
-- `lake build` — green.
-- Slice.lean declaration-use `sorry` warnings: **0 → 1** (new
-  `parabolic_decompose` only).
-- NormalForm.lean / Orbits.lean sorries: **unchanged** (3 + 1, lines
-  195/319/348/324). ✓ Round-6 acceptance criterion.
-- Total declaration-use `sorry` warnings: **4 → 5** (additive only). ✓
+The file already satisfies every Round 6 acceptance criterion (PROGRESS.md
+lines 115–131, `informal/levi.md` § "Acceptance criteria for Round 6").
+Verified at the start of this dispatch:
 
-Axiom audit (all 14 newly-added declarations via `#print axioms` on
-`/tmp/check_axioms_slice.lean`):
-- `lambdaDualE`, `lambdaDualE_pairing_eq`, `lambdaDualE_id`,
-  `lambdaDualE_comp` — `[propext, Classical.choice, Quot.sound]`.
-- `leviGL_E`, `leviGL_V0`, `leviGL_E_apply`, `leviGL_V0_apply` — same.
-- `leviGL_E_symm_inverse`, `leviGL_V0_symm_inverse` — same.
-- `leviGL_E_isParabolic`, `leviGL_V0_isParabolic` — same.
-- `leviGL_E_conj_XCB`, `leviGL_V0_conj_XCB` — same.
+- `lake env lean InducedOrbitToy/Slice.lean` compiles. Only diagnostic:
+  `Slice.lean:1078:8: warning: declaration uses 'sorry'` (the deferred
+  `parabolic_decompose`, expected per plan).
+- `lake build` is green. 5 declaration-use `sorry` warnings total —
+  matches the expected end-of-Round-6 count: 1 in Slice (the additive
+  `parabolic_decompose`) + 3 in NormalForm + 1 in Orbits.
+- Helpers 1–7 of `informal/levi.md` § "Machinery to add" are all
+  sorry-free, plus the bonus private helpers `lambdaDualE_symm_comp`,
+  `lambdaDualE_comp_symm`, `lambdaDualE_Cdual` that the proofs needed.
+- Helper 8 (`parabolic_decompose`) carries one bare `sorry` with a
+  documented `Gap:` comment block immediately above (lines 1067–1077),
+  exactly as the Round 6 plan permitted.
+- All newly closed declarations show
+  `[propext, Classical.choice, Quot.sound]` only — no custom axioms.
+  Verified via `#print axioms` on `lambdaDualE_pairing_eq`,
+  `lambdaDualE_id`, `lambdaDualE_comp`, `leviGL_E_apply`,
+  `leviGL_V0_apply`, `leviGL_E_symm_inverse`, `leviGL_V0_symm_inverse`,
+  `leviGL_E_isParabolic`, `leviGL_V0_isParabolic`,
+  `leviGL_E_conj_XCB`, `leviGL_V0_conj_XCB`.
+- All existing declarations through `uD_conj_XCB` (line 564) are
+  byte-for-byte unchanged. Levi machinery is a pure additive append
+  starting at line 679.
 
-**No custom axioms introduced.**
+## What is in Slice.lean (Round 6 inventory, lines 679–1090)
 
-## Definitions added (Section 6.1–6.2)
+### § 6.1 — Dual transpose on `E`
 
-### `lambdaDualE` (line ~696, post-`uD_conj_XCB`)
-- **Approach:** Mirror the existing `Cdual` construction (line 71).
-  Define `lambdaDualE S g e := S.lambda.toPerfPair.symm (g.dualMap (S.lambda e))`.
-  The inner `g.dualMap (S.lambda e) : Module.Dual F S.E'` is a linear
-  functional on `S.E'`; the outer perfect-pairing inverse lifts it to `S.E`.
-- **Key Mathlib lemmas:** `LinearMap.dualMap`, `LinearMap.dualMap_apply`,
-  `LinearMap.IsPerfPair.toPerfPair`, `LinearMap.apply_symm_toPerfPair_self`.
-- **Result:** RESOLVED.
+- `lambdaDualE` (def, line 695) — `(d : E' →ₗ E') ↦ (d^∨ : E →ₗ E)` via
+  `S.lambda.toPerfPair.symm ∘ d.dualMap ∘ S.lambda`. **sorry-free.**
+- `lambdaDualE_pairing_eq` (line 701) — defining identity
+  `λ(g^∨ e, e') = λ(e, g e')`. Closed via
+  `S.lambda.apply_symm_toPerfPair_self`. **sorry-free.**
+- `lambdaDualE_id` (line 712) — `lambdaDualE id = id`. **sorry-free.**
+- `lambdaDualE_comp` (line 723) — contravariant in composition.
+  **sorry-free.**
+- `lambdaDualE_symm_comp` (line 739, private) — `d.symm^∨ ∘ d^∨ = id`.
+  **sorry-free.**
+- `lambdaDualE_comp_symm` (line 751, private) — `d^∨ ∘ d.symm^∨ = id`.
+  **sorry-free.**
 
-### `lambdaDualE_pairing_eq` (defining identity)
-- **Approach:** Same `show` + `rw [apply_symm_toPerfPair_self]` + `simp [dualMap_apply]`
-  pattern as `Cdual_pairing_eq` (line 78).
-- **Result:** RESOLVED.
+### § 6.2 — Levi block embeddings
 
-### `lambdaDualE_id`
-- **Approach:** Pair both sides with arbitrary `e'` via
-  `S.paired.isPerfect.1` (left injectivity of perfect pairing); then
-  `lambdaDualE_pairing_eq` reduces both sides to `S.lambda e e'`.
-- **Result:** RESOLVED.
+- `leviGL_E` (def, line 766) — block-diagonal action
+  `((d⁻¹)^∨, id_{V0}, d)`. **sorry-free.**
+- `leviGL_V0` (def, line 784) — block-diagonal action
+  `(id_E, g, id_{E'})`. **sorry-free.**
+- `leviGL_E_apply` (line 798), `leviGL_V0_apply` (line 806) —
+  pointwise formulas; closed by `unfold; simp`. **sorry-free.**
 
-### `lambdaDualE_comp`
-- **Approach:** Same `S.paired.isPerfect.1` template. After `show`-ing
-  `(g₁ ∘ₗ g₂)`'s `lambdaDualE` equals the nested form, three
-  `lambdaDualE_pairing_eq` rewrites + `rfl` close the goal.
-- **Initial dead end:** Without the `show` step, `rw` couldn't match
-  `lambdaDualE_pairing_eq` on the RHS because the composition `(f ∘ₗ g) e`
-  was opaque. Fixed by `show`-ing the goal in nested-application form.
-- **Result:** RESOLVED.
+### § 6.3 — Inverses
 
-### `lambdaDualE_symm_comp` / `lambdaDualE_comp_symm` (private helpers)
-- **Approach:** Use `lambdaDualE_comp` to fold compositions, then
-  `lambdaDualE_id` on the trivialised inner.
-- **Result:** RESOLVED.
+- `leviGL_E_symm_inverse` (line 815), `leviGL_V0_symm_inverse`
+  (line 835) — both **sorry-free.**
 
-### `leviGL_E` / `leviGL_V0` (block-diagonal embeddings)
-- **Approach:** Direct block-matrix definitions via `LinearMap.inl`,
-  `LinearMap.inr`, `LinearMap.fst`, `LinearMap.snd` projections/embeddings.
-  `leviGL_E d` acts as `((d⁻¹)^∨, id, d)` on `E × V0 × E'`;
-  `leviGL_V0 g` as `(id, g, id)`. Definitions follow the informal
-  `levi.md §6.2` exactly.
-- **Note:** `leviGL_V0` does NOT depend on the isometry hypothesis on `g`.
-  Per `levi.md` side note, only the parabolicity proof needs it. This
-  avoids the Round-5 subtype-wrapping anti-pattern.
-- **Result:** RESOLVED (definitions). `_apply` lemmas RESOLVED via
-  `unfold` + `simp`.
+### § 6.4 — Parabolicity
 
-### `leviGL_E_symm_inverse` / `leviGL_V0_symm_inverse`
-- **Approach:** `LinearMap.ext` + `Prod.mk.injEq` to component-split, then
-  `congrArg` on `lambdaDualE_comp_symm` for the E-block, `simp` for the rest.
-- **Key insight:** `d.symm.symm = d` is `rfl` for `LinearEquiv` (via
-  Mathlib's `LinearEquiv.symm_symm`), so applying
-  `leviGL_E_symm_inverse S d.symm` gives the other-direction inverse for
-  free. Used in `leviGL_E_isParabolic` IsUnit conjunct.
-- **Result:** RESOLVED.
+- `leviGL_E_isParabolic` (line 849) — proves the unbundled
+  4-conjunct `IsParabolicElement` (`IsUnit ∧ flagE ∧ flagEV0 ∧
+  IsOrthogonal`). The proof opens the conjunction with
+  `refine ⟨?_, ?_, ?_, ?_⟩` and discharges each with
+  `Units.mkOfMulEqOne` (unit), `le_antisymm` + `lambdaDualE_symm_comp`
+  / `lambdaDualE_comp_symm` (flag preservation), and a single
+  `simp; rw [lambdaDualE_pairing_eq]; simp` (orthogonality).
+  **sorry-free.**
+- `leviGL_V0_isParabolic` (line 911) — analogous, using the
+  isometry hypothesis `hg : ∀ u v, S.formV0 (g u) (g v) = S.formV0 u v`
+  on the V0 block. **sorry-free.**
 
-## Section 6.4 — Parabolicity
+### § 6.5 — Conjugation transformation of `XCB`
 
-### `leviGL_E_isParabolic`
-- **Approach:** Statement unfolds `IsParabolicElement S` (defined in
-  NormalForm.lean, downstream — so unfolded as 4-conjunct `IsUnit ∧
-  Submodule.map = ∧ Submodule.map = ∧ IsOrthogonal`). The four conjuncts:
-  - **IsUnit:** `Units.mkOfMulEqOne` on the symm inverse (with `d.symm`
-    twice for the other-direction inverse via `d.symm.symm = d` rfl).
-  - **flagE preservation:** `le_antisymm` + standard `rintro` patterns;
-    forward inclusion uses `leviGL_E_apply` + `simp`; backward uses
-    `lambdaDualE_symm_comp` to invert.
-  - **flagEV0 preservation:** Same template.
-  - **IsOrthogonal:** `simp only [SliceSetup.ambientForm,
-    LinearMap.mk₂_apply]` to expand the bilinear form, then
-    `lambdaDualE_pairing_eq` rewrites both `λ` atoms, `simp` closes via
-    `d.symm (d _) = _`.
-- **Result:** RESOLVED.
+- `lambdaDualE_Cdual` (line 967, private) — compatibility:
+  `lambdaDualE g (Cdual C v) = Cdual (C ∘ g) v`. Proved via
+  `Cdual_pairing_eq + lambdaDualE_pairing_eq + perfect-pairing
+  injectivity`. **sorry-free.**
+- `leviGL_E_conj_XCB` (line 978) — block formula
+  `leviGL_E d ∘ XCB(C, B) = XCB(C ∘ d⁻¹, (d⁻¹)^∨ ∘ B ∘ d⁻¹) ∘ leviGL_E d`.
+  Proved by component-wise calculation on `(e, v, e')` using
+  `XCB_apply`, `leviGL_E_apply`, `lambdaDualE_Cdual`. **sorry-free.**
+- `leviGL_V0_conj_XCB` (line 1012) — block formula on V0 with
+  hypotheses `hgX` (g commutes with X0) and `hgC` (g preserves
+  pairwise V0-form on C-image). **sorry-free.** This is a slight
+  generalisation of the spec in `informal/levi.md` § 6.5, which
+  acknowledged the `g`-isometry-only version may need conditional
+  hypotheses; the implementation makes both `hgX` and `hgC` explicit.
 
-### `leviGL_V0_isParabolic`
-- **Approach:** Same template as `leviGL_E_isParabolic`. The IsOrthogonal
-  conjunct uses the isometry hypothesis `hg : ∀ u v, S.formV0 (g u) (g v) = S.formV0 u v`
-  via `rw [hg]`.
-- **Result:** RESOLVED.
+### § 6.6 — Levi/unipotent decomposition (deferred to Round 8)
 
-## Section 6.5 — Conjugation transformation
+- `parabolic_decompose` (line 1078) — **carries the single Round 6
+  additive `sorry`.** Documented `Gap:` block at lines 1067–1077
+  outlines the 3-step proof:
+  1. **Step A** (g₀ extraction): action of `p` on `flagEV0/flagE ≃ V0`.
+  2. **Step B** (`(d⁻¹)^∨` extraction): action of `p` on `flagE = E`.
+  3. **Step C** (residual `D`): apply `parametrizeX0PlusU_uniqueness`
+     to `p ∘ leviGL_E d.symm ∘ leviGL_V0 g₀.symm`.
+  The plan in PROGRESS.md (Round Plan table, line 56) and
+  `task_pending.md` lines 101–113 schedule this for Round 8.
 
-### `lambdaDualE_Cdual` (private helper)
-- **Statement:** `lambdaDualE S g (Cdual S C v) = Cdual S (C ∘ₗ g) v`.
-- **Approach:** Pair both sides with `e''` via `S.paired.isPerfect.1`,
-  reduce LHS via `lambdaDualE_pairing_eq` then `Cdual_pairing` (no-Nondeg
-  variant), reduce RHS via `Cdual_pairing` + `LinearMap.comp_apply`.
-- **Result:** RESOLVED.
+## Why no further partial proof attempt for `parabolic_decompose` this round
 
-### `leviGL_E_conj_XCB`
-- **Approach:** Component-split via `Prod.mk.injEq`. E-component uses
-  `lambdaDualE_Cdual` and `LinearMap.map_add`; V0-component is a direct
-  `simp [comp_apply]`; E'-component is trivially 0 = 0.
-- **Result:** RESOLVED.
+I evaluated whether to add structural sub-`sorry`s inside
+`parabolic_decompose`'s body (e.g. via `refine ⟨?D, ?d, ?g, ?hg, ?_⟩`
+with separate `case D` ... blocks) to expose the substeps in the proof
+script. Reasons against:
 
-### `leviGL_V0_conj_XCB`
-- **Approach:** Same template. The hypothesis `hgC` had to be stated
-  carefully to bridge the LinearEquiv FunLike (`g v`) with the LinearMap
-  FunLike (`(g : V0 →ₗ V0) (C e'')`). Final form:
-  `S.formV0 (g v) ((g : S.V0 →ₗ[F] S.V0) (C e'')) = S.formV0 v (C e'')`.
-- **Initial dead end (10 min):** Stated `hgC` symmetrically with `g`-FunLike
-  on both sides, but the `Cdual_pairing` rewrite produces `(g : V0 →ₗ V0)
-  (C e'')` (LinearMap-coerced) on the second arg. The asymmetric
-  statement matches the goal exactly.
-- **Result:** RESOLVED.
+1. The Round 6 acceptance criterion forbids changing the `sorry` count
+   beyond the one additive warning for `parabolic_decompose` itself
+   (PROGRESS.md line 124). Internal `sorry`s coalesce into one
+   declaration-use warning, but adding helper *declarations* with their
+   own sorries (the natural way to expose substeps for the next prover)
+   would violate this. The current state is the strictly cleanest
+   form: one `theorem`, one `sorry`, gap fully documented.
+2. The existing `Gap:` comment block (lines 1067–1077) already
+   describes the 3-step proof at the same granularity that an internal
+   `refine` skeleton would expose, without adding any code that the
+   Round 8 prover would need to delete or restructure.
+3. Round 8's prover will most likely refactor the body to its own
+   layout — writing speculative skeleton code now risks creating
+   churn at no benefit.
 
-## Section 6.6 — Levi/unipotent decomposition (DEFERRED)
+## Mathlib / project lemmas used (Round 6 reference list, for
+audit/handoff)
 
-### `parabolic_decompose` (line 1078)
-- **Statement:** Adapted to take 4 unfolded conjuncts of
-  `IsParabolicElement` (since `IsParabolicElement` lives in NormalForm.lean,
-  downstream). Round 7's NormalForm consumer destructs
-  `IsParabolicElement` and passes the 4 components.
-- **Approach attempted:** Outline only; left as `sorry` with explanatory
-  comment block (24 lines preceding the theorem).
-- **Gap:** The full proof requires three substantive sub-constructions
-  per `levi.md §6.6`:
-  - **(a) `g₀` extraction** via descent of `p` to the quotient
-    `flagEV0 / flagE ≃ V0` (~30 lines: define quotient module action,
-    show it's bijective, bridge through `Submodule.quotientEquivOfIsCompl`).
-  - **(b) `(d⁻¹)^∨` extraction** from `Submodule.map p S.flagE = S.flagE`
-    (~25 lines: restrict `p` to `flagE`, transfer through `flagE ≃ E`,
-    invert `lambdaDualE` via `lambdaDualE_pairing_eq` + perfect pairing).
-  - **(c) Residual `D`** via
-    `parametrizeX0PlusU_existence`/`parametrizeX0PlusU_uniqueness` applied
-    to `p ∘ₗ (leviGL_E d ∘ₗ leviGL_V0 g)⁻¹` (~30 lines: prove this
-    composition is in `UnipotentRadical S`, apply `existence` to extract
-    `(C, B)`, identify `C = D` and `B = 0` via the third (skewness)
-    conjunct).
-- **Result:** DEFERRED — explicit `sorry` with documented 3-step roadmap
-  in the file's `/-** Gap: ... -/` block.
-- **Round 7 plan:** Either close `parabolic_decompose` here (additively
-  in `Slice.lean`, ~85 lines) OR work around it for `residual_levi_extract`
-  only — the consumer can use `parametrizeX0PlusU_uniqueness` +
-  `leviGL_E_isParabolic` directly (per `levi.md` line 240) without
-  needing the full Levi/unipotent decomposition.
+- **From X0Geometry.lean / earlier in Slice.lean:**
+  `S.paired.isPerfect.1` (left-injectivity of perfect pairing — used
+  to reduce E-side equalities to functional equalities),
+  `lambda_isPerfPair` (private, line 46),
+  `S.lambda.toPerfPair`, `.toPerfPair.symm`,
+  `S.lambda.apply_symm_toPerfPair_self`,
+  `S.lambda.toPerfPair_apply`,
+  `Cdual_pairing` / `Cdual_pairing_eq` (line 78),
+  `Cdual_neg`, `Cdual_X0_apply`,
+  `XCB_apply` (line 168), `X0Lift_apply` (line 177),
+  `uD_apply` (line 405).
+- **From Mathlib (LinearMap / Submodule):**
+  `LinearMap.dualMap_apply`,
+  `LinearMap.IsPerfPair`, `LinearMap.toPerfPair`,
+  `LinearMap.IsOrthogonal` unfolds to
+  `∀ x y, B (g x) (g y) = B x y`,
+  `LinearMap.inl`, `LinearMap.inr`, `LinearMap.fst`,
+  `LinearMap.snd` (block matrix idiom on `S.E × S.V0 × S.E'`),
+  `LinearMap.ext`, `LinearMap.comp_apply`, `LinearMap.add_apply`,
+  `LinearMap.sub_apply`, `LinearMap.map_add`,
+  `Submodule.map`, `Submodule.subtype`, `Submodule.mem_bot`,
+  `Submodule.mem_top`,
+  `Units.mkOfMulEqOne` (used to build `IsUnit` from a one-sided
+  inverse on `Module.End F V`).
+- **Tactics:** `simp` (after `unfold`), `simpa`, `apply LinearMap.ext`,
+  `refine Prod.mk.injEq .. |>.mpr ⟨?_, ...⟩` (component-wise on the
+  `E × V0 × E'` triple), `rfl` for definitional equalities,
+  `congrArg (fun f => f x)` to evaluate `LinearMap` equalities at a
+  point. **No** use of `linear_combination` in Levi machinery (the
+  perfect-pairing identity rewrites are clean enough that
+  `simp + rw` closes everything).
 
-### Why deferred (per PROGRESS.md stop conditions)
-- The `lambdaDualE_*`, `leviGL_*_apply`, `leviGL_*_symm_inverse`, all 4
-  conjuncts of both `_isParabolic` lemmas, and both `_conj_XCB` lemmas
-  consumed the bulk of the round budget (helpers 1–7 priority per
-  `PROGRESS.md` lines 142–144).
-- Per the PROGRESS.md stop condition: "If `parabolic_decompose` proves
-  intractable: stop and report. Do NOT spend more than ~30% of the round
-  budget on it; helpers 1–7 are the priority."
+## Compilation evidence (this dispatch)
 
-## Mathlib lemmas used (new this round)
+```
+$ lake env lean InducedOrbitToy/Slice.lean
+InducedOrbitToy/Slice.lean:1078:8: warning: declaration uses `sorry`
 
-- `LinearMap.dualMap`, `LinearMap.dualMap_apply` — for `lambdaDualE`.
-- `LinearMap.IsPerfPair.toPerfPair`, `LinearMap.apply_symm_toPerfPair_self`
-  — already used by `Cdual`; reused here.
-- `Units.mkOfMulEqOne` — IsUnit witnesses (Round 4 carry-forward).
-- `LinearEquiv.symm_apply_apply` — `g.symm (g v) = v` (used in
-  `leviGL_V0_symm_inverse` and the `simp` cleanups).
-- `LinearMap.comp_apply` — composition unfolding throughout.
+$ lake build  (full project)
+warning: InducedOrbitToy/X0Geometry.lean:221:35: unused variable `hlambda`
+warning: InducedOrbitToy/Slice.lean:1078:8: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:195:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:319:16: declaration uses `sorry`
+warning: InducedOrbitToy/NormalForm.lean:348:16: declaration uses `sorry`
+warning: InducedOrbitToy/Orbits.lean:324:8: declaration uses `sorry`
+Build completed successfully (8033 jobs).
+```
 
-## Lessons learned (carry forward to Round 7+)
+5 declaration-use warnings, exactly matching the end-of-Round-6
+expectation in `task_pending.md` lines 4–16.
 
-- **`d.symm.symm = d` is `rfl` for `LinearEquiv`.** This makes
-  `leviGL_E_symm_inverse S d.symm` directly usable as the other-direction
-  inverse, halving the inverse-proof work.
-- **LinearEquiv FunLike vs LinearMap FunLike coercion mismatch in
-  `rw` patterns.** Even though `g v = (g : V →ₗ V) v` is `rfl`, `rw`
-  pattern-matching is syntactic. When stating an isometry-style hypothesis
-  used in `rw`, match the LinearMap-coerced form that appears in the goal
-  after `LinearMap.comp_apply` rewrites. Specifically: if the second arg
-  comes from `(g : V →ₗ V) ∘ₗ C` after `comp_apply`, state the hypothesis
-  with `(g : V →ₗ V) (C e'')` rather than `g (C e'')`.
-- **`show` to convert composed-form goals to nested-application form**
-  before `rw`-ing perfect-pairing equations. Pattern: when the goal has
-  `(f ∘ₗ g) e`, use `show ... = ... f (g e)` to make `rw` targets visible.
-- **Block-matrix inverse via componentwise identity proofs.** The Levi
-  proofs all use `Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr
-  ⟨?_, ?_⟩⟩` to split into E/V0/E' components, then close each individually.
-  Reusable for any `Module.End F (E × V0 × E')` proofs.
-- **`leviGL_V0` definition takes only `g : V0 ≃ₗ V0`, no isometry
-  bundled.** Avoids Round-5 subtype anti-pattern. Isometry hypothesis is
-  passed separately at consumer sites (`leviGL_V0_isParabolic`,
-  `leviGL_V0_conj_XCB`).
+## Next steps (handoff to plan agent / Round 7 dispatch)
 
-## Next steps (Round 7 prover for NormalForm.lean)
+- **Round 7** consumers in `NormalForm.lean` will reference
+  `lambdaDualE`, `lambdaDualE_pairing_eq`, `leviGL_E`, `leviGL_E_apply`,
+  `leviGL_E_isParabolic`, `leviGL_E_conj_XCB`, and
+  `leviGL_E_symm_inverse` to close `pNormalForm_witnesses`,
+  `residual_levi_extract`, `residual_levi_build`. All these signatures
+  are now finalised and stable.
+- **Round 8** will close `parabolic_decompose` (line 1078) and
+  `sIndependenceAndOrbitCriterion`. The `Gap:` comment in Slice.lean
+  is the entry point for the former.
+- The bonus private helpers `lambdaDualE_symm_comp`,
+  `lambdaDualE_comp_symm`, `lambdaDualE_Cdual` may be useful in Round 7
+  / Round 8 — they are exported within the namespace.
 
-The 4 sorries in NormalForm.lean (lines 195, 319, 348) and the deferred
-`parabolic_decompose` (Slice.lean line 1078) are now ready to consume.
+## Dead-end warnings
 
-**Recommended Round 7 sequencing:**
-1. **`pNormalForm_witnesses` (NormalForm line 195)** — uses
-   `leviGL_E_conj_XCB` (Slice 6.5) to align `(C, B)` to a Levi-normalised
-   form, then `uD_conj_XCB` to clear the residual. Estimated ~50 lines.
-2. **`residual_levi_extract` (NormalForm line 319)** — choose between:
-   - **Option A:** Close `parabolic_decompose` first (~85 lines in
-     Slice.lean), then use it directly (~10 lines in NormalForm).
-   - **Option B:** Skip `parabolic_decompose`; work directly via
-     `parametrizeX0PlusU_uniqueness` + `leviGL_E_isParabolic` (~40 lines
-     in NormalForm). **Recommended.**
-3. **`residual_levi_build` (NormalForm line 348)** — construct
-   `d : E' ≃ₗ E'` from the iso `h : L0' ≃ₗ L0'` via
-   `IsCompl L1' L0'`, then `p := leviGL_E d`. Estimated ~40 lines.
-
-After Round 7 lands, only Orbits.lean line 324
-(`sIndependenceAndOrbitCriterion`, Round 8) remains.
-
-## File diff summary
-
-- Slice.lean: lines 1–678 byte-for-byte unchanged. Lines 679–1093
-  appended (~414 lines including comment headers).
-- No other files edited.
+- **Do not** try to subtype-wrap the `(g, hg)` pair in a single
+  `Subtype` for `leviGL_V0_isParabolic`. Per the Round-5 review note in
+  PROGRESS.md ("Subtype-wrapping anti-pattern for `Iso + Property`"),
+  the `Prop`-eliminator restriction on `IsCompl.codisjoint`-style
+  cases makes this fail. The current implementation keeps `g` and
+  `hg` separate function arguments, matching the
+  `informal/levi.md` § "Side notes" recommendation.
+- **Do not** try to discharge `lambdaDualE_pairing_eq` by `unfold` +
+  `simp` alone. The construction goes through
+  `S.lambda.toPerfPair.symm`, and the cancellation requires the
+  explicit lemma `S.lambda.apply_symm_toPerfPair_self`.
+- **Do not** try `linear_combination` inside `parabolic_decompose`
+  or the `leviGL_*_conj_XCB` proofs. The identities are clean enough
+  to close by direct rewrite + `simp`; `linear_combination` would
+  attempt to synthesise `CommRing` on the wrong type (per the Round 5
+  note in PROGRESS.md "Reusable Gotchas").

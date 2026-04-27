@@ -168,45 +168,51 @@ private lemma map_uD_eq_of_le (S : SliceSetup F)
   refine ⟨uD S (-D) x, ?_, hkey⟩
   exact h_neg ⟨x, hx, rfl⟩
 
-/-- Witness existence for `pNormalForm`: there exist `Sₕ`, `D`, `T` such
-that the *unipotent* conjugation `uD D ∘ XCB C B ∘ uD (-D)` already
-equals `XST Sₕ T`, with `T` skew.
+/-- Witness existence for `pNormalForm` (new Round 7 signature).
 
-This bundles the *multi-step Levi pre-conjugation* from the blueprint
-proof (lines 200–264 of `references/blueprint_verified.md`):
-  (a) act by a Levi element of `P` to arrange `ker Cbar = L0'`,
-  (b) act by another Levi element on `L1'` to identify `Cbar|_{L1'}` with
-      a chosen iso `Sₕ : L1' ≃ Vplus`,
-  (c) choose `D` (in two stages, `D_0 : L0' → ker X0` then
-      `D_1 : L1' → ker X0`) so that the unipotent `uD D` absorbs the
-      `B|_{L1'}`-blocks and so that `XCB (C - X0 D) (B + ...) = XST Sₕ T`.
+There exist `(Sₕ, D, d, T)` such that the *Levi+unipotent* conjugator
+`p := uD D ∘ leviGL_E d` realises `p ∘ XCB(C, B) = XST(Sₕ, T) ∘ p`.
 
-The Lean encoding of steps (a) and (b) requires Levi-action machinery on
-`SliceSetup` that is NOT yet in scope (`Slice.lean` only exposes the
-`uD` unipotent piece). Until the plan agent adds the Levi machinery,
-we record this existence claim as a focused `sorry`; once filled,
-`pNormalForm` follows mechanically.
+This bundles the multi-step normalisation from the blueprint proof
+(lines 200–264 of `references/blueprint_verified.md`):
+  (a) act by a Levi element `leviGL_E d` of `P` so `ker (Cbar (C ∘ d.symm))
+      = L0'` and `Cbar (C ∘ d.symm)|_{L1'}` equals `mkQ ∘ Sₕ` for some
+      `Sₕ : L1' ≃ Vplus`,
+  (b) act by `uD D` for a suitable `D : E' →ₗ V0` so that
+      `uD D ∘ XCB (C ∘ d.symm) (lambdaDualE d.symm ∘ B ∘ d.symm) ∘ uD (-D)
+      = XST Sₕ T`, with `T : L0' →ₗ L0` skew.
 
-NOTE: the witness statement glosses over one subtlety — the *input*
-`(C, B)` to `pNormalForm` must already be Levi-normalized for the
-alignment to hold with `p = uD D`. In the actual blueprint proof the
-parabolic `p` is `uD D ∘ ℓ` for a Levi `ℓ`; here we conflate the Levi
-action into the choice of `(Sₕ, D, T)`. -/
+`Sₕ` is delivered as a `LinearEquiv` (its surjectivity is needed by the
+`pNormalForm_residual_orbit_iso` consumer via `kernelImage_ker`).
+
+**Tier A #1 (Round 7) — current state.** The full body remains a
+single carefully-marked `sorry`. The steps required are:
+
+1. Build `(Sₕ, d)` from `_hRank : rank Cbar = c` (the `d`-construction).
+2. Set `(C', B') := (C ∘ d.symm, lambdaDualE d.symm ∘ B ∘ d.symm)` and
+   apply `leviGL_E_conj_XCB`.
+3. Build `D` such that `X0 ∘ D = C' - CST Sₕ` (lands in `range X0` by
+   construction); `T` reads off the `B`-block residual.
+4. Combine via `uD_conj_XCB` + uniqueness (`parametrizeX0PlusU_uniqueness`)
+   + `uD_neg_inverse`.
+
+Round 8 will close this remaining piece. The two pNormalForm_witnesses
+*consumers* — `pNormalForm` and (downstream) `pNormalForm_residual_orbit_iso`
+— now consume the new (correct) signature; `pNormalForm`'s body is
+sorry-free. -/
 private theorem pNormalForm_witnesses (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
     (_hRank :
       Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
-    ∃ (Sₕ : S.L1' →ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
-      (T : S.L0' →ₗ[F] S.L0),
+    ∃ (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
+      (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
       IsSkewT S T ∧
-      uD S D ∘ₗ XCB S C B ∘ₗ uD S (-D) = XST S Sₕ T := by
-  -- BLOCKED: see docstring. Requires Levi-conjugation machinery on
-  -- SliceSetup that is not yet present in Slice.lean. The blueprint
-  -- proof at §prop:p-normal-form (lines 200–264) gives the construction
-  -- explicitly: (a) ker Cbar = L0' via Levi(E') action; (b) Cbar|_{L1'}
-  -- = Sₕ via another Levi(E') action; (c) D = D₀ ⊕ D₁ chosen via the
-  -- perfect pairing V₊ × ker X₀ → F (`vplusKerPairing_isPerfPair`).
+      uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
+        = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
+  -- TIER A #1 (Round 7) BODY — single isolated `sorry`. See docstring
+  -- above for the four-step plan and `.archon/informal/normalform_round7.md`
+  -- § Tier A #1 for the full informal proof outline. Round 8 closes this.
   sorry
 
 /-- `prop:p-normal-form` (existence of normal form).  Existence of a
@@ -243,31 +249,50 @@ theorem pNormalForm
       IsSkewT S T ∧
         ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
           p ∘ₗ XCB S C B = XST S Sₕ T ∘ₗ p := by
-  -- Step 1: Pull (Sₕ, D, T) plus the conjugation equation from the helper.
-  obtain ⟨Sₕ, D, T, hT, hConj⟩ :=
+  -- Step 1: Pull (Sₕ, D, d, T) plus the conjugation equation from the helper.
+  -- (Round 7 signature: pNormalForm_witnesses now exposes a Levi factor `d`.)
+  obtain ⟨Sₕ, D, d, T, hT, hConj⟩ :=
     pNormalForm_witnesses S _hNondeg _hChar C B _hB _hRank
-  refine ⟨Sₕ, T, hT, uD S D, ?_, ?_⟩
-  · -- IsParabolicElement (uD S D)
+  -- The parabolic conjugator is `p := uD D ∘ leviGL_E d`.
+  refine ⟨(Sₕ : S.L1' →ₗ[F] S.Vplus), T, hT,
+    uD S D ∘ₗ leviGL_E S d, ?_, ?_⟩
+  · -- IsParabolicElement (uD S D ∘ leviGL_E S d): four conjuncts.
     refine ⟨?_, ?_, ?_, ?_⟩
-    · -- IsUnit (uD S D)
-      exact isUnit_uD S _hNondeg _hChar D
-    · -- Submodule.map (uD D) S.flagE = S.flagE
+    · -- IsUnit: product of two units.
+      have hu_uD : IsUnit (uD S D) := isUnit_uD S _hNondeg _hChar D
+      have hu_levi : IsUnit (leviGL_E S d) := (leviGL_E_isParabolic S d).1
+      exact hu_uD.mul hu_levi
+    · -- Submodule.map (uD D ∘ leviGL_E d) flagE = flagE.
+      -- Compose: map (g ∘ f) = map g ∘ map f. Then leviGL_E preserves flagE,
+      -- and uD preserves flagE (via map_uD_eq_of_le).
+      have hLevi : Submodule.map (leviGL_E S d) S.flagE = S.flagE :=
+        (leviGL_E_isParabolic S d).2.1
       have h_pos : Submodule.map (uD S D) S.flagE ≤ S.flagE :=
         (uD_isParabolic S _hNondeg _hChar D).2.1
       have h_neg : Submodule.map (uD S (-D)) S.flagE ≤ S.flagE :=
         (uD_isParabolic S _hNondeg _hChar (-D)).2.1
-      exact map_uD_eq_of_le S _hNondeg _hChar D S.flagE h_pos h_neg
-    · -- Submodule.map (uD D) S.flagEV0 = S.flagEV0
+      have hUD : Submodule.map (uD S D) S.flagE = S.flagE :=
+        map_uD_eq_of_le S _hNondeg _hChar D S.flagE h_pos h_neg
+      rw [show (uD S D ∘ₗ leviGL_E S d) = (uD S D : S.V →ₗ[F] S.V).comp
+            (leviGL_E S d : S.V →ₗ[F] S.V) from rfl]
+      rw [Submodule.map_comp, hLevi, hUD]
+    · -- Submodule.map (uD D ∘ leviGL_E d) flagEV0 = flagEV0. Same template.
+      have hLevi : Submodule.map (leviGL_E S d) S.flagEV0 = S.flagEV0 :=
+        (leviGL_E_isParabolic S d).2.2.1
       have h_pos : Submodule.map (uD S D) S.flagEV0 ≤ S.flagEV0 :=
         (uD_isParabolic S _hNondeg _hChar D).2.2
       have h_neg : Submodule.map (uD S (-D)) S.flagEV0 ≤ S.flagEV0 :=
         (uD_isParabolic S _hNondeg _hChar (-D)).2.2
-      exact map_uD_eq_of_le S _hNondeg _hChar D S.flagEV0 h_pos h_neg
-    · -- LinearMap.IsOrthogonal S.ambientForm (uD S D)
-      -- After Tier S #1, `uD_isParabolic`'s 1st conjunct is
-      -- `IsAdjointPair S.ambientForm S.ambientForm (uD D) (uD (-D))`.
-      -- Chain that with `uD_neg_inverse` to get the isometry identity.
+      have hUD : Submodule.map (uD S D) S.flagEV0 = S.flagEV0 :=
+        map_uD_eq_of_le S _hNondeg _hChar D S.flagEV0 h_pos h_neg
+      rw [show (uD S D ∘ₗ leviGL_E S d) = (uD S D : S.V →ₗ[F] S.V).comp
+            (leviGL_E S d : S.V →ₗ[F] S.V) from rfl]
+      rw [Submodule.map_comp, hLevi, hUD]
+    · -- IsOrthogonal: composition of two isometries is an isometry.
       intro u v
+      have hLeviIso : LinearMap.IsOrthogonal S.ambientForm (leviGL_E S d) :=
+        (leviGL_E_isParabolic S d).2.2.2
+      -- Derive `IsOrthogonal` for `uD D` from its `IsAdjointPair` + uD-inverse.
       have hAdj :
           LinearMap.IsAdjointPair S.ambientForm S.ambientForm
               (uD S D) (uD S (-D)) :=
@@ -279,88 +304,664 @@ theorem pNormalForm
         intro w
         have := congrArg (fun f : Module.End F S.V => f w) hinv
         simpa using this
-      calc S.ambientForm (uD S D u) (uD S D v)
-          = S.ambientForm u (uD S (-D) (uD S D v)) := hAdj u (uD S D v)
-        _ = S.ambientForm u v := by rw [hinv_apply]
-  · -- Conjugation equation: `uD D ∘ XCB C B = XST Sₕ T ∘ uD D`.
-    -- From `hConj : uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T`, multiply on
-    -- the right by `uD D` and use `uD (-D) ∘ uD D = id`.
-    have hinv : uD S (-D) ∘ₗ uD S D = LinearMap.id := by
-      have := uD_neg_inverse S _hNondeg _hChar (-D)
-      simpa [neg_neg] using this
-    -- Apply `(· ∘ₗ uD S D)` to both sides of `hConj`.
-    have hgoal := congrArg (fun f : Module.End F S.V => f ∘ₗ uD S D) hConj
-    simp only at hgoal
-    -- Reduce LHS via associativity and `hinv`.
-    have key :
-        (uD S D ∘ₗ XCB S C B ∘ₗ uD S (-D)) ∘ₗ uD S D
-          = uD S D ∘ₗ XCB S C B := by
-      rw [LinearMap.comp_assoc, LinearMap.comp_assoc, hinv,
-        LinearMap.comp_id]
-    rw [key] at hgoal
-    exact hgoal
+      have hUDIso : ∀ x y, S.ambientForm (uD S D x) (uD S D y)
+          = S.ambientForm x y := by
+        intro x y
+        calc S.ambientForm (uD S D x) (uD S D y)
+            = S.ambientForm x (uD S (-D) (uD S D y)) := hAdj x (uD S D y)
+          _ = S.ambientForm x y := by rw [hinv_apply]
+      -- Now combine: uD ∘ leviGL_E preserves the form via two-step chase.
+      show S.ambientForm ((uD S D ∘ₗ leviGL_E S d) u)
+          ((uD S D ∘ₗ leviGL_E S d) v) = S.ambientForm u v
+      simp only [LinearMap.comp_apply]
+      rw [hUDIso, hLeviIso]
+  · -- Conjugation: `(uD D ∘ leviGL_E d) ∘ XCB C B = XST Sₕ T ∘ (uD D ∘ leviGL_E d)`.
+    -- This is `hConj` modulo associativity.
+    show (uD S D ∘ₗ leviGL_E S d) ∘ₗ XCB S C B
+        = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ (uD S D ∘ₗ leviGL_E S d)
+    rw [LinearMap.comp_assoc]
+    exact hConj
+
+/-! ### Helper: explicit formula for `XST` applied to a triple. -/
+
+/-- `XST S Sₕ T` applied to `(e, v, e')` is `(Cdual (CST Sₕ) v + (T (projL0' e') : E),
+X0 v + (Sₕ (projL1' e') : V0), 0)`. -/
+private theorem XST_apply (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0)
+    (e : S.E) (v : S.V0) (e' : S.E') :
+    XST S Sₕ T (e, v, e') =
+      (Cdual S (CST S Sₕ) v + (T (projL0' S e') : S.E),
+        S.X0 v + (Sₕ (projL1' S e') : S.V0), 0) := by
+  -- Unfold XST = XCB S (CST Sₕ) (BST T), then unfold XCB.
+  show XCB S (CST S Sₕ) (BST S T) (e, v, e') = _
+  unfold XCB
+  simp only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.fst_apply,
+    LinearMap.snd_apply, LinearMap.inl_apply, LinearMap.inr_apply,
+    Prod.mk_add_mk, add_zero, zero_add]
+  -- Now reduce `BST S T e'` and `CST S Sₕ e'` to their definitions.
+  unfold BST CST
+  simp only [LinearMap.comp_apply, Submodule.subtype_apply]
 
 /-! ### Helpers for `pNormalForm_residual_orbit_iso`. -/
+
+/-- Extension of an `L0'`-iso `h` to a full `E'`-iso acting as `id` on `L1'`
+and as `h` on `L0'`. Built via the `IsCompl L1' L0'` direct-sum
+decomposition. Used in `residual_levi_build` (Round 7) to lift an
+`L0'`-isometry to a Levi factor `leviGL_E S d` realising the residual
+conjugation. -/
+private noncomputable def extendL0'IsoToE' (S : SliceSetup F)
+    (h : S.L0' ≃ₗ[F] S.L0') : S.paired.E' ≃ₗ[F] S.paired.E' :=
+  let prodEq : (S.L1' × S.L0') ≃ₗ[F] S.paired.E' :=
+    S.L1'.prodEquivOfIsCompl S.L0' S.isComplL'
+  let prodMap : (S.L1' × S.L0') ≃ₗ[F] (S.L1' × S.L0') :=
+    (LinearEquiv.refl F S.L1').prodCongr h
+  prodEq.symm ≪≫ₗ prodMap ≪≫ₗ prodEq
+
+/-- Pointwise formula for the symm of `extendL0'IsoToE'`. -/
+private lemma extendL0'IsoToE'_symm_apply (S : SliceSetup F)
+    (h : S.L0' ≃ₗ[F] S.L0') (e' : S.paired.E') :
+    (extendL0'IsoToE' S h).symm e' =
+      (projL1' S e' : S.paired.E') + (h.symm (projL0' S e') : S.paired.E') := by
+  -- Unfold the composition and use prodEquivOfIsCompl symm/apply lemmas.
+  show (S.L1'.prodEquivOfIsCompl S.L0' S.isComplL')
+        (((LinearEquiv.refl F S.L1').prodCongr h).symm
+          ((S.L1'.prodEquivOfIsCompl S.L0' S.isComplL').symm e'))
+      = (projL1' S e' : S.paired.E') + (h.symm (projL0' S e') : S.paired.E')
+  -- Step 1: prodEq.symm e' = (projL1' e', projL0' e').
+  have hsymm : ((S.L1'.prodEquivOfIsCompl S.L0' S.isComplL').symm e' : S.L1' × S.L0')
+      = (projL1' S e', projL0' S e') := by
+    have := Submodule.toLinearMap_prodEquivOfIsCompl_symm S.isComplL'
+    show ((S.L1'.prodEquivOfIsCompl S.L0' S.isComplL').symm.toLinearMap e') = _
+    rw [this]
+    rfl
+  rw [hsymm]
+  -- Step 2: prodMap.symm (a, b) = (a, h.symm b).
+  show (S.L1'.prodEquivOfIsCompl S.L0' S.isComplL') (projL1' S e', h.symm (projL0' S e'))
+      = (projL1' S e' : S.paired.E') + (h.symm (projL0' S e') : S.paired.E')
+  -- Step 3: prodEq (a, b) = a.subtype + b.subtype.
+  rw [show (S.L1'.prodEquivOfIsCompl S.L0' S.isComplL')
+            (projL1' S e', h.symm (projL0' S e'))
+        = (S.L1'.subtype.coprod S.L0'.subtype)
+            (projL1' S e', h.symm (projL0' S e')) from by
+    have := Submodule.coe_prodEquivOfIsCompl (p := S.L1') (q := S.L0') S.isComplL'
+    -- The coe statement gives equality of the underlying linear maps.
+    have h2 : ((S.L1'.prodEquivOfIsCompl S.L0' S.isComplL') :
+        (S.L1' × S.L0') →ₗ[F] S.paired.E')
+          = S.L1'.subtype.coprod S.L0'.subtype := this
+    have h3 := congrArg (fun (f : (S.L1' × S.L0') →ₗ[F] S.paired.E') =>
+      f (projL1' S e', h.symm (projL0' S e'))) h2
+    simp only at h3
+    exact h3]
+  simp [LinearMap.coprod_apply]
+
+/-- `projL1' ∘ d.symm = projL1'` where `d := extendL0'IsoToE' S h`. -/
+private lemma projL1'_extendL0'IsoToE'_symm (S : SliceSetup F)
+    (h : S.L0' ≃ₗ[F] S.L0') (e' : S.paired.E') :
+    projL1' S ((extendL0'IsoToE' S h).symm e') = projL1' S e' := by
+  rw [extendL0'IsoToE'_symm_apply, map_add]
+  -- projL1' (projL1' e' : E') = projL1' e', projL1' (h.symm _ : E') = 0.
+  have h1 : projL1' S ((projL1' S e' : S.L1') : S.paired.E') = projL1' S e' := by
+    unfold projL1'
+    exact Submodule.linearProjOfIsCompl_apply_left S.isComplL' (projL1' S e')
+  have h2 : projL1' S ((h.symm (projL0' S e') : S.L0') : S.paired.E') = 0 := by
+    unfold projL1'
+    exact Submodule.linearProjOfIsCompl_apply_right S.isComplL' (h.symm (projL0' S e'))
+  rw [h1, h2, add_zero]
+
+/-- `projL0' ∘ d.symm = h.symm ∘ projL0'`. -/
+private lemma projL0'_extendL0'IsoToE'_symm (S : SliceSetup F)
+    (h : S.L0' ≃ₗ[F] S.L0') (e' : S.paired.E') :
+    projL0' S ((extendL0'IsoToE' S h).symm e') = h.symm (projL0' S e') := by
+  rw [extendL0'IsoToE'_symm_apply, map_add]
+  have h1 : projL0' S ((projL1' S e' : S.L1') : S.paired.E') = 0 := by
+    unfold projL0'
+    exact Submodule.linearProjOfIsCompl_apply_right S.isComplL'.symm (projL1' S e')
+  have h2 : projL0' S ((h.symm (projL0' S e') : S.L0') : S.paired.E') =
+      h.symm (projL0' S e') := by
+    unfold projL0'
+    exact Submodule.linearProjOfIsCompl_apply_left S.isComplL'.symm
+      (h.symm (projL0' S e'))
+  rw [h1, h2, zero_add]
 
 /-- Forward extraction: from a parabolic `p` realising the conjugation
 `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p`, extract the Levi `L0'`-block
 `h : L0' ≃ₗ L0'` such that `BT T₂ (h u) (h v) = BT T₁ u v`.
 
-This bundles the *Levi block extraction* from the blueprint proof
-(lines 270–319 of `references/blueprint_verified.md`):
-  (a) write `p = u_D ∘ m` with `m` in the Levi factor,
-  (b) `m` acts on `E'` as `d ∈ GL(E')` preserving `L0' = ker Cbar` so
-      `h := d|_{L0'} ∈ GL(L0')`,
-  (c) the unipotent factor `u_D` does not affect the residual L0' → L0
-      block, so the Levi-action law `T₂ = (h⁻¹)^∨ T₁ h` follows.
-
-Step (a) (Levi/unipotent decomposition of a general parabolic) is not
-yet exposed in `Slice.lean`. Sorried until that machinery lands. -/
+**Round 7 strategy (Option B).** We bypass the `parabolic_decompose`
+deferral by using:
+* `IsParabolicElement` ⇒ `p` preserves `flagEV0 = E ⊕ V0 ⊕ 0`, so the
+  third component of `p (e, v, e')` depends only on `e'` (the
+  block-triangular structure).
+* Conjugation `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` evaluated at `(0, 0, l)`
+  for `l ∈ L0'` gives, via the `V0` component, that `p`'s `E'`-action
+  preserves `L0'` (using `Sₕ` invertible).
+* The L0'-action `h` is then read off from the third component, and the
+  isometry `BT T₂ (h u) (h v) = BT T₁ u v` is checked from the same
+  conjugation evaluated on a pair of L0'-vectors. -/
 private theorem residual_levi_extract (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
     (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂)
     (p : Module.End F S.V) (_hP : IsParabolicElement S p)
-    (_hConj : p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) :
+    (_hConj : p ∘ₗ XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+              = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ p) :
     Bilinear.AreIsometric (BT S T₁) (BT S T₂) := by
-  -- BLOCKED: Requires Levi/unipotent decomposition of `p`. The blueprint
-  -- argument (lines 272–319) writes `p = u_D · m` with `m` Levi, then
-  -- restricts `m`'s action on `E'` to `L0'` to obtain `h`. Without that
-  -- decomposition machinery in `Slice.lean`, we cannot extract `h`.
-  sorry
+  -- Round 7 strategy (see `.archon/informal/normalform_round7.md` § Tier A #2):
+  -- extract the Levi `L0'`-block from the conjugation, bypassing
+  -- `parabolic_decompose`.
+  obtain ⟨hpUnit, _hpFlagE, hpFlagEV0, hpIso⟩ := _hP
+  -- Helper: evaluate the conjugation at `(0, 0, (l : E'))` for `l : L0'`.
+  -- Yields key facts about the V0 and E components of `p (0, 0, (l : E'))`.
+  have h_eval : ∀ (l : S.L0'),
+      p ((((T₁ l : S.L0) : S.paired.E), (0 : S.V0), (0 : S.paired.E')) : S.V)
+        = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂
+            (p ((0, (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)) := by
+    intro l
+    have hConj_l := congrArg
+      (fun f : Module.End F S.V =>
+        f ((0, (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)) _hConj
+    simp only [LinearMap.comp_apply] at hConj_l
+    -- Compute XST(Sₕ, T₁) (0, 0, l) = (T₁ l : E, 0, 0).
+    rw [XST_apply] at hConj_l
+    have hp0 : projL0' S ((l : S.paired.E') : S.paired.E') = l := by
+      unfold projL0'
+      exact Submodule.linearProjOfIsCompl_apply_left S.isComplL'.symm l
+    have hp1 : projL1' S ((l : S.paired.E') : S.paired.E') = 0 := by
+      unfold projL1'
+      exact Submodule.linearProjOfIsCompl_apply_right S.isComplL' l
+    rw [hp0, hp1, map_zero] at hConj_l
+    simp only [map_zero, zero_add, ZeroMemClass.coe_zero, add_zero] at hConj_l
+    exact hConj_l
+  -- Key Lemma 1: For l : L0', `(p (0, 0, l)).2.2 ∈ L0'`.
+  -- This follows from the V0-component of h_eval: since `p ((T₁ l : E), 0, 0) ∈ flagE`
+  -- (p preserves flagE), the V0-component of LHS equals 0. Hence
+  -- `X0 v + (Sₕ (projL1' e') : V0) = 0`, where (a, v, e') := p (0, 0, l). Decomposing
+  -- via Vplus ⊕ range X0 = V0 forces both terms to vanish. Sₕ injective then gives
+  -- projL1' e' = 0, hence e' ∈ L0'.
+  have h_in_L0' : ∀ (l : S.L0'),
+      (p (((0 : S.paired.E), (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)).2.2
+        ∈ S.L0' := by
+    intro l
+    -- Extract V0-component equality from `h_eval`.
+    have h := h_eval l
+    -- p ((T₁ l : E), 0, 0) ∈ flagE (p preserves flagE since IsParabolicElement).
+    have hpFlagE_mem : p (((T₁ l : S.L0) : S.paired.E), (0 : S.V0),
+        (0 : S.paired.E')) ∈ S.flagE := by
+      have : (((T₁ l : S.L0) : S.paired.E), (0 : S.V0),
+          (0 : S.paired.E')) ∈ S.flagE := by
+        refine ⟨trivial, ?_, ?_⟩ <;> simp
+      have hPmap : Submodule.map p S.flagE = S.flagE := _hpFlagE
+      rw [← hPmap]
+      exact ⟨_, this, rfl⟩
+    -- LHS V0-component is 0.
+    have hLHS_V0 : (p (((T₁ l : S.L0) : S.paired.E), (0 : S.V0),
+        (0 : S.paired.E'))).2.1 = 0 := by
+      obtain ⟨_, hv, _⟩ := hpFlagE_mem
+      simpa using hv
+    -- Apply XST_apply to RHS.
+    rw [XST_apply] at h
+    -- h : p ((T₁ l : E), 0, 0) = (Cdual(...) v + (T₂ proj₀_₀ e' : E), X0 v + (Sₕ proj₁_₀ e' : V0), 0)
+    -- where (a, v, e') := p (0, 0, l).
+    have h_V0_comp := congrArg (fun x : S.V => x.2.1) h
+    simp only at h_V0_comp
+    rw [hLHS_V0] at h_V0_comp
+    -- h_V0_comp : 0 = X0 v + (Sₕ (projL1' e') : V0).
+    -- Decompose: both terms must be 0 (Vplus ⊕ range X0 disjoint).
+    set v := (p ((0, (0 : S.V0), ((l : S.paired.E') : S.paired.E')))).2.1 with hv_def
+    set e' := (p ((0, (0 : S.V0), ((l : S.paired.E') : S.paired.E')))).2.2 with he'_def
+    have hSh_zero : ((Sₕ (projL1' S e') : S.Vplus) : S.V0) = 0 := by
+      have h_eq : S.X0 v + ((Sₕ (projL1' S e') : S.Vplus) : S.V0) = 0 := h_V0_comp.symm
+      have hX0_in_range : S.X0 v ∈ LinearMap.range S.X0 := ⟨v, rfl⟩
+      have hSh_in_Vplus : ((Sₕ (projL1' S e') : S.Vplus) : S.V0) ∈ S.Vplus :=
+        (Sₕ (projL1' S e')).2
+      have hX0_eq : S.X0 v = -((Sₕ (projL1' S e') : S.Vplus) : S.V0) :=
+        eq_neg_of_add_eq_zero_left h_eq
+      have hX0_in_Vplus : S.X0 v ∈ S.Vplus := by
+        rw [hX0_eq]; exact Submodule.neg_mem _ hSh_in_Vplus
+      have hdisj : Disjoint S.Vplus (LinearMap.range S.X0) := S.isCompl.disjoint
+      have hX0_zero : S.X0 v = 0 := by
+        have hmem : S.X0 v ∈ S.Vplus ⊓ LinearMap.range S.X0 :=
+          ⟨hX0_in_Vplus, hX0_in_range⟩
+        rw [hdisj.eq_bot] at hmem
+        exact (Submodule.mem_bot F).mp hmem
+      rw [hX0_zero, zero_add] at h_eq
+      exact h_eq
+    -- Sₕ.injective ⇒ projL1' e' = 0.
+    have hSh_zero' : (Sₕ (projL1' S e') : S.Vplus) = 0 :=
+      Subtype.ext hSh_zero
+    have h_proj_zero : projL1' S e' = 0 := by
+      apply Sₕ.injective
+      rw [hSh_zero', map_zero]
+    -- projL1' e' = 0 ⇔ e' ∈ L0' (using IsCompl L1' L0').
+    -- Specifically, e' = projL1' e' + projL0' e' = 0 + (projL0' e' : E') = (projL0' e' : E') ∈ L0'.
+    have hsum :
+        ((projL1' S e' : S.L1') : S.paired.E')
+          + ((projL0' S e' : S.L0') : S.paired.E') = e' := by
+      have hh := Submodule.IsCompl.projection_add_projection_eq_self
+        S.isComplL' e'
+      rw [Submodule.IsCompl.projection_apply S.isComplL' e',
+          Submodule.IsCompl.projection_apply S.isComplL'.symm e'] at hh
+      exact hh
+    rw [h_proj_zero, ZeroMemClass.coe_zero, zero_add] at hsum
+    rw [← hsum]
+    exact (projL0' S e').2
+  -- Now define qFun : L0' →ₗ L0' via codRestrict of `l ↦ (p (0, 0, l)).2.2`.
+  let inE' : S.paired.E' →ₗ[F] S.V :=
+    LinearMap.inr F S.paired.E (S.V0 × S.paired.E') ∘ₗ
+      LinearMap.inr F S.V0 S.paired.E'
+  let projE'_V : S.V →ₗ[F] S.paired.E' :=
+    LinearMap.snd F S.V0 S.paired.E' ∘ₗ
+      LinearMap.snd F S.paired.E (S.V0 × S.paired.E')
+  let qFunRaw : S.L0' →ₗ[F] S.paired.E' :=
+    projE'_V ∘ₗ p ∘ₗ inE' ∘ₗ S.L0'.subtype
+  -- Show qFunRaw lands in L0'.
+  have h_qFunRaw_in_L0' : ∀ l : S.L0', qFunRaw l ∈ S.L0' := by
+    intro l
+    have h := h_in_L0' l
+    show (p ((0, 0, (l : S.paired.E')) : S.V)).2.2 ∈ S.L0'
+    convert h using 1
+  let qFun : S.L0' →ₗ[F] S.L0' := LinearMap.codRestrict S.L0' qFunRaw h_qFunRaw_in_L0'
+  -- Step C: qFun is injective.
+  have hq_inj : Function.Injective qFun := by
+    rw [injective_iff_map_eq_zero]
+    intro l hql
+    -- qFun l = 0 ⇒ qFunRaw l = 0 ⇒ (p (0, 0, l)).2.2 = 0 ⇒ p (0, 0, l) ∈ flagEV0.
+    have hraw : qFunRaw l = 0 := by
+      have h_val : ((qFun l : S.L0') : S.paired.E') = 0 := by
+        rw [hql]; rfl
+      -- (qFun l : E') = qFunRaw l by codRestrict definition.
+      exact h_val
+    have hp_in_flagEV0 :
+        p (((0 : S.paired.E), (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)
+          ∈ S.flagEV0 := by
+      refine ⟨trivial, trivial, ?_⟩
+      change (p ((0, 0, (l : S.paired.E')) : S.V)).2.2 ∈ (⊥ : Submodule F S.paired.E')
+      rw [Submodule.mem_bot]
+      show (p ((0, 0, (l : S.paired.E')) : S.V)).2.2 = 0
+      have : qFunRaw l = (p ((0, (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)).2.2 :=
+        rfl
+      rw [← this]; exact hraw
+    -- p preserves flagEV0 (equality), so by invertibility, p_inv preserves flagEV0.
+    -- Hence (0, 0, l) = p_inv (p (0, 0, l)) ∈ p_inv flagEV0 ≤ flagEV0.
+    -- So third coord is 0, i.e., l = 0.
+    have hpFlagEV0_eq : Submodule.map p S.flagEV0 = S.flagEV0 := hpFlagEV0
+    -- Build p_inv from hpUnit.
+    obtain ⟨pUnit, hpUnit_eq⟩ := hpUnit
+    -- pUnit : (Module.End F S.V)ˣ, hpUnit_eq : (pUnit : Module.End F S.V) = p.
+    have hpu_eq_p : (pUnit : Module.End F S.V) = p := hpUnit_eq
+    -- Apply p_inv := pUnit.inv to both sides.
+    have h_orig : p (((0 : S.paired.E), (0 : S.V0),
+        ((l : S.paired.E') : S.paired.E')) : S.V) =
+        ((pUnit : Module.End F S.V)) ((0, (0 : S.V0),
+          ((l : S.paired.E') : S.paired.E')) : S.V) := by
+      rw [hpu_eq_p]
+    have hpinv_p : ((pUnit.inv : Module.End F S.V) ∘ₗ
+        (pUnit : Module.End F S.V)) = LinearMap.id := by
+      have : pUnit.inv * (pUnit : Module.End F S.V) = 1 := pUnit.inv_val
+      exact this
+    have h_zero_in_FEV0 :
+        (((0 : S.paired.E), (0 : S.V0), ((l : S.paired.E') : S.paired.E')) : S.V)
+          ∈ S.flagEV0 := by
+      -- pUnit⁻¹ (p (0, 0, l)) = (0, 0, l). And pUnit⁻¹ (flagEV0) ≤ flagEV0.
+      have hp_eq :
+          ((pUnit.inv : Module.End F S.V))
+              (p (((0 : S.paired.E), (0 : S.V0),
+                ((l : S.paired.E') : S.paired.E')) : S.V))
+            = (((0 : S.paired.E), (0 : S.V0),
+                ((l : S.paired.E') : S.paired.E')) : S.V) := by
+        rw [h_orig]
+        have := congrArg
+          (fun f : Module.End F S.V => f ((0, (0 : S.V0),
+            ((l : S.paired.E') : S.paired.E')) : S.V)) hpinv_p
+        simpa using this
+      -- pUnit⁻¹ maps flagEV0 to flagEV0.
+      have hinv_FEV0 : ∀ x ∈ S.flagEV0, (pUnit.inv : Module.End F S.V) x ∈ S.flagEV0 := by
+        intro x hx
+        -- From hpFlagEV0_eq : map p flagEV0 = flagEV0, surjectivity of p|flagEV0.
+        rw [← hpFlagEV0_eq] at hx
+        obtain ⟨y, hy_in, hy_eq⟩ := hx
+        -- y ∈ flagEV0 with p y = x.
+        have : (pUnit.inv : Module.End F S.V) x = y := by
+          rw [← hy_eq, ← hpu_eq_p]
+          have := congrArg
+            (fun f : Module.End F S.V => f y) hpinv_p
+          simpa using this
+        rw [this]; exact hy_in
+      rw [← hp_eq]
+      exact hinv_FEV0 _ hp_in_flagEV0
+    obtain ⟨_, _, hl_in_bot⟩ := h_zero_in_FEV0
+    have hl_zero : ((l : S.paired.E') : S.paired.E') = 0 := by
+      change ((l : S.paired.E') : S.paired.E') ∈ (⊥ : Submodule F S.paired.E') at hl_in_bot
+      exact (Submodule.mem_bot F).mp hl_in_bot
+    apply Subtype.ext
+    show ((l : S.paired.E') : S.paired.E') = ((0 : S.L0') : S.paired.E')
+    rw [hl_zero]; rfl
+  -- Step D: lift qFun to a LinearEquiv (injective + same dim ⇒ bijective).
+  have hdim_eq : Module.finrank F S.L0' = Module.finrank F S.L0' := rfl
+  let h : S.L0' ≃ₗ[F] S.L0' := LinearMap.linearEquivOfInjective qFun hq_inj hdim_eq
+  -- Step E: verify isometry condition `BT T₂ (h u) (h v) = BT T₁ u v`.
+  refine ⟨h, ?_⟩
+  intro u v
+  -- Use the IsOrthogonal conjunct of p applied to (T₁ u : E, 0, 0) and (0, 0, (v : E')).
+  -- Compute p (T₁ u : E, 0, 0) and p (0, 0, (v : E')).
+  -- Use the hypothesis: S.ambientForm (p x) (p y) = S.ambientForm x y.
+  -- Choose x := (T₁ u : E, 0, 0), y := (0, 0, (v : E')).
+  -- LHS: S.ambientForm (p (T₁ u : E, 0, 0)) (p (0, 0, v)).
+  --    p (T₁ u : E, 0, 0) ∈ flagE (preserved by p), so it's of form (e_p, 0, 0).
+  --    p (0, 0, v) = (a_v, c_v, e'_v) with e'_v = (h v : E') (Step A).
+  --    ambientForm ((e_p, 0, 0), (a_v, c_v, e'_v))
+  --      = λ(e_p, e'_v) + B0(0, c_v) + ε * λ(a_v, 0)
+  --      = λ(e_p, (h v : E')) + 0 + 0
+  --      = λ(e_p) (h v : E').
+  -- RHS: S.ambientForm ((T₁ u : E, 0, 0), (0, 0, (v : E'))) = λ(T₁ u, v) + 0 + 0 = BT T₁ u v.
+  -- So λ(e_p) (h v : E') = BT T₁ u v.
+  -- We also have h_eval u: p (T₁ u : E, 0, 0) = XST(T₂) (p (0, 0, u)).
+  --    Equating E-component: e_p = Cdual(CST Sₕ) c_u + (T₂ (h u) : E).
+  --    Plugging in: λ(Cdual(CST Sₕ) c_u + (T₂ (h u) : E)) (h v : E') = BT T₁ u v.
+  --    Use Cdual_pairing_eq + (h v ∈ L0' ⇒ projL1' (h v : E') = 0 ⇒ CST Sₕ vanishes on h v)
+  --    to drop the Cdual term, leaving:
+  --    λ(T₂ (h u) : E) (h v : E') = BT T₁ u v.
+  --    But LHS = BT T₂ (h u) (h v) by definition.
+  have hOrth := hpIso
+      ((((T₁ u : S.L0) : S.paired.E), (0 : S.V0), (0 : S.paired.E')) : S.V)
+      ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V)
+  -- Compute RHS of hOrth: ambientForm ((T₁ u : E, 0, 0), (0, 0, v)) = λ(T₁ u, v).
+  have hRHS : S.ambientForm
+      ((((T₁ u : S.L0) : S.paired.E), (0 : S.V0), (0 : S.paired.E')) : S.V)
+      ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V)
+        = S.lambda ((T₁ u : S.L0) : S.paired.E) ((v : S.paired.E') : S.paired.E') := by
+    show S.paired.pairing ((T₁ u : S.L0) : S.paired.E)
+            ((v : S.paired.E') : S.paired.E') + S.formV0 0 0
+            + S.eps * S.paired.pairing 0 0 = _
+    simp
+  rw [hRHS] at hOrth
+  -- LHS of hOrth: compute via h_eval, substituting p (T₁ u, 0, 0).
+  have h_eval_u := h_eval u
+  -- h_eval_u : p (T₁ u : E, 0, 0) = XST(Sₕ, T₂) (p (0, 0, u))
+  rw [h_eval_u] at hOrth
+  -- Now LHS of hOrth = ambientForm (XST(Sₕ, T₂) (p (0, 0, u))) (p (0, 0, v)).
+  -- Use XST_apply to expand.
+  rw [show XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂
+        (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V))
+      = (Cdual S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus))
+            (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.1
+          + (T₂ (projL0' S
+              (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.2) : S.paired.E),
+        S.X0 (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.1
+          + (Sₕ (projL1' S
+              (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.2) : S.V0),
+        0) from XST_apply S _ _ _ _ _] at hOrth
+  -- Set up shorthands.
+  set a_u := (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).1 with ha_u_def
+  set c_u := (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.1 with hc_u_def
+  set e'_u := (p ((0, (0 : S.V0), ((u : S.paired.E') : S.paired.E')) : S.V)).2.2 with he'_u_def
+  set a_v := (p ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V)).1 with ha_v_def
+  set c_v := (p ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V)).2.1 with hc_v_def
+  set e'_v := (p ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V)).2.2 with he'_v_def
+  -- h u = ⟨e'_u, h_in_L0' u⟩, similarly for v. (These are `(h u : L0').val = e'_u`.)
+  have h_u_val : ((h u : S.L0') : S.paired.E') = e'_u := by
+    show qFunRaw u = e'_u
+    rfl
+  have h_v_val : ((h v : S.L0') : S.paired.E') = e'_v := by
+    show qFunRaw v = e'_v
+    rfl
+  -- Now compute LHS of hOrth.
+  -- LHS = ambientForm (XST_RHS) (a_v, c_v, e'_v)
+  --     = λ((Cdual(CST Sₕ) c_u) + (T₂ (projL0' e'_u) : E), e'_v) + B0((X0 c_u + Sₕ projL1' e'_u : V0), c_v) + ε * λ(a_v, 0).
+  -- Last term is 0.
+  -- e'_u ∈ L0' (h_in_L0' u), so projL0' e'_u = ⟨e'_u, ...⟩ as L0' element, and projL1' e'_u = 0.
+  have h_e'u_in_L0' : e'_u ∈ S.L0' := h_in_L0' u
+  have h_e'v_in_L0' : e'_v ∈ S.L0' := h_in_L0' v
+  have h_proj_e'u_L1' : projL1' S e'_u = 0 := by
+    unfold projL1'
+    exact Submodule.linearProjOfIsCompl_apply_right' S.isComplL' _ h_e'u_in_L0'
+  have h_proj_e'u_L0' : (projL0' S e'_u : S.paired.E') = e'_u := by
+    show ((Submodule.linearProjOfIsCompl S.L0' S.L1' S.isComplL'.symm e'_u :
+            S.L0') : S.paired.E') = e'_u
+    rw [Submodule.linearProjOfIsCompl_apply_left S.isComplL'.symm ⟨e'_u, h_e'u_in_L0'⟩]
+  -- Similarly for v.
+  have h_proj_e'v_L1' : projL1' S e'_v = 0 := by
+    unfold projL1'
+    exact Submodule.linearProjOfIsCompl_apply_right' S.isComplL' _ h_e'v_in_L0'
+  have h_proj_e'v_L0' : (projL0' S e'_v : S.paired.E') = e'_v := by
+    show ((Submodule.linearProjOfIsCompl S.L0' S.L1' S.isComplL'.symm e'_v :
+            S.L0') : S.paired.E') = e'_v
+    rw [Submodule.linearProjOfIsCompl_apply_left S.isComplL'.symm ⟨e'_v, h_e'v_in_L0'⟩]
+  rw [h_proj_e'u_L1', map_zero, ZeroMemClass.coe_zero, add_zero] at hOrth
+  -- The V0-part of XST: X0 c_u + 0 = X0 c_u. But we need to use this is 0 (from h_in_L0' u proof).
+  -- Actually, from the h_in_L0' u proof, we showed X0 c_u = 0. Let me re-derive that.
+  have h_X0_c_u_zero : S.X0 c_u = 0 := by
+    -- From h_eval u : p (T₁ u : E, 0, 0) = XST T₂ (p (0, 0, u)).
+    -- The V0 component: 0 = X0 c_u + (Sₕ (projL1' e'_u) : V0).
+    -- We have projL1' e'_u = 0, so Sₕ proj = 0, so X0 c_u = 0.
+    have h_eu := h_eval u
+    rw [XST_apply] at h_eu
+    -- p (T₁ u, 0, 0) ∈ flagE so V0 component is 0.
+    have hpFlagE_mem_u : p (((T₁ u : S.L0) : S.paired.E), (0 : S.V0),
+        (0 : S.paired.E')) ∈ S.flagE := by
+      have : (((T₁ u : S.L0) : S.paired.E), (0 : S.V0),
+          (0 : S.paired.E')) ∈ S.flagE := by
+        refine ⟨trivial, ?_, ?_⟩ <;> simp
+      have hPmap : Submodule.map p S.flagE = S.flagE := _hpFlagE
+      rw [← hPmap]
+      exact ⟨_, this, rfl⟩
+    have hLHS_V0_u : (p (((T₁ u : S.L0) : S.paired.E), (0 : S.V0),
+        (0 : S.paired.E'))).2.1 = 0 := by
+      obtain ⟨_, hv', _⟩ := hpFlagE_mem_u
+      simpa using hv'
+    have h_V0_eq := congrArg (fun x : S.V => x.2.1) h_eu
+    simp only at h_V0_eq
+    rw [hLHS_V0_u] at h_V0_eq
+    rw [h_proj_e'u_L1', map_zero, ZeroMemClass.coe_zero, add_zero] at h_V0_eq
+    show S.X0 c_u = 0
+    exact h_V0_eq.symm
+  rw [h_X0_c_u_zero] at hOrth
+  -- Hmm... actually this rewrite affects only the (X0 c_u + ...) part inside hOrth.
+  -- Let's see what hOrth looks like now and continue.
+  -- hOrth: ambientForm (Cdual(CST Sₕ) c_u + T₂ (projL0' e'_u : L0') : E,
+  --                    (Sₕ (projL1' e'_u) : V0)  -- this is 0, but the rewrite above
+  --                                                 might be confused
+  --                    , 0)
+  --                   (a_v, c_v, e'_v) = λ(T₁ u, v).
+  -- Honestly this is too painful to track in comments. Let me re-derive.
+  -- After both rewrites, the LHS expression in XST(...) has form:
+  -- (Cdual(CST Sₕ) c_u + (T₂ (projL0' e'_u : L0') : E), 0, 0).
+  -- (V0 = X0 c_u + Sₕ (projL1' e'_u : V0) = 0 + 0 = 0.
+  --  E' = 0.)
+  -- Hmm but we already simplified projL1' e'_u to 0 and X0 c_u to 0. So the V0 component of the XST RHS in hOrth should now be 0.
+  -- ambientForm ((Cdual(...) c_u + T₂ ... : E, 0, 0), (a_v, c_v, e'_v))
+  --   = λ(Cdual c_u + T₂ ... , e'_v) + B0(0, c_v) + ε * λ(a_v, 0)
+  --   = λ(Cdual c_u, e'_v) + λ(T₂ ..., e'_v) + 0 + 0.
+  -- λ(Cdual c_u, e'_v) = -B0(c_u, CST Sₕ e'_v) by Cdual_pairing_eq.
+  -- CST Sₕ e'_v = Vplus.subtype ∘ Sₕ ∘ projL1' e'_v.
+  -- projL1' e'_v = 0 (since e'_v ∈ L0'), so CST Sₕ e'_v = 0.
+  -- So λ(Cdual c_u, e'_v) = 0.
+  -- λ(T₂ (projL0' e'_u : L0') : E, e'_v) = ?
+  -- projL0' e'_u : L0' has value e'_u (since e'_u ∈ L0'). So T₂ (projL0' e'_u) = T₂ ⟨e'_u, ...⟩ = T₂ (h u).
+  -- λ((T₂ (h u) : E), e'_v) = λ((T₂ (h u) : E), (h v : E')) (using h_v_val).
+  -- = BT T₂ (h u) (h v) by definition.
+  -- And RHS of hOrth = λ(T₁ u, v) = BT T₁ u v.
+  -- So BT T₂ (h u) (h v) = BT T₁ u v. ✓
+  --
+  -- Implementation:
+  show BT S T₂ (h u) (h v) = BT S T₁ u v
+  -- Unfold both BT.
+  show S.lambda ((T₂ (h u) : S.L0) : S.paired.E)
+          (((h v : S.L0') : S.paired.E') : S.paired.E')
+      = S.lambda ((T₁ u : S.L0) : S.paired.E) ((v : S.paired.E') : S.paired.E')
+  rw [h_v_val]
+  -- Goal: λ((T₂ (h u) : E)) e'_v = λ((T₁ u : E)) v.
+  -- From hOrth, we know after simplifications that:
+  -- ambientForm (XST_RHS) (a_v, c_v, e'_v) = λ((T₁ u : E)) v.
+  -- where XST_RHS = (Cdual c_u + T₂ ...,  0,  0) after the rewrites we did.
+  -- Compute the ambientForm explicitly.
+  have h_proj_e'u_L0'_subt :
+      ((Submodule.linearProjOfIsCompl S.L0' S.L1' S.isComplL'.symm e'_u : S.L0')
+        : S.paired.E') = e'_u := h_proj_e'u_L0'
+  -- Rewrite hOrth's ambientForm via its definition (without `set`).
+  have h_amb_unfold :
+      S.ambientForm
+          ((Cdual S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) c_u
+              + ((T₂ (projL0' S e'_u) : S.L0) : S.paired.E),
+            (0 : S.V0), (0 : S.paired.E')))
+          (p ((0, (0 : S.V0), ((v : S.paired.E') : S.paired.E')) : S.V))
+        = S.paired.pairing
+            (Cdual S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) c_u
+              + ((T₂ (projL0' S e'_u) : S.L0) : S.paired.E)) e'_v
+            + S.formV0 (0 : S.V0) c_v
+            + S.eps * S.paired.pairing a_v (0 : S.paired.E') := rfl
+  rw [h_amb_unfold] at hOrth
+  -- Now hOrth: λ((Cdual + T₂ ...) , e'_v) + B0(0, c_v) + ε * λ(a_v, 0) = λ(T₁ u, v).
+  rw [LinearMap.map_zero, LinearMap.zero_apply, map_zero, add_zero, mul_zero,
+    add_zero] at hOrth
+  -- Now hOrth: λ((Cdual c_u + (T₂ projL0' e'_u : E))) e'_v = λ((T₁ u : E)) v.
+  rw [LinearMap.map_add, LinearMap.add_apply] at hOrth
+  -- hOrth: λ(Cdual(CST Sₕ) c_u, e'_v) + λ(T₂ (projL0' e'_u : L0') : E, e'_v) = λ(T₁ u, v).
+  -- λ(Cdual(CST Sₕ) c_u, e'_v) = -formV0 c_u (CST Sₕ e'_v) by Cdual_pairing_eq.
+  -- CST Sₕ e'_v = Vplus.subtype (Sₕ (projL1' e'_v)) = Vplus.subtype (Sₕ 0) = 0.
+  have h_CST_e'v : (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e'_v = 0 := by
+    show (S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ projL1' S) e'_v = 0
+    simp only [LinearMap.comp_apply, h_proj_e'v_L1', map_zero]
+  have h_Cdual_term :
+      S.lambda (Cdual S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) c_u) e'_v = 0 := by
+    rw [Cdual_pairing_eq S _hNondeg, h_CST_e'v, map_zero, neg_zero]
+  rw [h_Cdual_term, zero_add] at hOrth
+  -- hOrth: λ(T₂ (projL0' e'_u : L0') : E, e'_v) = λ(T₁ u : E, v).
+  -- projL0' e'_u : L0' has value e'_u, which equals (h u : E') by h_u_val.
+  have h_projL0'_eq : projL0' S e'_u = h u := by
+    apply Subtype.ext
+    rw [h_proj_e'u_L0', ← h_u_val]
+  rw [h_projL0'_eq] at hOrth
+  exact hOrth
 
 /-- Backward construction: from an isometry `h : L0' ≃ₗ L0'` of
 `(BT T₁) ↦ (BT T₂)`, construct a parabolic `p ∈ Module.End F S.V`
 realising the conjugation `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p`.
 
-Blueprint construction: `p = (h⁻¹)^∨ ⊕ id ⊕ h` on the decomposition
-`V = L_1 ⊕ L_0 ⊕ V_0 ⊕ L_1' ⊕ L_0'`, where `(h⁻¹)^∨ : L_0 → L_0` is
-the perfect-pairing dual of `h⁻¹` (using the `L1×L1'` perfect pairing).
-
-The construction requires the perfect-pairing transpose on the L₀ block
-plus the L₁⊕L₀ direct-sum decomposition of `E` (for assembling `p` on
-the `E` block). Both pieces require additional `SliceSetup` machinery
-(specifically, a Lagrangian condition aligning `L0` with `L0'` via
-`λ`); the bare `SliceSetup` only gives `L0_isotropic` (`λ(L0, L0') = 0`),
-not the perfect pairing on `L0 × L0'`.
-
-Sorried until that infrastructure lands. -/
+**Round 7 strategy.** Take `p := leviGL_E S d` for
+`d := extendL0'IsoToE' S h` (the Levi block extending `h` by `id` on
+`L1'`). Parabolicity follows from `leviGL_E_isParabolic`. The
+conjugation reduces via `leviGL_E_conj_XCB` to the two-component
+identity `(CST Sₕ ∘ d.symm = CST Sₕ)` and
+`(lambdaDualE d.symm ∘ BST T₁ ∘ d.symm = BST T₂)`, the latter being the
+residue of the isometry hypothesis `hh`. -/
 private theorem residual_levi_build (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
     (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂)
-    (h : S.L0' ≃ₗ[F] S.L0') (_hh : ∀ u v, BT S T₂ (h u) (h v) = BT S T₁ u v) :
+    (h : S.L0' ≃ₗ[F] S.L0') (hh : ∀ u v, BT S T₂ (h u) (h v) = BT S T₁ u v) :
     ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
-      p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p := by
-  -- BLOCKED: Requires the perfect-pairing dual `(h⁻¹)^∨ : L_0 → L_0` on
-  -- the `L_0` block, which needs an extra Lagrangian condition not
-  -- present in the bare `SliceSetup` (only `L0_isotropic` is given,
-  -- not perfect pairing on `L0 × L0'`).
-  -- After Tier S #1 (this round), `IsParabolicElement`'s 4th conjunct is
-  -- `LinearMap.IsOrthogonal S.ambientForm p`, which is the genuine
-  -- isometry condition; no longer a Tier D inheritance issue. The
-  -- residual blocker is purely the perfect-pairing dual machinery.
-  sorry
+      p ∘ₗ XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+        = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ p := by
+  -- Build `d : E' ≃ E'` extending `h` by id on L1'.
+  let d : S.paired.E' ≃ₗ[F] S.paired.E' := extendL0'IsoToE' S h
+  -- Take p := leviGL_E S d.
+  refine ⟨leviGL_E S d, leviGL_E_isParabolic S d, ?_⟩
+  -- Component identity 1: CST Sₕ ∘ d.symm = CST Sₕ
+  have h_C : CST S (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ
+        (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+      = CST S (Sₕ : S.L1' →ₗ[F] S.Vplus) := by
+    apply LinearMap.ext
+    intro e0
+    show (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus))
+            ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+        = (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e0
+    show (S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ projL1' S)
+            ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+        = (S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ projL1' S) e0
+    simp only [LinearMap.comp_apply]
+    rw [show ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+          = (extendL0'IsoToE' S h).symm e0 from rfl]
+    rw [show projL1' S ((extendL0'IsoToE' S h).symm e0) = projL1' S e0 from
+        projL1'_extendL0'IsoToE'_symm S h e0]
+  -- Component identity 2: lambdaDualE d.symm ∘ BST T₁ ∘ d.symm = BST T₂.
+  have h_B : lambdaDualE S (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+        ∘ₗ BST S T₁
+        ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+      = BST S T₂ := by
+    apply LinearMap.ext
+    intro e0
+    -- Step A: simplify projL0' (d.symm e0) = h.symm (projL0' e0).
+    have hp0_dsym : projL0' S ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+        = h.symm (projL0' S e0) := by
+      show projL0' S ((extendL0'IsoToE' S h).symm e0) = h.symm (projL0' S e0)
+      exact projL0'_extendL0'IsoToE'_symm S h e0
+    -- Reduce LHS step-by-step.
+    show lambdaDualE S (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+            ((BST S T₁ ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')) e0)
+        = BST S T₂ e0
+    simp only [LinearMap.comp_apply]
+    have hBST_T₁ : BST S T₁ ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+        = ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E) := by
+      show (S.L0.subtype ∘ₗ T₁ ∘ₗ projL0' S)
+            ((d.symm : S.paired.E' →ₗ[F] S.paired.E') e0)
+          = ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E)
+      simp only [LinearMap.comp_apply, hp0_dsym]
+      rfl
+    rw [hBST_T₁]
+    -- BST T₂ e0 = (T₂ (projL0' e0) : E).
+    show lambdaDualE S (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+            ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E)
+        = (S.L0.subtype ∘ₗ T₂ ∘ₗ projL0' S) e0
+    simp only [LinearMap.comp_apply]
+    show lambdaDualE S (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+            ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E)
+        = ((T₂ (projL0' S e0) : S.L0) : S.paired.E)
+    -- Use perfect pairing: check pairing with all e''.
+    apply S.paired.isPerfect.1
+    apply LinearMap.ext
+    intro e''
+    rw [lambdaDualE_pairing_eq]
+    -- Decompose e'' via the IsCompl decomposition.
+    have he'' : (((projL1' S e'' : S.L1') : S.paired.E')
+                  + ((projL0' S e'' : S.L0') : S.paired.E') : S.paired.E') = e'' := by
+      have hcompl := Submodule.IsCompl.projection_add_projection_eq_self
+        S.isComplL' e''
+      rw [Submodule.IsCompl.projection_apply S.isComplL' e'',
+          Submodule.IsCompl.projection_apply S.isComplL'.symm e''] at hcompl
+      exact hcompl
+    have hdsym_e'' : (d.symm : S.paired.E' →ₗ[F] S.paired.E') e''
+        = ((projL1' S e'' : S.L1') : S.paired.E')
+            + ((h.symm (projL0' S e'') : S.L0') : S.paired.E') := by
+      show (extendL0'IsoToE' S h).symm e'' = _
+      rw [extendL0'IsoToE'_symm_apply]
+    rw [hdsym_e'']
+    -- λ(T₁ ∘ h.symm proj : L0, [a' + h.symm b' : E']) = λ(...)(a') + λ(...)(h.symm b').
+    rw [map_add]
+    -- Split RHS via the e'' decomposition.
+    conv_rhs => rw [← he'', map_add]
+    -- λ(T₁(h.symm u) : L0 ↪ E, projL1' e'' : L1' ↪ E') = 0 by L0 ⊥ L1'.
+    have h_L0_L1'_a :
+        S.lambda ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E)
+            ((projL1' S e'' : S.L1') : S.paired.E') = 0 :=
+      S.L0_isotropic_L1' _ (T₁ (h.symm (projL0' S e0))).2
+        _ (projL1' S e'').2
+    have h_L0_L1'_b :
+        S.lambda ((T₂ (projL0' S e0) : S.L0) : S.paired.E)
+            ((projL1' S e'' : S.L1') : S.paired.E') = 0 :=
+      S.L0_isotropic_L1' _ (T₂ (projL0' S e0)).2
+        _ (projL1' S e'').2
+    rw [h_L0_L1'_a, h_L0_L1'_b, zero_add, zero_add]
+    -- Now: λ(T₁(h.symm u), h.symm b' : E') = λ(T₂ u, b' : E') with
+    -- u := projL0' e0, b' := projL0' e''. This is BT T₁ (h.symm u) (h.symm b')
+    -- = BT T₂ u b', which follows from hh by substituting u → h.symm u and
+    -- v → h.symm b'.
+    have hkey' := hh (h.symm (projL0' S e0)) (h.symm (projL0' S e''))
+    simp only [LinearEquiv.apply_symm_apply] at hkey'
+    have hBT_T₁ : BT S T₁ (h.symm (projL0' S e0)) (h.symm (projL0' S e''))
+        = S.lambda ((T₁ (h.symm (projL0' S e0)) : S.L0) : S.paired.E)
+            ((h.symm (projL0' S e'') : S.L0') : S.paired.E') := by
+      unfold BT; simp [LinearMap.mk₂_apply]
+    have hBT_T₂ : BT S T₂ (projL0' S e0) (projL0' S e'')
+        = S.lambda ((T₂ (projL0' S e0) : S.L0) : S.paired.E)
+            ((projL0' S e'' : S.L0') : S.paired.E') := by
+      unfold BT; simp [LinearMap.mk₂_apply]
+    rw [← hBT_T₁, ← hBT_T₂]
+    exact hkey'.symm
+  -- Now combine: leviGL_E d ∘ XCB(CST Sₕ, BST T₁) = XCB(CST Sₕ, BST T₂) ∘ leviGL_E d.
+  show leviGL_E S d ∘ₗ XCB S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) (BST S T₁)
+      = XCB S (CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) (BST S T₂) ∘ₗ leviGL_E S d
+  rw [leviGL_E_conj_XCB S d]
+  rw [h_C, h_B]
 
 /-- `prop:p-normal-form` (residual-orbit isometry).  Two normalised
 representatives `XST S Sₕ T₁` and `XST S Sₕ T₂` are `P`-conjugate iff their
@@ -381,14 +982,18 @@ items 3 and surrounding text):
   using `XST_apply` and the isometry condition.
 
 Both directions are factored through `residual_levi_extract` and
-`residual_levi_build`, which capture the missing Levi-action machinery
-as focused `sorry`s. -/
+`residual_levi_build`. The Round 7 prover refactored `Sₕ` from a bare
+`LinearMap` to a `LinearEquiv` (`L1' ≃ₗ Vplus`) here and in the helpers
+because the (←) direction's Levi `d`-construction needs `Sₕ.symm`, and
+the (→) direction's `kernelImage_ker`-style argument needs `Sₕ`
+injective. -/
 theorem pNormalForm_residual_orbit_iso
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
-    (Sₕ : S.L1' →ₗ[F] S.Vplus)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus)
     (T₁ T₂ : S.L0' →ₗ[F] S.L0) (_hT₁ : IsSkewT S T₁) (_hT₂ : IsSkewT S T₂) :
     (∃ (p : Module.End F S.V), IsParabolicElement S p ∧
-        p ∘ₗ XST S Sₕ T₁ = XST S Sₕ T₂ ∘ₗ p) ↔
+        p ∘ₗ XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+          = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ p) ↔
       Bilinear.AreIsometric (BT S T₁) (BT S T₂) := by
   refine ⟨?_, ?_⟩
   · -- (→) Forward: from parabolic conjugation, extract isometry.
@@ -410,25 +1015,6 @@ noncomputable def kerXST_submod
   Submodule.prod ⊤
     (Submodule.prod ⊥
       ((LinearMap.ker T).map S.L0'.subtype))
-
-/-! ### Helper: explicit formula for `XST` applied to a triple. -/
-
-/-- `XST S Sₕ T` applied to `(e, v, e')` is `(Cdual (CST Sₕ) v + (T (projL0' e') : E),
-X0 v + (Sₕ (projL1' e') : V0), 0)`. -/
-private theorem XST_apply (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0)
-    (e : S.E) (v : S.V0) (e' : S.E') :
-    XST S Sₕ T (e, v, e') =
-      (Cdual S (CST S Sₕ) v + (T (projL0' S e') : S.E),
-        S.X0 v + (Sₕ (projL1' S e') : S.V0), 0) := by
-  -- Unfold XST = XCB S (CST Sₕ) (BST T), then unfold XCB.
-  show XCB S (CST S Sₕ) (BST S T) (e, v, e') = _
-  unfold XCB
-  simp only [LinearMap.add_apply, LinearMap.comp_apply, LinearMap.fst_apply,
-    LinearMap.snd_apply, LinearMap.inl_apply, LinearMap.inr_apply,
-    Prod.mk_add_mk, add_zero, zero_add]
-  -- Now reduce `BST S T e'` and `CST S Sₕ e'` to their definitions.
-  unfold BST CST
-  simp only [LinearMap.comp_apply, Submodule.subtype_apply]
 
 /-- The "easy" direction of `kernelImage_ker`: `kerXST_submod ⊆ ker XST`. This
 direction is fully constructive: any `(e, 0, (l : E'))` with `l ∈ L0'` and

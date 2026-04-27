@@ -1,124 +1,137 @@
 # Prover Backlog
 
-`lake build` is green (verified 2026-04-28, end of Round 5); 0 custom
-axioms; **4 declaration-use `sorry` warnings** remain (down from 6 at
-end of Round 4). The remaining sorries split into the tiers below — see
-`PROGRESS.md` for the per-round assignments and `PROJECT_STATUS.md` for
-the inter-target dependency graph.
+`lake build` is green (verified 2026-04-28, end of Round 6); 0 custom
+axioms; **5 declaration-use `sorry` warnings** (4 + 1 additive from
+Round 6's deferred `parabolic_decompose`):
+
+- `InducedOrbitToy/Slice.lean:1078` — `parabolic_decompose` (Tier A,
+  **Round 8**).
+- `InducedOrbitToy/NormalForm.lean:195` — `pNormalForm_witnesses`
+  (Tier S #5 + Tier A, **Round 7**).
+- `InducedOrbitToy/NormalForm.lean:319` — `residual_levi_extract`
+  (Tier A, **Round 7**).
+- `InducedOrbitToy/NormalForm.lean:348` — `residual_levi_build`
+  (Tier A, **Round 7**).
+- `InducedOrbitToy/Orbits.lean:324` — `sIndependenceAndOrbitCriterion`
+  (Tier A, **Round 8**).
 
 ## Tier S — plan-agent statement / structural fixes
 
-(Tier S #1 — `uD_isParabolic` IsAdjointPair conjunct + `IsParabolicElement`
-4th conjunct — was **resolved in session 5 / Round 3**.)
+(Tier S #1, #2, #3, #4 — all resolved in earlier rounds; see
+`task_done.md`.)
 
-(Tier S #2 — `UnipotentRadical` tightened with the 4th `IsSkewAdjoint`
-conjunct — was **resolved in Round 4**, with cascading consumers
-`parametrizeX0PlusU_mem` / `parametrizeX0PlusU_existence`,
-`XCB_sub_X0Lift_mem_unipotent`, `XST_sub_X0Lift_mem_unipotent`,
-`XST_mem_O0PlusU`, `inducedOrbits`, `main` all updated.)
+### Tier S #5 — `pNormalForm_witnesses` signature change (must land in Round 7)
 
-(Tier S #3 — `SliceSetup` Lagrangian fields `L0_paired`,
-`L1_isotropic_L0'`, `L0_isotropic_L1'` (replacing the mis-named
-`L0_isotropic`) — were **added in Round 4**. Audit confirmed the old
-field had no live consumers, only stale comments in `NormalForm.lean`.)
+The current statement of `pNormalForm_witnesses` (NormalForm.lean lines
+195–203) is **mathematically false as written**. The conclusion
+`uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T` cannot hold for arbitrary `(C, B)`
+because `uD`-conjugation only modifies the B-block (per `uD_conj_XCB`),
+leaving the C-block invariant. To match `XST Sₕ T` (which has C-block
+`CST Sₕ`), the conjugator must include a Levi factor `leviGL_E d`.
 
-(Tier S #4 — `kernelImage_ker`'s `Sₕ` re-typed to `S.L1' ≃ₗ[F] S.Vplus`
-— was **resolved in Round 5 / session 7**. `kernelImage_dim` call site
-updated to drop the explicit `LinearMap` coercion. The closure of
-`kernelImage_ker` and `kernelImage_im` followed mechanically once the
-re-typing landed.)
+**Restructure (Round 7 prover delivers):**
 
-### Tier S #5 (provisional) — `pNormalForm_witnesses` may need restructuring
+```lean
+private theorem pNormalForm_witnesses (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
+    (_hRank :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+    ∃ (Sₕ : S.L1' →ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
+      (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
+      IsSkewT S T ∧
+      uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
+        = XST S Sₕ T ∘ₗ uD S D ∘ₗ leviGL_E S d
+```
 
-The current statement of `pNormalForm_witnesses` (lines 195–203 of
-`InducedOrbitToy/NormalForm.lean`) glosses over the Levi step (see the
-docstring's "subtlety" note). Strictly speaking, the helper as written
-is provable only when the input `(C, B)` is *already* Levi-normalized
-(`ker Cbar = L0'`, `Cbar|_{L1'} = Sₕ`).
+The cascading update to `pNormalForm`'s body (lines 237–301) extracts
+`p := uD S D ∘ₗ leviGL_E S d` and proves
+`IsParabolicElement S p` from `uD_isParabolic` ∘ `leviGL_E_isParabolic`.
 
-The plan is to handle this in **Round 7** as part of the closure work —
-either restructure the helper to internalize the Levi step (preferred)
-or split `pNormalForm` to do Levi-then-uD explicitly.
+See `.archon/informal/normalform_round7.md` for the full restructure
+plan and proof sketches.
 
-The exact form of the restructure depends on what Round 6 delivers. Hold
-the decision until Round 6's Levi machinery lands; the Round 7 prover
-will pick the cleanest signature based on Slice.lean's actual API.
+## Tier A — provable now with Round 6's Levi machinery in place
 
-## Tier A — provable now once Levi machinery is in place
+### `InducedOrbitToy/NormalForm.lean :: pNormalForm_witnesses` (line 195, Round 7)
 
-### `InducedOrbitToy/NormalForm.lean :: pNormalForm_witnesses` (line 195, private)
+Existence of `(Sₕ, D, d, T)` with the new (Tier S #5) signature.
 
-Existence of `(Sₕ, D, T)` such that
-`IsSkewT T ∧ uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T`.
+- **Strategy** (blueprint lines 200–264): build `d : E' ≃ₗ E'` so
+  `d(L0') = ker (Cbar C)` and `Cbar (C ∘ d.symm)|_{L1'}` matches a
+  chosen `Sₕ : L1' ≃ Vplus`; then `D = D₀ ⊕ D₁` chosen via the
+  `Vplus × ker X₀ → F` perfect pairing
+  (`vplusKerPairing_isPerfPair`); then `T := projL0 ∘ B'|_{L0'}`.
+- **Fallback:** if the `d`-construction is intractable in one round,
+  emit a one-helper sorry isolating that piece; close everything else.
+  Plan agent picks up the helper Round 8.
+- **References:** `Round 7 plan` in
+  `.archon/informal/normalform_round7.md`.
 
-- **Blocker:** Levi-action machinery is missing from `Slice.lean`. Need:
-  - `leviGL_E : (S.E' ≃ₗ[F] S.E') →* Module.End F S.V` — block-diagonal
-    embedding of `GL(E')`.
-  - `leviGL_V0 : (subgroup of `S.V0 ≃ₗ S.V0` preserving `formV0`)
-    →* Module.End F S.V` — same for `G_0` (isometries of `V_0`).
-  - `levi_conj_XCB` lemma giving the action on `XCB` parameters per
-    blueprint lines 277–278:
-    `m X_{C,B} m⁻¹ = X_{g₀ C d⁻¹, (d⁻¹)^∨ B d⁻¹}` for
-    `m = leviGL_E d ∘ leviGL_V0 g₀`.
-  - Optionally: `parabolic_decompose` (any `IsParabolicElement` factors
-    as `uD D ∘ leviGL_E d ∘ leviGL_V0 g₀`).
-- **Plan:** Round 6 — add Levi machinery to `Slice.lean` (additive).
-  Round 7 — close this helper using:
-  - choose `d ∈ GL(E')` so `d(L0') = ker Cbar` (uses `_hRank`),
-  - choose `d|_{L1'}` so `Cbar|_{L1'} = Sₕ` (uses surjectivity of `Cbar`),
-  - `D := X0⁻¹ on (C - CST Sₕ)` (uses surjectivity of `X0` onto
-    `range X0` plus a section choice via `Vplus`-complement).
+### `InducedOrbitToy/NormalForm.lean :: residual_levi_extract` (line 319, Round 7)
 
-### `InducedOrbitToy/NormalForm.lean :: residual_levi_extract` (line 319, private)
+Forward direction of `pNormalForm_residual_orbit_iso`: extract
+`h : L0' ≃ L0'` from a parabolic conjugator.
 
-Forward direction of `pNormalForm_residual_orbit_iso`: from a parabolic
-`p` realising the conjugation, extract `h : L0' ≃ₗ L0'`.
+- **Strategy (Option B, recommended):** `p` preserves `flagEV0 = E ⊕ V0`;
+  the action descends to a quotient iso `p_E' : E' ≃ E'`. Show `p_E'`
+  preserves `L0'` from the conjugation `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p`
+  and `kernelImage_ker`. Take `h := p_E'|_{L0'}`. Verify isometry via
+  the `IsOrthogonal` conjunct of `p` plus `lambdaDualE_pairing_eq`.
+- **Fallback (Option A):** rely on `parabolic_decompose` (currently
+  sorry'd in Slice.lean). Adds dependence on Round 8.
+- **References:** `.archon/informal/normalform_round7.md` § Tier A #2.
 
-- **Blocker:** Levi/unipotent decomposition lemma `parabolic_decompose :
-  ∀ p, IsParabolicElement S p → ∃ D d g₀, p = uD D ∘ leviGL_E d ∘ leviGL_V0 g₀`.
-- **Plan:** Round 6 — Slice.lean's `parabolic_decompose` lands. Round 7 —
-  discharge this helper (~20 lines): apply `parabolic_decompose` to `p`,
-  the unipotent `uD D` part doesn't affect the residual `L0' → L0` block
-  (per blueprint lines 305–309), so the iso `h` comes from `d|_{L0'}`.
+### `InducedOrbitToy/NormalForm.lean :: residual_levi_build` (line 348, Round 7)
 
-### `InducedOrbitToy/NormalForm.lean :: residual_levi_build` (line 348, private)
+Backward direction of `pNormalForm_residual_orbit_iso`: build a
+parabolic from an isometry.
 
-Backward direction of `pNormalForm_residual_orbit_iso`: given an isometry
-`h : L0' ≃ₗ L0'`, build a parabolic `p` realising the conjugation.
+- **Strategy:** extend `h : L0' ≃ L0'` to `d : E' ≃ E'` via
+  `IsCompl L1' L0'` (`d := id ⊕ h`). Set `p := leviGL_E S d`.
+  Parabolicity follows from `leviGL_E_isParabolic`. The conjugation
+  `p ∘ XST(Sₕ, T₁) = XST(Sₕ, T₂) ∘ p` reduces to verifying
+  `CST Sₕ ∘ d.symm = CST Sₕ` (since `d.symm` is `id` on `L1'`)
+  and `lambdaDualE d.symm ∘ BST T₁ ∘ d.symm = BST T₂` (residue of
+  the isometry condition).
+- Refresh stale comments at lines 344, 357 (no longer accurate after
+  Round 4's Tier S #3 added `L0_paired`, `L1_isotropic_L0'`, etc.).
+- **References:** `.archon/informal/normalform_round7.md` § Tier A #3.
 
-- **Blocker:** the perfect-pairing dual `(h⁻¹)^∨ : L0 → L0` plus the
-  block-decomposition of `S.V` along `L1 ⊕ L0 ⊕ V0 ⊕ L1' ⊕ L0'`. The
-  `S.L0_paired` field (Round 4 / Tier S #3) is the perfect-pairing
-  needed for the dual transpose.
-- **Plan:** Round 6 — Slice.lean's `leviGL_E` machinery makes the block
-  construction available. Round 7 — discharge this helper (~40 lines):
-  build `d : E' ≃ₗ E'` as `(h⁻¹)^∨ ⊕ id_{L1'}` along `IsCompl L1' L0'`
-  (or rather, build `d` so `d|_{L0'} = h` and `d|_{L1'} = id`); set
-  `p := leviGL_E d`. The perfect-pairing dual forces the `L0` block to
-  be `(h⁻¹)^∨` automatically. Refresh stale comments at lines 344, 357.
+### `InducedOrbitToy/Slice.lean :: parabolic_decompose` (line 1078, Round 8)
 
-### `InducedOrbitToy/Orbits.lean :: sIndependenceAndOrbitCriterion` (line 324)
+Levi/unipotent decomposition: every `IsParabolicElement p` factors as
+`p = uD D ∘ leviGL_E d ∘ leviGL_V0 g₀`.
+
+- **Status:** carries an explicit `/-** Gap: ... -/` comment block
+  outlining the 3-step construction (~85 lines).
+- **Substeps:** (a) `g₀ : V0 ≃ V0` from descent of `p` to
+  `flagEV0 / flagE ≃ V0`; (b) `d : E' ≃ E'` from the dual transpose
+  of `p` on `flagE = E`; (c) residual `D` from
+  `parametrizeX0PlusU_uniqueness` applied to `p ∘ leviGL_E d.symm ∘ leviGL_V0 g₀.symm`.
+- **References:** `.archon/informal/levi.md` § 6.6 + the `Gap` comment
+  preceding `parabolic_decompose` in `Slice.lean`.
+
+### `InducedOrbitToy/Orbits.lean :: sIndependenceAndOrbitCriterion` (line 324, Round 8)
 
 - **Blocker:** depends on `pNormalForm_residual_orbit_iso` being fully
-  sorry-free (i.e. on `pNormalForm_witnesses`, `residual_levi_extract`,
-  `residual_levi_build` all closing). The current statement also lacks
-  `Nondegenerate` / `(2 : F) ≠ 0` hypotheses — the prover may need to
-  add them and reduce the two-`Sₕ` case to single-`Sₕ` via
-  `pNormalForm`'s existence half.
-- **Plan:** Round 8 (after all Round 6 + Round 7 Tier A items land).
+  sorry-free (i.e. Round 7's NormalForm work landing). The current
+  statement also lacks `Nondegenerate` / `(2 : F) ≠ 0` hypotheses;
+  the prover may need to add them and reduce the two-`Sₕ` case to
+  single-`Sₕ` via `pNormalForm`'s existence half. (Plan agent will
+  flag the statement-shape change in Round 8 PROGRESS.md.)
+- **Plan:** Round 8 (after Round 7 lands).
 
 ## Completed (carried forward)
 
-See `task_done.md` for the full list. Highlights:
+See `task_done.md` for the full list. Highlights through Round 6:
 
-- All 6 `Basic.lean` definitions and `c_eq_finrank_quotient` (with
-  Round-4 Tier S #2 / #3 structural updates).
-- All `X0Geometry.lean` lemmas (including `sDual_restrict_ker_isIso`
-  closed in session 4).
-- 9 of 9 `Slice.lean` declaration sorries (incl. `Cdual`, `uD`,
-  `uD_conj_XCB`, `uD_isParabolic`, `parametrizeX0PlusU_existence`).
-- 3 of 5 original `NormalForm.lean` sorries (`kernelImage_dim` from
-  Round 1, `kernelImage_ker` and `kernelImage_im` Round 5).
-- 3 of 3 `LocalForms.lean` sorries (typeclass-projection refactor).
-- 2 of 3 `Orbits.lean` sorries (`inducedOrbits`, `main`).
+- All 6 `Basic.lean` definitions and `c_eq_finrank_quotient`.
+- All `X0Geometry.lean` lemmas.
+- All `Slice.lean` declarations through Round 5 + the Round 6 Levi
+  machinery (`lambdaDualE`, `leviGL_E`, `leviGL_V0`, `_isParabolic`,
+  `_conj_XCB`, etc. — 13 of 14 new declarations sorry-free).
+- 3 of 6 original `NormalForm.lean` sorries (`kernelImage_*`).
+- 3 of 3 `LocalForms.lean` sorries.
+- 2 of 3 `Orbits.lean` sorries.
 - All `multiplicity*` lemmas via `MultiplicityTheory`.

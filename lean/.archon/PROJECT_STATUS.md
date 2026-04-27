@@ -2,137 +2,90 @@
 
 ## Overall Progress
 
-- **Stage:** prover (Round 6 complete; **5** declaration-use sorries — additive +1
-  expected for the deferred `parabolic_decompose`).
-- **Build state:** `lake build` succeeds (green, end of session 8 / Round 6).
-- **Custom axiom declarations:** 0. All 14 newly-added Levi declarations in
-  `Slice.lean` (`lambdaDualE`, `lambdaDualE_pairing_eq`, `lambdaDualE_id`,
-  `lambdaDualE_comp`, `leviGL_E`, `leviGL_V0`, `leviGL_E_apply`,
-  `leviGL_V0_apply`, `leviGL_E_symm_inverse`, `leviGL_V0_symm_inverse`,
-  `leviGL_E_isParabolic`, `leviGL_V0_isParabolic`, `leviGL_E_conj_XCB`,
-  `leviGL_V0_conj_XCB`) depend only on `[propext, Classical.choice, Quot.sound]`,
-  audited via `/tmp/check_axioms_slice.lean` + `lake env lean`.
-- **Cumulative reduction:** 22 (start of session 3) → 8 (end of session 3) → 9 (end of session 4) → 7 (end of session 5) → 6 (end of session 6) → 4 (end of session 7) → **5 (end of session 8)**.
-  Net session 8: **+1** declaration sorry — additive only, the deferred
-  `parabolic_decompose` per Round 6 design (PROGRESS.md lines 122–126
-  permit up to one extra `sorry` for this helper). All other Round 5 sorries
-  unchanged in count and location.
+- **Stage:** prover (Round 7 complete; **3** declaration-use sorries — −2 net from Round 6).
+- **Build state:** `lake build` succeeds (green, end of session 9 / Round 7).
+- **Custom axiom declarations:** 0. The two newly-closed Round 7 helpers
+  (`residual_levi_extract`, `residual_levi_build`) plus the public consumer
+  `pNormalForm_residual_orbit_iso` depend only on
+  `[propext, Classical.choice, Quot.sound]`; no `sorryAx` (the deferred
+  `pNormalForm_witnesses` body still uses `sorry` so `pNormalForm` transitively
+  depends on `sorryAx` — expected per Round 7 plan).
+- **Cumulative reduction:** 22 (start of session 3) → 8 (end of session 3) → 9 (end of session 4) → 7 (end of session 5) → 6 (end of session 6) → 4 (end of session 7) → 5 (end of session 8) → **3 (end of session 9)**.
+  Net session 9: **−2** declaration sorries. Plan target was 5 → 2 (close all 3 NormalForm sorries); achieved 2 of 3 with `pNormalForm_witnesses` body deferred to Round 8 as documented in the body docstring.
 
-## Solved this session (session 8 / Round 6)
+## Solved this session (session 9 / Round 7)
 
-- **`Slice.lean :: lambdaDualE` infrastructure (4 declarations)** —
-  `lambdaDualE`, `lambdaDualE_pairing_eq`, `lambdaDualE_id`,
-  `lambdaDualE_comp`. Mirrors the existing `Cdual` construction at Slice.lean
-  line 71 via `S.lambda.toPerfPair.symm` + `g.dualMap`. The `_comp` proof
-  needed a `show` step to convert `(g₁ ∘ₗ g₂) e` opaque-composition form to
-  nested-application `g₁ (g₂ e)` before `rw [lambdaDualE_pairing_eq]` could
-  pattern-match.
-- **`Slice.lean :: leviGL_E + leviGL_V0` block-diagonal embeddings (4
-  declarations)** — `leviGL_E`, `leviGL_V0`, `leviGL_E_apply`,
-  `leviGL_V0_apply`. Direct block-matrix definitions via
-  `LinearMap.inl`/`inr`/`fst`/`snd`. `leviGL_V0` does NOT bundle the
-  isometry hypothesis (avoids session-7 subtype-wrapping anti-pattern).
-- **`Slice.lean :: _symm_inverse` lemmas (2 declarations)** —
-  `leviGL_E_symm_inverse`, `leviGL_V0_symm_inverse`. `Prod.mk.injEq`
-  component-split + `lambdaDualE_comp_symm` for E-block, `simp` for the
-  rest. `d.symm.symm = d` `rfl` for `LinearEquiv` halves inverse-pair work.
-- **`Slice.lean :: _isParabolic` lemmas (2 declarations)** —
-  `leviGL_E_isParabolic`, `leviGL_V0_isParabolic`. 4-conjunct unfolds
-  (`IsUnit ∧ Submodule.map = ∧ Submodule.map = ∧ IsOrthogonal`) via
-  `Units.mkOfMulEqOne` + `le_antisymm` + `simp [SliceSetup.ambientForm,
-  LinearMap.mk₂_apply]` + `lambdaDualE_pairing_eq`.
-- **`Slice.lean :: _conj_XCB` lemmas (2 declarations)** —
-  `leviGL_E_conj_XCB`, `leviGL_V0_conj_XCB`. Component-split via
-  `Prod.mk.injEq`; E-component uses the new private helper
-  `lambdaDualE_Cdual`. The V0 lemma needed an **asymmetric** `hgC` form
-  (first arg CoeFun, second arg LinearMap-coerced) to match the asymmetric
-  output of `Cdual_pairing` after `comp_apply` rewrites.
+- **`NormalForm.lean :: residual_levi_extract` (line 440)** — `~250` lines closed sorry-free. Forward extraction of the L0' isometry `h` from a parabolic conjugator. Four-step skeleton: (A) Step A preserves L0' via V0-component analysis + `Sₕ.injective`; (B) Step B defines `qFun = codRestrict L0' (projE'_V ∘ p ∘ inE' ∘ L0'.subtype)`; (C) Step C shows injectivity via `flagEV0` preservation by `p` and `p⁻¹`; (D) Step D verifies isometry via `IsOrthogonal p` + `XST_apply` substitution + `Cdual_pairing_eq`.
 
-## Solved earlier (sessions 1–7, carry-forward)
+- **`NormalForm.lean :: residual_levi_build` (line 847)** — closed sorry-free. Constructs the Levi factor `d := extendL0'IsoToE' S h` extending `h : L0' ≃ L0'` by id on L1'; takes `p := leviGL_E S d`; verifies the conjugation via `leviGL_E_conj_XCB` reduced to two component identities (`CST Sₕ ∘ d.symm = CST Sₕ` and `lambdaDualE d.symm ∘ BST T₁ ∘ d.symm = BST T₂`).
 
-(See `proof-journal/sessions/session_7/summary.md` and earlier sessions
-for full detail.)
+- **`NormalForm.lean :: pNormalForm_residual_orbit_iso` (line 990)** — public theorem **now sorry-free** (Sₕ as LinearEquiv enables direct passage to `residual_levi_extract` / `residual_levi_build`). `#print axioms` clean.
+
+- **Tier S #5 signature restructure (`pNormalForm_witnesses` line 203)** — replaced mathematically-false `uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T` with corrected Levi-factor form `∃ Sₕ D d T, ... uD D ∘ leviGL_E d ∘ XCB C B = XST Sₕ T ∘ uD D ∘ leviGL_E d`. `Sₕ` strengthened from `LinearMap` to `LinearEquiv`. Cascaded through `pNormalForm`, `pNormalForm_residual_orbit_iso`, `residual_levi_*` helpers.
+
+- **`NormalForm.lean :: pNormalForm` (line 248)** — body refactored to consume the new `pNormalForm_witnesses` signature (extract parabolic `p := uD D ∘ leviGL_E d`). Body sorry-free; depends on `pNormalForm_witnesses` so transitively `sorryAx`.
+
+- **`NormalForm.lean :: XST_apply` (private helper, line 329)** — added because `residual_levi_extract` needs explicit unfolding `XST S Sₕ T (e, v, e') = (Cdual S (CST S Sₕ) v + (T (projL0' S e') : S.E), S.X0 v + (Sₕ (projL1' S e') : S.V0), 0)`. **Sorry-free.**
+
+- **`NormalForm.lean :: extendL0'IsoToE'` (private noncomputable def) + 3 helper lemmas** (`extendL0'IsoToE'_symm_apply`, `projL1'_extendL0'IsoToE'_symm`, `projL0'_extendL0'IsoToE'_symm`). Block-extension via `Submodule.prodEquivOfIsCompl` + `LinearEquiv.prodCongr`. **All sorry-free.**
+
+## Solved earlier (sessions 1–8, carry-forward)
+
+(See `proof-journal/sessions/session_8/summary.md` and earlier sessions for full detail.)
 
 - All of `LocalForms.lean` (3 theorems via `ClassifyBilinearForms` typeclass).
 - All of `X0Geometry.lean` (closed in session 4).
-- `NormalForm.lean :: kernelImage_dim`, `kernelImage_ker`, `kernelImage_im`,
-  `isUnit_uD`, `map_uD_eq_of_le`, `pNormalForm` (sessions 3–7).
+- `NormalForm.lean :: kernelImage_dim`, `kernelImage_ker`, `kernelImage_im`, `isUnit_uD`, `map_uD_eq_of_le`, `pNormalForm` (sessions 3–7; `pNormalForm` now refactored in session 9).
 - `Basic.lean :: SliceSetup`, `UnipotentRadical` (Tier S #2, #3 — session 6).
-- `Slice.lean :: parametrizeX0PlusU_existence`, `parametrizeX0PlusU_mem`,
-  `uD_isParabolic` (sessions 5–6).
-- `Orbits.lean :: XCB_sub_X0Lift_mem_unipotent`,
-  `XST_sub_X0Lift_mem_unipotent`, `XST_mem_O0PlusU`, `inducedOrbits`,
-  `main` (sessions 3 + 6).
+- `Slice.lean :: parametrizeX0PlusU_existence`, `parametrizeX0PlusU_mem`, `uD_isParabolic` (sessions 5–6).
+- `Slice.lean ::` Levi-action machinery (14 declarations: `lambdaDualE`, `lambdaDualE_pairing_eq`, `lambdaDualE_id`, `lambdaDualE_comp`, `leviGL_E`, `leviGL_V0`, `leviGL_E_apply`, `leviGL_V0_apply`, `leviGL_E_symm_inverse`, `leviGL_V0_symm_inverse`, `leviGL_E_isParabolic`, `leviGL_V0_isParabolic`, `leviGL_E_conj_XCB`, `leviGL_V0_conj_XCB`) — closed in session 8.
+- `Orbits.lean :: XCB_sub_X0Lift_mem_unipotent`, `XST_sub_X0Lift_mem_unipotent`, `XST_mem_O0PlusU`, `inducedOrbits`, `main` (sessions 3 + 6).
 
-## Remaining sorries (5 declaration warnings)
+## Remaining sorries (3 declaration warnings)
 
 | File | Line | Theorem | Tier | Status |
 |---|---|---|---|---|
-| `NormalForm.lean` | 195 | `pNormalForm_witnesses` (private helper) | A | Slice Levi infra now landed. **Unblocked for Round 7.** Estimated ~50 lines (uses `leviGL_E_conj_XCB` + `uD_conj_XCB`). |
-| `NormalForm.lean` | 319 | `residual_levi_extract` (private helper) | A | Slice Levi infra now landed. Choose Option B (~40 lines via `parametrizeX0PlusU_uniqueness` + `leviGL_E_isParabolic`) over Option A (close `parabolic_decompose` first, ~95 lines). **Unblocked for Round 7.** |
-| `NormalForm.lean` | 348 | `residual_levi_build` (private helper) | A | Slice Levi infra now landed. Use `leviGL_E S d` directly. **Unblocked for Round 7.** Estimated ~40 lines. Refresh stale comments at lines 344, 357 (`L0_isotropic` references) as part of edit pass. |
-| `Slice.lean` | 1078 | `parabolic_decompose` (deferred) | (Round 6 deferred) | Hardest piece of Round 6 (3 sub-constructions: g₀ extraction via quotient descent, (d⁻¹)^∨ from flagE action, residual D via `parametrizeX0PlusU_uniqueness`). 24-line gap explanation in-file. **Optional for Round 7** (Option A) or skip permanently if not needed downstream. |
-| `Orbits.lean` | 358 + 376 | `sIndependenceAndOrbitCriterion` (2 internal scoped sorries, 1 declaration) | A (deferred) | unblocks once `pNormalForm_residual_orbit_iso` is sorry-free; also needs added hypotheses (`Nondegenerate`, `(2 : F) ≠ 0`) and `Sₕ`-equality refactor — **Round 8**. |
+| `NormalForm.lean` | 216 | `pNormalForm_witnesses` (private helper) | A | **Single isolated sorry, body docstring outlines four-step plan.** Round 8 primary objective. ~150 lines estimated. The Tier S #5 signature restructure has already landed; only the body remains. Consumers `residual_levi_extract`, `residual_levi_build`, `pNormalForm_residual_orbit_iso` are all sorry-free. |
+| `Slice.lean` | 1089 | `parabolic_decompose` (deferred Round 6) | (Round 6 deferred) | Three sub-constructions per `informal/levi.md §6.6` (~85 lines). 24-line `Gap:` comment block in-file. **Optional** for Round 8 — not needed by Round 7 work (Option B sidesteps it); only relevant if Orbits.lean forward direction needs it. |
+| `Orbits.lean` | 358 + 376 | `sIndependenceAndOrbitCriterion` (2 internal scoped sorries, 1 declaration) | A (deferred) | **Now structurally unblocked** — `pNormalForm_residual_orbit_iso` is sorry-free. Forward direction (358) needs parabolic-decomposition step (depends on `parabolic_decompose` OR a workaround). Reverse direction (376) is direct via `pNormalForm_residual_orbit_iso`. Both directions need missing hypotheses (`Nondegenerate`, `(2 : F) ≠ 0`, `Sₕ`-equality) added to the theorem statement, OR strengthening `pNormalForm_residual_orbit_iso` to absorb them. |
 
 ## Knowledge Base
 
 ### Proof patterns (reusable across targets)
 
-(Augments session 7 list.)
+(Augments session 8 list.)
 
-- **(NEW session 8) `show` to expose composed-application terms before
-  `rw` perfect-pairing identities.** When the goal has `(f ∘ₗ g) e` and
-  `rw` of a perfect-pairing lemma fails to match, prepend `show ... f
-  (g e) = ...` to surface the nested-application form. Used to fix
-  `lambdaDualE_comp`.
-- **(NEW session 8) Asymmetric isometry-hypothesis form for `_conj_XCB`-style
-  proofs.** Match the asymmetric form `Cdual_pairing` produces — first arg
-  CoeFun (`g v`), second arg LinearMap-coerced (`(g : V0 →ₗ[F] V0) (C e'')`).
-  Symmetric `hgC` cannot match either form alone. The two FunLike instances
-  coexist; reflexive equality doesn't help syntactic pattern-matching.
-- **(NEW session 8) `d.symm.symm = d` is `rfl` for `LinearEquiv`** —
-  enables `leviGL_E_symm_inverse S d.symm` for the other-direction inverse
-  for free, halving inverse-pair proofs.
-- **(NEW session 8) Block-matrix component-split closure pattern.**
-  `refine Prod.mk.injEq .. |>.mpr ⟨?_, Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩`
-  for any `Module.End F (E × V0 × E')` identity, then close each component
-  individually. Used 4× in Round 6's Levi proofs.
-- **(NEW session 8) `leviGL_V0` no-bundle definition pattern.** Isometry
-  hypothesis is passed at consumer sites (`leviGL_V0_isParabolic`,
-  `leviGL_V0_conj_XCB`), not bundled in the def. Sidesteps session-7
-  subtype-wrapping anti-pattern.
-- **(NEW session 8) `lean_run_code` `#check` for known-name API
-  verification** is faster than `lean_loogle` / `leansearch` when the
-  informal doc names the lemma. Workflow: read `informal/levi.md` `-- Hint:`
-  → `#check` → write proof. Round 6 prover did this 3× and never invoked
-  the search tools — still landed 14 sorry-free declarations.
-- **(NEW session 8) `#print axioms` syntax detail.** Drop the `@` prefix:
-  `#print axioms lambdaDualE` works; `#print axioms @lambdaDualE` fails
-  with `Unknown constant axioms`.
+- **(NEW session 9) `prodEquivOfIsCompl` symm via `Submodule.toLinearMap_prodEquivOfIsCompl_symm`.** The symm coerces to `(linearProjOfIsCompl p q h).prod (linearProjOfIsCompl q p _)`, i.e., `prodEq.symm e' = (projL1' e', projL0' e')` for our `IsCompl L1' L0'`. Bypasses unfolding through `LinearEquiv.trans`. Used in `extendL0'IsoToE'` Round 7.
 
-(Earlier patterns from sessions 1–7 unchanged; see
-`proof-journal/sessions/session_7/summary.md` for the complete list.)
+- **(NEW session 9) `set ... with hdef` for opaque shorthands, BUT NOT for sums you'll later `LinearMap.add_apply`-rewrite.** Identifies a specific failure mode: `set lhs_E := Cdual ... + T₂ ...` opaquefies the sum, breaking subsequent `rw [add_apply]`. Use `set` for opaque applications like `set p_uv := p (0, 0, v)`, never for sums.
+
+- **(NEW session 9) `congr 1` does NOT split through outer `LinearMap.comp`.** For `XCB(A, B) = XCB(A', B') ∘ leviGL_E d`-style equations where the outer is `LinearMap.comp`, `congr 1` doesn't yield 2 component goals. Better: prove `A = A'` and `B = B'` as separate `have`s and chain `rw [hA, hB]`.
+
+- **(NEW session 9) Linearity in 1st arg of `S.paired.pairing`: `map_add` first, then `add_apply`.** The pattern `pairing (a + b) c = pairing a c + pairing b c` reduces via `LinearMap.map_add` (LHS first arg) followed by `LinearMap.add_apply` (resulting `(f + g) c`); reversed order fails.
+
+- **(NEW session 9) `(qFun l : L0').val = qFunRaw l` is *definitionally* equal** when `qFun = LinearMap.codRestrict L0' qFunRaw _`. Use `(qFun l : E') = 0 → qFunRaw l = 0` via `exact h_val` (no `simpa`).
+
+- **(NEW session 9) Trailing `rfl` after `simp only [..., map_zero]` is "No goals" lint.** `simp only` with `map_zero` already closes `f 0 = 0`. Drop it.
+
+- **(NEW session 9) LinearEquiv at definition; pass directly at use site.** When a private theorem strengthens `Sₕ` from LinearMap to LinearEquiv, the consumer call site that expects LinearMap should pass `Sₕ` directly (Lean auto-coerces via LinearEquiv.toLinearMap-via-CoeFun). Explicit coercion at the call site fails type-check.
+
+- **(NEW session 9) `S.V` ≡ `S.paired.E'` abbrev boundary requires explicit type ascription in helper defs.** When defining helpers like `extendL0'IsoToE' S h : E' ≃ E'`, every `↑d.symm e'` application needs `(d.symm : S.paired.E' →ₗ[F] S.paired.E')` to bridge the abbrev.
+
+- **(NEW session 9) `XST_apply` private helper near top of consuming section.** When a proof needs explicit unfolding of a multi-let block-matrix def, write a `private theorem _apply` early in the section. Saves ~10 lines per consumer.
+
+(Earlier patterns from sessions 1–8 unchanged; see `proof-journal/sessions/session_8/summary.md` for the complete carryforward list including the Round 6 Levi-machinery patterns.)
 
 ### Known Blockers (do not retry)
 
-- **`parabolic_decompose`** (Slice.lean line 1078): hardest piece of
-  Round 6. Three substantive sub-constructions required (a-c per
-  `informal/levi.md §6.6`, ~85 lines total). Deferred; **NOT required**
-  for Round 7 if the consumer takes Option B (direct
-  `parametrizeX0PlusU_uniqueness` + `leviGL_E_isParabolic`). Optional for
-  Round 7+.
-- **Round 8 work** (`sIndependenceAndOrbitCriterion`): blocked on
-  Round 7's `pNormalForm_residual_orbit_iso` plus added hypotheses
-  (`Nondegenerate`, `(2 : F) ≠ 0`) and `Sₕ`-equality refactor.
+- **None.** All three remaining sorries are now structurally unblocked:
+  - `pNormalForm_witnesses` has the Levi machinery in scope (Round 6) and the consumer-correctness proof in scope (Round 7's `residual_levi_*` are sorry-free).
+  - `sIndependenceAndOrbitCriterion` has `pNormalForm_residual_orbit_iso` sorry-free in scope.
+  - `parabolic_decompose` has all the sub-pieces (`leviGL_*`, `parametrizeX0PlusU_existence`) sorry-free in scope.
 
 ### Stale comment hygiene
 
-- `NormalForm.lean` lines 344, 357 still contain comment refs to the
-  now-removed `L0_isotropic` field (replaced by Lagrangian quartet in
-  session 6). They compile cleanly (inside docstrings/comments) but
-  should be refreshed as part of the Round 7 `residual_levi_build` edit
-  pass. (Carry-forward from session 7.)
+- `NormalForm.lean` lines 344, 357 still contain comment refs to the now-removed `L0_isotropic` field (replaced by Lagrangian quartet in session 6). They compile cleanly (inside docstrings/comments) but should be refreshed during the Round 8 `pNormalForm_witnesses` edit pass. (Carry-forward from sessions 7-8.)
 
 ## Last Updated
 
-2026-04-28T00:00:00Z (end of session 8 / Round 6)
+2026-04-28T20:50:00Z (end of session 9 / Round 7)
