@@ -483,3 +483,108 @@ are byte-for-byte unchanged.
 `leviGL_V0_isParabolic`, `leviGL_E_conj_XCB`, `leviGL_V0_conj_XCB`
 returns `[propext, Classical.choice, Quot.sound]`. **No custom
 axioms.**
+
+## Prover Round 7 (session 9 — NormalForm.lean closure cascade)
+
+Net: 5 → 3 declaration-use `sorry` (−2). `lake build` ✅ at end of
+round; 0 custom axioms.  Single-file dispatch — only
+`NormalForm.lean` was edited.
+
+### `InducedOrbitToy/NormalForm.lean` — Tier S #5 + 2 sorries closed
+
+- **Tier S #5 — `pNormalForm_witnesses` signature restructure
+  (landed).** Replaced the mathematically-false
+  `uD D ∘ XCB C B ∘ uD (-D) = XST Sₕ T` with the corrected
+  Levi-factor form
+  ```lean
+  ∃ (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
+    (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
+    IsSkewT S T ∧
+    uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
+      = XST S (↑Sₕ) T ∘ₗ uD S D ∘ₗ leviGL_E S d
+  ```
+  `Sₕ` strengthened from `LinearMap` to `LinearEquiv` (its
+  surjectivity is needed by the `pNormalForm_residual_orbit_iso`
+  consumer). Cascaded correctly through `pNormalForm`,
+  `pNormalForm_residual_orbit_iso`, and the two `residual_levi_*`
+  helpers.
+
+- **`residual_levi_extract` (line 440) — sorry-free.** ~250 lines
+  closed. Forward extraction of the L0' isometry `h` from a
+  parabolic conjugator. Four-step skeleton:
+  1. **Step A:** preserve L0' via V0-component analysis +
+     `Sₕ.injective` (LinearEquiv strengthening).
+  2. **Step B:** define `qFun = codRestrict L0' qFunRaw _` where
+     `qFunRaw := projE'_V ∘ p ∘ inE' ∘ L0'.subtype`.
+  3. **Step C:** show injectivity via `flagEV0` preservation by
+     `p` and `p⁻¹`.
+  4. **Step D:** verify isometry via `IsOrthogonal p` + `XST_apply`
+     substitution + `Cdual_pairing_eq` + reduction to
+     `BT T₂ (h u) (h v) = BT T₁ u v`.
+
+- **`residual_levi_build` (line 847) — sorry-free.** Constructs
+  the Levi factor `d := extendL0'IsoToE' S h` extending
+  `h : L0' ≃ L0'` by `id` on L1'; takes `p := leviGL_E S d`;
+  verifies the conjugation via `leviGL_E_conj_XCB` reduced to two
+  component identities (`CST Sₕ ∘ d.symm = CST Sₕ` and
+  `lambdaDualE d.symm ∘ BST T₁ ∘ d.symm = BST T₂`).
+
+- **`pNormalForm_residual_orbit_iso` — sorry-free** (public
+  consumer). `Sₕ` as `LinearEquiv` enables direct passage to
+  `residual_levi_extract` / `residual_levi_build`. `#print axioms`
+  clean.
+
+- **`pNormalForm` body** refactored to consume the new
+  `pNormalForm_witnesses` signature (extract parabolic
+  `p := uD D ∘ leviGL_E d`). Body sorry-free; depends on
+  `pNormalForm_witnesses` so transitively `sorryAx`.
+
+- **5 new helpers (private):**
+  - `XST_apply` (line 329) — explicit unfolding of the
+    multi-let block-matrix `XST` definition. Saves ~10 lines per
+    consumer.
+  - `extendL0'IsoToE'` (private noncomputable def) — block
+    extension via `Submodule.prodEquivOfIsCompl`.
+  - `extendL0'IsoToE'_symm_apply` — pointwise formula.
+  - `projL1'_extendL0'IsoToE'_symm` — `projL1' ∘ d.symm = projL1'`.
+  - `projL0'_extendL0'IsoToE'_symm` —
+    `projL0' ∘ d.symm = h.symm ∘ projL0'`.
+
+### Cross-cutting wins (session 9 / Round 7)
+
+- **`prodEquivOfIsCompl` symm via
+  `Submodule.toLinearMap_prodEquivOfIsCompl_symm`.** The symm
+  coerces to `(linearProjOfIsCompl p q h).prod (linearProjOfIsCompl q p _)`,
+  i.e., `prodEq.symm e' = (projL1' e', projL0' e')` for our
+  `IsCompl L1' L0'`. Bypasses unfolding through `LinearEquiv.trans`.
+- **`set ... with hdef` for opaque shorthands, BUT NOT for sums.**
+  `set lhs_E := Cdual ... + T₂ ...` opaquefies the sum, breaking
+  subsequent `rw [LinearMap.add_apply]`. Use `set` only for opaque
+  applications.
+- **`congr 1` does NOT split through outer `LinearMap.comp`.**
+  For `XCB(A, B) = XCB(A', B') ∘ leviGL_E d`-style equations,
+  prove `A = A'` and `B = B'` as separate `have`s and chain.
+- **Linearity in 1st arg of `S.paired.pairing`: `map_add` first,
+  then `add_apply`.** Reversed order fails.
+- **`(qFun l : L0').val = qFunRaw l` is *definitionally* equal**
+  when `qFun = LinearMap.codRestrict L0' qFunRaw _`. Use
+  `exact h_val` (no `simpa`).
+- **Trailing `rfl` after `simp only [..., map_zero]` is "No goals"
+  lint.** Drop it.
+- **LinearEquiv at definition; pass directly at use site.** When
+  a private theorem strengthens `Sₕ` from LinearMap to LinearEquiv,
+  the consumer call site that expects LinearMap should pass `Sₕ`
+  directly (Lean auto-coerces). Explicit coercion fails type-check.
+- **`S.V` ≡ `S.paired.E'` abbrev boundary requires explicit type
+  ascription in helper defs.** Every `↑d.symm e'` application in
+  helpers like `extendL0'IsoToE'` needs
+  `(d.symm : S.paired.E' →ₗ[F] S.paired.E')` to bridge the abbrev.
+- **`XST_apply` private helper near top of consuming section.**
+  When a proof needs explicit unfolding of a multi-let block-matrix
+  def, write a `private theorem _apply` early in the section.
+- All public theorems re-audited via `#print axioms`:
+  `pNormalForm_residual_orbit_iso`, `kernelImage_ker`,
+  `kernelImage_im`, `kernelImage_dim` show only
+  `[propext, Classical.choice, Quot.sound]`. `pNormalForm`
+  transitively depends on `sorryAx` via `pNormalForm_witnesses`
+  body (expected per Round 7 plan). **No custom axioms.**

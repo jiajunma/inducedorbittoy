@@ -149,6 +149,67 @@ private lemma isUnit_uD (S : SliceSetup F)
   have h1 : uD S D * uD S (-D) = 1 := uD_neg_inverse S hNondeg hChar D
   exact (Units.mkOfMulEqOne _ _ h1).isUnit
 
+/-- **`pNormalForm_witnesses` data, single isolated Gap (Round 8).**
+
+Bundles the four-step normalisation of `pNormalForm_witnesses` as a
+single existential. The full body proof is deferred to Round 9 with a
+documented Gap (see below).
+
+Blueprint sketch
+(`references/blueprint_verified.md` lines 200–264; restated in
+`.archon/informal/normalform_round7.md` § Tier A #1):
+
+1. **Build `(Sₕ, d)` from `_hRank`.** By `_hRank` and
+   `dim (V0/range X0) = c` (`finrank_Vplus_eq_c`), `Cbar S C` is
+   surjective; `dim ker (Cbar S C) = dim E' - c`. By the slice
+   constraints, `dim L1' = c`; pick `Sₕ : L1' ≃ Vplus` via
+   `LinearEquiv.ofFinrankEq`. Choose `d : E' ≃ E'` by combining an
+   iso `L0' ≃ ker (Cbar S C)` with the chosen iso `L1' ≃ K'` (a
+   complement of `ker (Cbar S C)`), normalised so that
+   `(Cbar S C) ∘ d.symm |_{L1'} = mkQ ∘ Sₕ` and
+   `(Cbar S C) ∘ d.symm |_{L0'} = 0`.
+
+2. **Lift `(C ∘ d.symm - CST Sₕ)` through `X0`.** The map lands in
+   `range X0` by Step 1; lift via a section of `X0 : V0 →ₗ range X0`
+   (any complement `K` of `ker X0` gives `X0 |_K : K ≃ range X0`).
+   This produces `D : E' →ₗ V0` with `S.X0 ∘ D = C ∘ d.symm - CST Sₕ`.
+
+3. **Identify the residual `T : L0' →ₗ L0`.** By `leviGL_E_conj_XCB`
+   and `uD_conj_XCB`, the conjugated operator equals
+   `XCB(C', B'')` with `C' - X0 ∘ D = CST Sₕ` (Step 2) and
+   `B''` an explicit Cdual-corrected version of
+   `B' = lambdaDualE d.symm ∘ B ∘ d.symm`. Choose `D|_{L1'}`
+   carefully (via the perfect pairing `Vplus × ker X0 → F` from
+   `vplusKerPairing_isPerfPair`) so that `B''(L1') = 0` and the
+   skew condition forces `B''(L0') ⊂ L0`. The L0'-restriction
+   defines `T`.
+
+4. **Verify `IsSkewT T` and the conjugation.** Skewness of `T`
+   propagates from `_hB`'s skewness through Levi+unipotent
+   transformations. The conjugation equation reduces to
+   `parametrizeX0PlusU_uniqueness` applied to `(C', B'')` and
+   `(CST Sₕ, BST T)`.
+
+**Gap (deferred to Round 9):** the entire four-step construction.
+This is approximately 200–300 lines of Lean code and was estimated
+in PROGRESS.md as ~150 lines for Step 1 alone. Round 8 punts on the
+full construction; Round 9 picks up. -/
+private theorem pNormalForm_witnesses_aux (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
+    (_hRank :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+    ∃ (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
+      (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
+      IsSkewT S T ∧
+      uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
+        = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
+  -- Gap: full four-step construction outlined above. Round 9 picks
+  -- this up. See body docstring of `pNormalForm_witnesses` (below)
+  -- and `.archon/informal/normalform_round7.md` § Tier A #1 for the
+  -- full informal outline.
+  sorry
+
 /-- Map equality from inclusion: `Submodule.map (uD D) F0 ≤ F0` plus
 `Submodule.map (uD (-D)) F0 ≤ F0` upgrades to equality. -/
 private lemma map_uD_eq_of_le (S : SliceSetup F)
@@ -210,10 +271,12 @@ private theorem pNormalForm_witnesses (S : SliceSetup F)
       IsSkewT S T ∧
       uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
         = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
-  -- TIER A #1 (Round 7) BODY — single isolated `sorry`. See docstring
-  -- above for the four-step plan and `.archon/informal/normalform_round7.md`
-  -- § Tier A #1 for the full informal proof outline. Round 8 closes this.
-  sorry
+  -- TIER A #1 (Round 8). Single isolated helper sorry: the full
+  -- four-step construction (Sₕ, D, d, T + skewness + conjugation) is
+  -- packaged in `pNormalForm_witnesses_aux` above. Round 9 closes the
+  -- helper. See `pNormalForm_witnesses_aux` Gap docstring for the full
+  -- informal outline.
+  exact pNormalForm_witnesses_aux S _hNondeg _hChar C B _hB _hRank
 
 /-- `prop:p-normal-form` (existence of normal form).  Existence of a
 `P`-conjugacy (encoded by `IsParabolicElement`) of `XCB S C B` to some

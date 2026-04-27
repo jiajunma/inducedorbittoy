@@ -1064,17 +1064,48 @@ may either close it here in `Slice.lean` (additively) or work around it
 for `residual_levi_extract` only by using `parametrizeX0PlusU_uniqueness`
 + the `leviGL_*_isParabolic` machinery directly. -/
 
-/-- Levi/unipotent decomposition of a parabolic element. Deferred to
-Round 7 (see preceding comment block).
+/-- Levi/unipotent decomposition of a parabolic element.
 
-**Gap:** The full proof requires (a) descending `p` to a quotient
-`flagEV0 / flagE ≃ V0` to extract the `g₀ : V0 ≃ V0` block, (b) reading
-off `(d⁻¹)^∨` from the action of `p` on `flagE = E` using the
-`Submodule.map p S.flagE = S.flagE` conjunct of `IsParabolicElement`,
-and (c) inverting `parametrizeX0PlusU_uniqueness` on `p ∘ₗ
-(leviGL_E d ∘ₗ leviGL_V0 g)⁻¹` to recover the unipotent residue. Each
-step is several dozen lines, so it is best handled in Round 7 alongside
-the `residual_levi_extract` consumer. -/
+**Status (Round 8 partial progress):** The proof body now sets up the
+three diagonal-block extractions, packages them as `LinearEquiv`s, and
+proves both the V0-isometry property of `g₀` and the cross-pairing
+identity `λ(pE_fn e, pE'_fn e') = λ(e, e')`. A single consolidated
+`sorry` remains for the final assembly.
+
+The body includes (sorry-free):
+
+* `pE_equiv : S.E ≃ₗ[F] S.E` — action of `p` on `flagE = E`, with
+  bijectivity from the parallel construction on `pinv := _hpUnit.unit.inv`.
+* `pV0_equiv : S.V0 ≃ₗ[F] S.V0` — V0-block of `p` on the V0-slice; the
+  proof of bijectivity uses linearity of `p` to split the action of `pinv`
+  on the residual E-component.
+* `pE'_equiv : S.E' ≃ₗ[F] S.E'` — E'-block (descent action mod `flagEV0`).
+* `pV0_iso : ∀ u v, S.formV0 (pV0_fn u) (pV0_fn v) = S.formV0 u v` —
+  isometry from `_hpIso` on V0-pairs.
+* `hkey : ∀ e e', λ(pE_fn e, pE'_fn e') = λ(e, e')` — from `_hpIso` on
+  `((e, 0, 0), (0, 0, e'))`.
+
+**Mathematical observation (gap analysis):** A direct attempt to close
+the final equation reveals that the statement may be **strictly narrower
+than the full Levi decomposition**. Specifically: setting
+`d := pE'_equiv`, `g := pV0_equiv`, `D e' := (p (0, 0, d.symm e')).2.1`,
+the V0-component matches automatically and the
+`pE_fn = lambdaDualE d.symm` constraint follows from `hkey`. But the
+E-component requires `(p (0, 0, e')).1 = ½ Cdual D (D (pE'_fn e'))` for
+all e', which `_hpIso` only forces up to a residual `IsSkewB`-type
+term `B' : E' →ₗ E`. A general parabolic isometry has a nonzero `B'`,
+so the decomposition really is `(uD D + B') ∘ leviGL_E d ∘ leviGL_V0 g`
+— i.e. `uD` should accept an extra `B'` parameter.
+
+**Recommendation for Round 9 / polish:** generalise `uD` (or add a
+sister `uD_B`) to accept a residual skew `B' : E' →ₗ E`, and update
+`parabolic_decompose` to expose `(D, B', d, g)`. The current Round 7
+consumers (`residual_levi_extract`, `residual_levi_build`) sidestepped
+`parabolic_decompose` via Option B, so this signature change is
+non-blocking.
+
+The consolidated `sorry` therefore covers a genuine gap, not merely
+plumbing. -/
 theorem parabolic_decompose (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (p : Module.End F S.V)
@@ -1086,6 +1117,458 @@ theorem parabolic_decompose (S : SliceSetup F)
       (g : S.V0 ≃ₗ[F] S.V0)
       (_ : ∀ u v, S.formV0 (g u) (g v) = S.formV0 u v),
       p = uD S D ∘ₗ leviGL_E S d ∘ₗ leviGL_V0 S g := by
+  classical
+  -- Step 0: extract the inverse `p⁻¹`.
+  set pinv : Module.End F S.V := _hpUnit.unit.inv with hpinv_def
+  have hpinv_left : ∀ x : S.V, pinv (p x) = x :=
+    Module.End.isUnit_inv_apply_apply_of_isUnit _hpUnit
+  have hpinv_right : ∀ x : S.V, p (pinv x) = x :=
+    Module.End.isUnit_apply_inv_apply_of_isUnit _hpUnit
+  -- Step 1a: For x ∈ flagE, p x ∈ flagE, so its V0 and E' parts vanish.
+  have hp_flagE_V0 : ∀ e : S.E, (p (e, (0 : S.V0), (0 : S.E'))).2.1 = 0 := by
+    intro e
+    have hin : (e, (0 : S.V0), (0 : S.E')) ∈ S.flagE :=
+      ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
+    have h := _hpFlagE.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, hV0, _⟩
+    simpa using hV0
+  have hp_flagE_E' : ∀ e : S.E, (p (e, (0 : S.V0), (0 : S.E'))).2.2 = 0 := by
+    intro e
+    have hin : (e, (0 : S.V0), (0 : S.E')) ∈ S.flagE :=
+      ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
+    have h := _hpFlagE.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, _, hE'⟩
+    simpa using hE'
+  -- Step 1b: pE_fn : E →ₗ[F] E.
+  let pE_fn : S.E →ₗ[F] S.E :=
+    { toFun := fun e => (p (e, (0 : S.V0), (0 : S.E'))).1
+      map_add' := by
+        intro x y
+        have h0 : ((x + y : S.E), (0 : S.V0), (0 : S.E'))
+            = (x, (0 : S.V0), (0 : S.E')) + (y, (0 : S.V0), (0 : S.E')) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((c • x : S.E), (0 : S.V0), (0 : S.E'))
+            = c • ((x, (0 : S.V0), (0 : S.E')) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  have pE_fn_eq : ∀ e : S.E,
+      p ((e : S.E), (0 : S.V0), (0 : S.E')) = (pE_fn e, 0, 0) := by
+    intro e
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+    · exact hp_flagE_V0 e
+    · exact hp_flagE_E' e
+  -- Step 2a: For x ∈ flagEV0, p x ∈ flagEV0, so its E' part vanishes.
+  have hp_flagEV0_E' : ∀ (e : S.E) (v : S.V0),
+      (p (e, v, (0 : S.E'))).2.2 = 0 := by
+    intro e v
+    have hin : (e, v, (0 : S.E')) ∈ S.flagEV0 :=
+      ⟨trivial, trivial, Submodule.zero_mem _⟩
+    have h := _hpFlagEV0.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, _, hE'⟩
+    simpa using hE'
+  -- Step 2b: pV0_fn : V0 →ₗ[F] V0 (V0-component of p on the V0-slice).
+  let pV0_fn : S.V0 →ₗ[F] S.V0 :=
+    { toFun := fun v => (p ((0 : S.E), v, (0 : S.E'))).2.1
+      map_add' := by
+        intro x y
+        have h0 : ((0 : S.E), (x + y : S.V0), (0 : S.E'))
+            = ((0 : S.E), x, (0 : S.E')) + ((0 : S.E), y, (0 : S.E')) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((0 : S.E), (c • x : S.V0), (0 : S.E'))
+            = c • (((0 : S.E), x, (0 : S.E')) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  have pV0_fn_E'_eq : ∀ v : S.V0,
+      (p ((0 : S.E), v, (0 : S.E'))).2.2 = 0 := fun v =>
+    hp_flagEV0_E' 0 v
+  -- Step 3a: pE'_fn : E' →ₗ[F] E' (E'-component of p; descends modulo flagEV0).
+  let pE'_fn : S.E' →ₗ[F] S.E' :=
+    { toFun := fun e' => (p ((0 : S.E), (0 : S.V0), e')).2.2
+      map_add' := by
+        intro x y
+        have h0 : ((0 : S.E), (0 : S.V0), (x + y : S.E'))
+            = ((0 : S.E), (0 : S.V0), x) + ((0 : S.E), (0 : S.V0), y) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((0 : S.E), (0 : S.V0), (c • x : S.E'))
+            = c • (((0 : S.E), (0 : S.V0), x) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  -- Step 1c-3c: Inverse blocks via `pinv`.
+  -- Define the parallel diagonal blocks for `pinv`.
+  have hpinv_flagE : Submodule.map pinv S.flagE = S.flagE := by
+    apply le_antisymm
+    · rintro y ⟨x, hx, rfl⟩
+      have : x = p (pinv x) := (hpinv_right x).symm
+      have hpx : p (pinv x) ∈ S.flagE := this ▸ hx
+      -- We need pinv x ∈ flagE. Use that p flagE = flagE: pinv x = pinv (p (pinv x)) is
+      -- a member iff p (pinv x) is in p flagE = flagE; which is hx. So:
+      have hex : ∃ z ∈ S.flagE, p z = x := by
+        rw [← _hpFlagE] at hx
+        exact hx
+      obtain ⟨z, hz, hzeq⟩ := hex
+      have hpinv_x : pinv x = z := by
+        rw [← hzeq, hpinv_left]
+      rw [hpinv_x]
+      exact hz
+    · rintro x hx
+      refine ⟨p x, ?_, hpinv_left x⟩
+      have : p x ∈ Submodule.map p S.flagE := ⟨x, hx, rfl⟩
+      rw [_hpFlagE] at this
+      exact this
+  have hpinv_flagEV0 : Submodule.map pinv S.flagEV0 = S.flagEV0 := by
+    apply le_antisymm
+    · rintro y ⟨x, hx, rfl⟩
+      have hex : ∃ z ∈ S.flagEV0, p z = x := by
+        rw [← _hpFlagEV0] at hx
+        exact hx
+      obtain ⟨z, hz, hzeq⟩ := hex
+      have hpinv_x : pinv x = z := by
+        rw [← hzeq, hpinv_left]
+      rw [hpinv_x]
+      exact hz
+    · rintro x hx
+      refine ⟨p x, ?_, hpinv_left x⟩
+      have : p x ∈ Submodule.map p S.flagEV0 := ⟨x, hx, rfl⟩
+      rw [_hpFlagEV0] at this
+      exact this
+  -- Inverse blocks (mirror constructions).
+  have hpinv_flagE_V0 : ∀ e : S.E,
+      (pinv (e, (0 : S.V0), (0 : S.E'))).2.1 = 0 := by
+    intro e
+    have hin : (e, (0 : S.V0), (0 : S.E')) ∈ S.flagE :=
+      ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
+    have h := hpinv_flagE.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, hV0, _⟩
+    simpa using hV0
+  have hpinv_flagE_E' : ∀ e : S.E,
+      (pinv (e, (0 : S.V0), (0 : S.E'))).2.2 = 0 := by
+    intro e
+    have hin : (e, (0 : S.V0), (0 : S.E')) ∈ S.flagE :=
+      ⟨trivial, Submodule.zero_mem _, Submodule.zero_mem _⟩
+    have h := hpinv_flagE.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, _, hE'⟩
+    simpa using hE'
+  have hpinv_flagEV0_E' : ∀ (e : S.E) (v : S.V0),
+      (pinv (e, v, (0 : S.E'))).2.2 = 0 := by
+    intro e v
+    have hin : (e, v, (0 : S.E')) ∈ S.flagEV0 :=
+      ⟨trivial, trivial, Submodule.zero_mem _⟩
+    have h := hpinv_flagEV0.le ⟨_, hin, rfl⟩
+    rcases h with ⟨_, _, hE'⟩
+    simpa using hE'
+  let pE_inv : S.E →ₗ[F] S.E :=
+    { toFun := fun e => (pinv (e, (0 : S.V0), (0 : S.E'))).1
+      map_add' := by
+        intro x y
+        have h0 : ((x + y : S.E), (0 : S.V0), (0 : S.E'))
+            = (x, (0 : S.V0), (0 : S.E')) + (y, (0 : S.V0), (0 : S.E')) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((c • x : S.E), (0 : S.V0), (0 : S.E'))
+            = c • ((x, (0 : S.V0), (0 : S.E')) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  have pE_inv_eq : ∀ e : S.E,
+      pinv ((e : S.E), (0 : S.V0), (0 : S.E')) = (pE_inv e, 0, 0) := by
+    intro e
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨?_, ?_⟩⟩
+    · exact hpinv_flagE_V0 e
+    · exact hpinv_flagE_E' e
+  let pV0_inv : S.V0 →ₗ[F] S.V0 :=
+    { toFun := fun v => (pinv ((0 : S.E), v, (0 : S.E'))).2.1
+      map_add' := by
+        intro x y
+        have h0 : ((0 : S.E), (x + y : S.V0), (0 : S.E'))
+            = ((0 : S.E), x, (0 : S.E')) + ((0 : S.E), y, (0 : S.E')) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((0 : S.E), (c • x : S.V0), (0 : S.E'))
+            = c • (((0 : S.E), x, (0 : S.E')) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  let pE'_inv : S.E' →ₗ[F] S.E' :=
+    { toFun := fun e' => (pinv ((0 : S.E), (0 : S.V0), e')).2.2
+      map_add' := by
+        intro x y
+        have h0 : ((0 : S.E), (0 : S.V0), (x + y : S.E'))
+            = ((0 : S.E), (0 : S.V0), x) + ((0 : S.E), (0 : S.V0), y) := by
+          ext <;> simp
+        rw [h0, map_add]
+        rfl
+      map_smul' := by
+        intro c x
+        have h0 : ((0 : S.E), (0 : S.V0), (c • x : S.E'))
+            = c • (((0 : S.E), (0 : S.V0), x) : S.V) := by
+          ext <;> simp
+        rw [h0, map_smul]
+        rfl }
+  -- Step 1d: Bijectivity of pE_fn via pE_inv.
+  have pE_round_left : ∀ e : S.E, pE_fn (pE_inv e) = e := by
+    intro e
+    have h4 : ((e : S.E), (0 : S.V0), (0 : S.E'))
+        = (pE_fn (pE_inv e), (0 : S.V0), (0 : S.E')) := by
+      calc ((e : S.E), (0 : S.V0), (0 : S.E'))
+          = p (pinv ((e : S.E), (0 : S.V0), (0 : S.E'))) := (hpinv_right _).symm
+        _ = p ((pE_inv e : S.E), (0 : S.V0), (0 : S.E')) := by rw [pE_inv_eq]
+        _ = (pE_fn (pE_inv e), (0 : S.V0), (0 : S.E')) := pE_fn_eq _
+    have := congrArg (fun x : S.V => x.1) h4
+    simpa using this.symm
+  have pE_round_right : ∀ e : S.E, pE_inv (pE_fn e) = e := by
+    intro e
+    have h4 : ((e : S.E), (0 : S.V0), (0 : S.E'))
+        = (pE_inv (pE_fn e), (0 : S.V0), (0 : S.E')) := by
+      calc ((e : S.E), (0 : S.V0), (0 : S.E'))
+          = pinv (p ((e : S.E), (0 : S.V0), (0 : S.E'))) := (hpinv_left _).symm
+        _ = pinv ((pE_fn e : S.E), (0 : S.V0), (0 : S.E')) := by rw [pE_fn_eq]
+        _ = (pE_inv (pE_fn e), (0 : S.V0), (0 : S.E')) := pE_inv_eq _
+    have := congrArg (fun x : S.V => x.1) h4
+    simpa using this.symm
+  let pE_equiv : S.E ≃ₗ[F] S.E :=
+    { pE_fn with
+      invFun := pE_inv
+      left_inv := pE_round_right
+      right_inv := pE_round_left }
+  -- Step 2c: pV0_fn V0-isometry. Bijectivity via pV0_inv.
+  -- Note: pV0_inv ∘ pV0_fn ≠ id directly because p (0, v, 0) has nonzero
+  -- E-component in general. We need to track the action carefully.
+  -- The action of `p` on (0, v, 0) gives (γ v, pV0_fn v, 0). To invert, we
+  -- need pinv (γ v, pV0_fn v, 0). Use linearity: pinv (γ v, 0, 0) +
+  -- pinv (0, pV0_fn v, 0) = (γ v, pV0_fn v, 0)'s preimage which is (0, v, 0).
+  have pV0_p_eq : ∀ v : S.V0,
+      ∃ γv : S.E, p ((0 : S.E), v, (0 : S.E'))
+        = (γv, pV0_fn v, (0 : S.E')) := by
+    intro v
+    refine ⟨(p ((0 : S.E), v, (0 : S.E'))).1, ?_⟩
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨rfl, ?_⟩⟩
+    exact pV0_fn_E'_eq v
+  have pV0_pinv_eq : ∀ v : S.V0,
+      ∃ γv : S.E, pinv ((0 : S.E), v, (0 : S.E'))
+        = (γv, pV0_inv v, (0 : S.E')) := by
+    intro v
+    refine ⟨(pinv ((0 : S.E), v, (0 : S.E'))).1, ?_⟩
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨rfl, ?_⟩⟩
+    exact hpinv_flagEV0_E' 0 v
+  have pV0_round_left : ∀ v : S.V0, pV0_fn (pV0_inv v) = v := by
+    intro v
+    obtain ⟨γv, hpinv⟩ := pV0_pinv_eq v
+    -- p (γv, pV0_inv v, 0) = (something, pV0_fn (pV0_inv v), 0) — not directly.
+    -- Use: p (pinv (0, v, 0)) = (0, v, 0).
+    -- pinv (0, v, 0) = (γv, pV0_inv v, 0).
+    -- So p (γv, pV0_inv v, 0) = (0, v, 0).
+    have hp : p ((γv : S.E), pV0_inv v, (0 : S.E'))
+        = ((0 : S.E), v, (0 : S.E')) := by
+      rw [← hpinv]; exact hpinv_right _
+    -- Decompose: p (γv, pV0_inv v, 0) = p (γv, 0, 0) + p (0, pV0_inv v, 0).
+    have hsplit : ((γv : S.E), pV0_inv v, (0 : S.E'))
+        = (γv, (0 : S.V0), (0 : S.E')) + ((0 : S.E), pV0_inv v, (0 : S.E')) := by
+      ext <;> simp
+    rw [hsplit, map_add] at hp
+    rw [pE_fn_eq] at hp
+    -- hp : (pE_fn γv, 0, 0) + p (0, pV0_inv v, 0) = (0, v, 0).
+    have hV0 := congrArg (fun x : S.V => x.2.1) hp
+    simp at hV0
+    -- hV0 : pV0_fn (pV0_inv v) = v.
+    exact hV0
+  have pV0_round_right : ∀ v : S.V0, pV0_inv (pV0_fn v) = v := by
+    intro v
+    obtain ⟨γv, hp_eq⟩ := pV0_p_eq v
+    have hpinv : pinv ((γv : S.E), pV0_fn v, (0 : S.E'))
+        = ((0 : S.E), v, (0 : S.E')) := by
+      rw [← hp_eq]; exact hpinv_left _
+    have hsplit : ((γv : S.E), pV0_fn v, (0 : S.E'))
+        = (γv, (0 : S.V0), (0 : S.E')) + ((0 : S.E), pV0_fn v, (0 : S.E')) := by
+      ext <;> simp
+    rw [hsplit, map_add] at hpinv
+    rw [pE_inv_eq] at hpinv
+    have hV0 := congrArg (fun x : S.V => x.2.1) hpinv
+    simp at hV0
+    exact hV0
+  let pV0_equiv : S.V0 ≃ₗ[F] S.V0 :=
+    { pV0_fn with
+      invFun := pV0_inv
+      left_inv := pV0_round_right
+      right_inv := pV0_round_left }
+  -- Step 3c: pE'_fn bijectivity via pE'_inv.
+  -- p (0, 0, e') = (β e', δ e', pE'_fn e') where β e' = (p (0,0,e')).1, δ e' = (p (0,0,e')).2.1.
+  have pE'_p_struct : ∀ e' : S.E',
+      p ((0 : S.E), (0 : S.V0), e')
+        = ((p ((0 : S.E), (0 : S.V0), e')).1,
+            (p ((0 : S.E), (0 : S.V0), e')).2.1,
+            pE'_fn e') := by
+    intro e'
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨rfl, rfl⟩⟩
+  have pE'_pinv_struct : ∀ e' : S.E',
+      pinv ((0 : S.E), (0 : S.V0), e')
+        = ((pinv ((0 : S.E), (0 : S.V0), e')).1,
+            (pinv ((0 : S.E), (0 : S.V0), e')).2.1,
+            pE'_inv e') := by
+    intro e'
+    refine Prod.mk.injEq .. |>.mpr ⟨rfl,
+      Prod.mk.injEq .. |>.mpr ⟨rfl, rfl⟩⟩
+  have pE'_round_left : ∀ e' : S.E', pE'_fn (pE'_inv e') = e' := by
+    intro e'
+    -- p (pinv (0, 0, e')) = (0, 0, e').
+    -- pinv (0, 0, e') = (β'_inv e', γ'_inv e', pE'_inv e').
+    -- p (β'_inv e', γ'_inv e', pE'_inv e') = (0, 0, e').
+    -- E'-component: 0 + 0 + pE'_fn (pE'_inv e') = e'.
+    set βi := (pinv ((0 : S.E), (0 : S.V0), e')).1 with hβi_def
+    set γi := (pinv ((0 : S.E), (0 : S.V0), e')).2.1 with hγi_def
+    have hpinv_split : pinv ((0 : S.E), (0 : S.V0), e')
+        = (βi, γi, pE'_inv e') := pE'_pinv_struct e'
+    have hp : p (βi, γi, pE'_inv e')
+        = ((0 : S.E), (0 : S.V0), e') := by
+      rw [← hpinv_split]; exact hpinv_right _
+    have hsplit : ((βi : S.E), (γi : S.V0), pE'_inv e')
+        = (βi, (0 : S.V0), (0 : S.E'))
+            + ((0 : S.E), γi, (0 : S.E'))
+            + ((0 : S.E), (0 : S.V0), pE'_inv e') := by
+      ext <;> simp
+    rw [hsplit, map_add, map_add] at hp
+    rw [pE_fn_eq] at hp
+    have hE' := congrArg (fun x : S.V => x.2.2) hp
+    simp [pV0_fn_E'_eq] at hE'
+    exact hE'
+  have pE'_round_right : ∀ e' : S.E', pE'_inv (pE'_fn e') = e' := by
+    intro e'
+    set β := (p ((0 : S.E), (0 : S.V0), e')).1 with hβ_def
+    set γ := (p ((0 : S.E), (0 : S.V0), e')).2.1 with hγ_def
+    have hp_split : p ((0 : S.E), (0 : S.V0), e')
+        = (β, γ, pE'_fn e') := pE'_p_struct e'
+    have hpinv : pinv (β, γ, pE'_fn e')
+        = ((0 : S.E), (0 : S.V0), e') := by
+      rw [← hp_split]; exact hpinv_left _
+    have hsplit : ((β : S.E), (γ : S.V0), pE'_fn e')
+        = (β, (0 : S.V0), (0 : S.E'))
+            + ((0 : S.E), γ, (0 : S.E'))
+            + ((0 : S.E), (0 : S.V0), pE'_fn e') := by
+      ext <;> simp
+    rw [hsplit, map_add, map_add] at hpinv
+    rw [pE_inv_eq] at hpinv
+    have hE' := congrArg (fun x : S.V => x.2.2) hpinv
+    simp [hpinv_flagEV0_E' 0] at hE'
+    exact hE'
+  let pE'_equiv : S.E' ≃ₗ[F] S.E' :=
+    { pE'_fn with
+      invFun := pE'_inv
+      left_inv := pE'_round_right
+      right_inv := pE'_round_left }
+  -- Step 4: Key isometry identity:
+  --   λ(pE_fn e, pE'_fn e') = λ(e, e') for all e : E, e' : E'.
+  -- This follows from `_hpIso` at the pair ((e,0,0), (0,0,e')).
+  have hkey : ∀ (e : S.E) (e' : S.E'),
+      S.lambda (pE_fn e) (pE'_fn e') = S.lambda e e' := by
+    intro e e'
+    have hiso := _hpIso ((e, (0 : S.V0), (0 : S.E')) : S.V)
+                        (((0 : S.E), (0 : S.V0), e') : S.V)
+    -- LHS of hiso: ambientForm (p (e,0,0)) (p (0,0,e')).
+    -- RHS:        ambientForm (e,0,0) (0,0,e') = λ(e, e').
+    rw [pE_fn_eq] at hiso
+    -- `p (0, 0, e')` has V0-component = (pV0' e') (some element) and
+    -- E'-component = pE'_fn e'. The E-component is what we don't care about.
+    set q := p ((0 : S.E), (0 : S.V0), e') with hq_def
+    -- ambientForm ((pE_fn e, 0, 0)) q
+    --   = λ(pE_fn e, q.2.2) + B0(0, q.2.1) + ε λ(q.1, 0)
+    --   = λ(pE_fn e, pE'_fn e').
+    -- ambientForm (e, 0, 0) (0, 0, e') = λ(e, e').
+    have hq22 : q.2.2 = pE'_fn e' := rfl
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply,
+      map_zero, LinearMap.zero_apply, mul_zero, add_zero] at hiso
+    -- After simp: hiso : λ((pE_fn e), q.2.2) = λ(e, e').
+    rw [hq22] at hiso
+    convert hiso using 0
+  -- Step 5: pV0_fn is a `formV0`-isometry.
+  have pV0_iso : ∀ u v, S.formV0 (pV0_fn u) (pV0_fn v) = S.formV0 u v := by
+    intro u v
+    have hiso := _hpIso (((0 : S.E), u, (0 : S.E')) : S.V)
+                        (((0 : S.E), v, (0 : S.E')) : S.V)
+    -- Both `(p (0, u, 0)).2.2 = 0` and `(p (0, v, 0)).2.2 = 0`
+    -- (by `pV0_fn_E'_eq`).
+    have h_pu_E' := pV0_fn_E'_eq u
+    have h_pv_E' := pV0_fn_E'_eq v
+    -- `(p (0, u, 0)).2.1 = pV0_fn u`, `(p (0, v, 0)).2.1 = pV0_fn v`.
+    have h_pu_V0 : (p ((0 : S.E), u, (0 : S.E'))).2.1 = pV0_fn u := rfl
+    have h_pv_V0 : (p ((0 : S.E), v, (0 : S.E'))).2.1 = pV0_fn v := rfl
+    -- Expand ambientForm on both sides.
+    simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply,
+      map_zero, mul_zero, add_zero, zero_add] at hiso
+    -- After simp, hiso should reduce to:
+    --   λ((p (0,u,0)).1, (p (0,v,0)).2.2) + B0((p (0,u,0)).2.1, (p (0,v,0)).2.1)
+    --   + ε * λ((p (0,v,0)).1, (p (0,u,0)).2.2)
+    --   = B0(u, v).
+    rw [h_pu_E', h_pv_E', h_pu_V0, h_pv_V0] at hiso
+    simpa using hiso
+  -- Step 6: package the V0-isometry as a LinearEquiv with isometry property.
+  -- pV0_equiv is the LinearEquiv; pV0_iso is the isometry property.
+  --
+  -- Gap (Round 8 progress note): the remaining assembly hits a structural
+  -- obstacle that suggests the **statement of `parabolic_decompose` may
+  -- need an extra `B'` parameter**.
+  --
+  -- The data extracted above provides:
+  --   pE_equiv : S.E ≃ₗ[F] S.E      (action on `flagE`)
+  --   pV0_equiv : S.V0 ≃ₗ[F] S.V0   (V0-block; isometry by `pV0_iso`)
+  --   pE'_equiv : S.E' ≃ₗ[F] S.E'   (descent action mod `flagEV0`)
+  --   hkey : λ(pE_fn e, pE'_fn e') = λ(e, e')   (forces pE = lambdaDualE d.symm)
+  --
+  -- To close, set `d := pE'_equiv`, `g := pV0_equiv`, and define
+  --   `D e' := (p (0, 0, pE'_equiv.symm e')).2.1`.
+  -- Then expansion forces:
+  --   (E component) γ v + β e' = Cdual D (pV0_fn v) + ½ Cdual D (D (pE'_fn e'))
+  -- where γ v := (p (0, v, 0)).1 and β e' := (p (0, 0, e')).1.
+  -- Splitting:
+  --   * γ v = Cdual D (pV0_fn v) — provable from `_hpIso` on
+  --     `((0, v, 0), (0, 0, e''))` via `Cdual_pairing` + non-degeneracy.
+  --   * β e' = ½ Cdual D (D (pE'_fn e')) — **NOT provable from `_hpIso`**
+  --     alone. The isometry only forces
+  --       λ(f e₁', pE'_fn e₂') + ε λ(f e₂', pE'_fn e₁') = 0
+  --     where f e' := β e' - ½ Cdual D (D (pE'_fn e')). This is precisely
+  --     a residual `IsSkewB`-type condition (`f` is skew in the sense of
+  --     `IsSkewB`), so `f` is in general nonzero.
+  --
+  -- **Mathematical conclusion:** A general parabolic isometry decomposes
+  -- as `(unipotent group element) ∘ (Levi)`, where the unipotent group
+  -- element has the form
+  --   (e, v, e') ↦ (e + Cdual D v + ½ Cdual D (D e') + B' e', v + D e', e')
+  -- for some skew `B' : E' →ₗ E`. The current `uD D` definition fixes
+  -- `B' = 0`. Hence `parabolic_decompose` as stated is provable only when
+  -- this residual `B'` happens to vanish — which is not automatic.
+  --
+  -- **Recommendation for Round 9 / polish:** either (a) extend `uD` to
+  -- accept a residual skew `B'`, then strengthen `parabolic_decompose` to
+  -- expose `(D, B', d, g)`, or (b) restrict the hypothesis to parabolic
+  -- elements satisfying the implicit `B' = 0` condition. Option (a) is
+  -- the mathematically correct full statement; option (b) keeps the
+  -- existing signature shape but narrows applicability.
+  --
+  -- The consolidated `sorry` below covers the obstruction.
   sorry
 
 end InducedOrbitToy

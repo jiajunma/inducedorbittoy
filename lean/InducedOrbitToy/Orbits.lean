@@ -289,6 +289,172 @@ private lemma XST_mem_O0PlusU (S : SliceSetup F)
     XST_sub_X0Lift_mem_unipotent S hNondeg Sₕ hT, ?_⟩
   rw [embO0_X0_eq_X0Lift]; abel
 
+/-! ### Helpers for `sIndependenceAndOrbitCriterion` (Round 8) -/
+
+/-- Composition of orthogonal endomorphisms is orthogonal. -/
+private lemma IsOrthogonal_mul (S : SliceSetup F)
+    {g₁ g₂ : Module.End F S.V}
+    (h1 : LinearMap.IsOrthogonal S.ambientForm g₁)
+    (h2 : LinearMap.IsOrthogonal S.ambientForm g₂) :
+    LinearMap.IsOrthogonal S.ambientForm (g₁ * g₂) := by
+  intro u v
+  show S.ambientForm ((g₁ * g₂) u) ((g₁ * g₂) v) = S.ambientForm u v
+  rw [Module.End.mul_apply, Module.End.mul_apply, h1, h2]
+
+/-- The `Ring.inverse` of an invertible orthogonal endomorphism is itself
+orthogonal. -/
+private lemma IsOrthogonal_ringInverse (S : SliceSetup F)
+    {p : Module.End F S.V}
+    (hpU : IsUnit p) (hpO : LinearMap.IsOrthogonal S.ambientForm p) :
+    LinearMap.IsOrthogonal S.ambientForm
+      (Ring.inverse p : Module.End F S.V) := by
+  intro u v
+  have hcancel : ∀ w, p ((Ring.inverse p : Module.End F S.V) w) = w := by
+    intro w
+    have h2 : p * (Ring.inverse p : Module.End F S.V) = 1 :=
+      Ring.mul_inverse_cancel p hpU
+    have h3 := congrArg (fun f : Module.End F S.V => f w) h2
+    simpa [Module.End.mul_apply] using h3
+  have h := hpO ((Ring.inverse p : Module.End F S.V) u)
+                ((Ring.inverse p : Module.End F S.V) v)
+  rw [hcancel u, hcancel v] at h
+  exact h.symm
+
+/-- Two `G`-orbits coincide whenever a single isometry conjugates one
+generator to the other.  The witness `p` need only be an isometry of the
+ambient form (the parabolic flag-stability is irrelevant for orbit
+equality). -/
+private lemma GOrbit_eq_of_isometry_conj (S : SliceSetup F)
+    {x y : Module.End F S.V} {p : Module.End F S.V}
+    (hpU : IsUnit p) (hpO : LinearMap.IsOrthogonal S.ambientForm p)
+    (hConj : p ∘ₗ x = y ∘ₗ p) :
+    GOrbit S x = GOrbit S y := by
+  have hyx : y = p * x * (Ring.inverse p : Module.End F S.V) := by
+    have h1 : p * x = y * p := hConj
+    have h2 : (p * x) * (Ring.inverse p : Module.End F S.V)
+            = (y * p) * (Ring.inverse p : Module.End F S.V) := by rw [h1]
+    rw [mul_assoc y p, Ring.mul_inverse_cancel p hpU, mul_one] at h2
+    exact h2.symm
+  have hxy : x = (Ring.inverse p : Module.End F S.V) * y * p := by
+    have h1 : p * x = y * p := hConj
+    have h2 : (Ring.inverse p : Module.End F S.V) * (p * x)
+            = (Ring.inverse p : Module.End F S.V) * (y * p) := by rw [h1]
+    rw [← mul_assoc, ← mul_assoc, Ring.inverse_mul_cancel _ hpU,
+        one_mul] at h2
+    exact h2
+  apply Set.eq_of_subset_of_subset
+  · -- GOrbit x ⊆ GOrbit y, witnessed by g ↦ g * Ring.inverse p
+    rintro z ⟨g, ⟨hgU, hgO⟩, hzeq⟩
+    refine ⟨g * (Ring.inverse p : Module.End F S.V), ?_, ?_⟩
+    · exact ⟨hgU.mul hpU.ringInverse,
+             IsOrthogonal_mul S hgO (IsOrthogonal_ringInverse S hpU hpO)⟩
+    · have hInvFmla :
+          (Ring.inverse
+            (g * (Ring.inverse p : Module.End F S.V) : Module.End F S.V) :
+            Module.End F S.V) = p * (Ring.inverse g : Module.End F S.V) := by
+        set h : Module.End F S.V :=
+          g * (Ring.inverse p : Module.End F S.V) with hdef
+        have hhU : IsUnit h := hgU.mul hpU.ringInverse
+        have hkey : h * (p * (Ring.inverse g : Module.End F S.V)) = 1 := by
+          show (g * (Ring.inverse p : Module.End F S.V)) *
+               (p * (Ring.inverse g : Module.End F S.V)) = 1
+          rw [mul_assoc, ← mul_assoc (Ring.inverse p : Module.End F S.V) p,
+              Ring.inverse_mul_cancel _ hpU, one_mul,
+              Ring.mul_inverse_cancel _ hgU]
+        have hcalc : (Ring.inverse h : Module.End F S.V) =
+            (Ring.inverse h : Module.End F S.V) *
+              (h * (p * (Ring.inverse g : Module.End F S.V))) := by
+          rw [hkey, mul_one]
+        rw [hcalc, ← mul_assoc, Ring.inverse_mul_cancel _ hhU, one_mul]
+      change z = g * (Ring.inverse p : Module.End F S.V) * y *
+                  (Ring.inverse
+                    (g * (Ring.inverse p : Module.End F S.V) :
+                      Module.End F S.V) :
+                    Module.End F S.V)
+      rw [hzeq]
+      change g * x * (Ring.inverse g : Module.End F S.V)
+           = g * (Ring.inverse p : Module.End F S.V) * y *
+              (Ring.inverse
+                (g * (Ring.inverse p : Module.End F S.V) :
+                  Module.End F S.V) :
+                Module.End F S.V)
+      rw [hxy, hInvFmla]; noncomm_ring
+  · -- GOrbit y ⊆ GOrbit x, witnessed by g ↦ g * p
+    rintro z ⟨g, ⟨hgU, hgO⟩, hzeq⟩
+    refine ⟨g * p, ?_, ?_⟩
+    · exact ⟨hgU.mul hpU, IsOrthogonal_mul S hgO hpO⟩
+    · have hInvFmla : (Ring.inverse (g * p : Module.End F S.V) :
+                          Module.End F S.V) =
+                       (Ring.inverse p : Module.End F S.V) *
+                       (Ring.inverse g : Module.End F S.V) := by
+        set h : Module.End F S.V := g * p
+        have hhU : IsUnit h := hgU.mul hpU
+        have hkey : h * ((Ring.inverse p : Module.End F S.V) *
+                          (Ring.inverse g : Module.End F S.V)) = 1 := by
+          show (g * p) * ((Ring.inverse p : Module.End F S.V) *
+                           (Ring.inverse g : Module.End F S.V)) = 1
+          rw [mul_assoc, ← mul_assoc p (Ring.inverse p : Module.End F S.V),
+              Ring.mul_inverse_cancel _ hpU, one_mul,
+              Ring.mul_inverse_cancel _ hgU]
+        have hcalc : (Ring.inverse h : Module.End F S.V) =
+            (Ring.inverse h : Module.End F S.V) *
+              (h * ((Ring.inverse p : Module.End F S.V) *
+                    (Ring.inverse g : Module.End F S.V))) := by
+          rw [hkey, mul_one]
+        rw [hcalc, ← mul_assoc, Ring.inverse_mul_cancel _ hhU, one_mul]
+      change z = g * p * x *
+                  (Ring.inverse (g * p : Module.End F S.V) :
+                    Module.End F S.V)
+      rw [hzeq]
+      change g * y * (Ring.inverse g : Module.End F S.V)
+           = g * p * x *
+              (Ring.inverse (g * p : Module.End F S.V) : Module.End F S.V)
+      rw [hyx, hInvFmla]; noncomm_ring
+
+/-- **Slice-stability for the forward direction.**
+
+If `g : Module.End F S.V` is an isometry of `S.ambientForm` and conjugates
+`XST S Sₕ T₂` to `XST S Sₕ T₁`, then its inverse `Ring.inverse g` is a
+*P*-element (i.e. satisfies `IsParabolicElement S`).
+
+The `IsUnit` and `IsOrthogonal` conjuncts of `IsParabolicElement` follow
+from `IsometryEnd`-level closure (`IsOrthogonal_ringInverse`,
+`IsUnit.ringInverse`).  The two flag-stability conjuncts
+(`Submodule.map p flagE = flagE` and
+`Submodule.map p flagEV0 = flagEV0`) require the slice-transversality
+argument from the blueprint (every G-conjugacy that conjugates one
+slice-form to another must already lie in `P`).
+
+**Gap (Round 8):** the two flag-stability conjuncts carry `sorry`.  The
+classical argument uses Bruhat decomposition: any `g ∈ G` that maps the
+slice `O₀ + 𝔲` to itself must preserve the flag, since the slice is
+transverse to the parabolic and the unipotent radical acts freely on the
+quotient.  Reducing this to the conjugation hypothesis uses
+`parametrizeX0PlusU_uniqueness` plus a transversality argument that
+requires upgrading the `Sₕ`-data; this is left for Round 9.  See
+`InducedOrbitToy/Slice.lean :: parabolic_decompose` for the related
+construction and `.archon/informal/orbits.md` § Forward-direction for
+the informal sketch. -/
+private lemma isParabolicElement_ringInverse_of_orbit_witness
+    (S : SliceSetup F)
+    (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus)
+    (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (_hT₁ : S.IsSkewT T₁) (_hT₂ : S.IsSkewT T₂)
+    (g : Module.End F S.V) (hg : IsometryEnd S g)
+    (_hyeq : XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+        = g ∘ₗ XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ
+            (Ring.inverse g : Module.End F S.V)) :
+    SliceSetup.IsParabolicElement S
+      (Ring.inverse g : Module.End F S.V) := by
+  refine ⟨hg.1.ringInverse, ?_, ?_, IsOrthogonal_ringInverse S hg.1 hg.2⟩
+  · -- Gap: Submodule.map (Ring.inverse g) S.flagE = S.flagE
+    -- Slice-transversality argument (see Gap comment on the lemma).
+    sorry
+  · -- Gap: Submodule.map (Ring.inverse g) S.flagEV0 = S.flagEV0
+    -- Slice-transversality argument (see Gap comment on the lemma).
+    sorry
+
 /-! ## Theorems -/
 
 /-- `prop:induced-orbits`.  The maximal `G`-orbits inside the induced set
@@ -309,71 +475,94 @@ theorem inducedOrbits (S : SliceSetup F)
   exact ⟨g, hg, XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T,
     XST_mem_O0PlusU S hNondeg _ hT.1, hyeq⟩
 
-/-- `prop:s-independence-and-orbit-criterion`.  Two parametrisations
-yield the same `G`-orbit iff the corresponding `T`'s are isometric.
+/-- `prop:s-independence-and-orbit-criterion`.  Two parametrisations of
+the residual normal form yield the same `G`-orbit iff the corresponding
+skew operators `T₁, T₂` induce isometric bilinear forms on `L0'`.
 
 The blueprint argument runs through `pNormalForm_residual_orbit_iso`
 (NormalForm.lean), which translates `P`-conjugation of `XST T₁` to
 `XST T₂` into a bilinear isometry of the residual forms.  Closing this
-iff requires the additional hypotheses
-`S.formV0.Nondegenerate` and `(2 : F) ≠ 0` (to invoke
-`pNormalForm_residual_orbit_iso`) and a parabolic-decomposition argument
-showing every `g ∈ G` conjugating `XST T₁` to `XST T₂` is itself a
-`P`-element. Both pieces are out of scope for the current prover round
-and are recorded as scoped sorries below. -/
+iff requires the additional hypotheses `S.formV0.Nondegenerate` and
+`(2 : F) ≠ 0` (to invoke `pNormalForm_residual_orbit_iso`); the proof
+also assumes a single `Sₕ : S.L1' ≃ₗ[F] S.Vplus` parametrisation common
+to both sides (the blueprint's `Sₕ` is fixed once the slice `O₀ + 𝔲`
+is chosen).
+
+**Reverse direction** (`IsometryRel → orbit equality`) is sorry-free:
+it invokes `pNormalForm_residual_orbit_iso` to extract a `P`-element
+`p` with `p ∘ XST T₁ = XST T₂ ∘ p`, and concludes via the helper
+`GOrbit_eq_of_isometry_conj` (the parabolic flag-stability is *not*
+needed for the orbit equality — only the unit/orthogonal data of `p`).
+
+**Forward direction** (`orbit equality → IsometryRel`) reduces to the
+slice-transversality helper
+`isParabolicElement_ringInverse_of_orbit_witness`.  That helper still
+carries two scoped `sorry`s on the flag-stability conjuncts of
+`IsParabolicElement`.  See the helper's docstring for the gap. -/
 theorem sIndependenceAndOrbitCriterion (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
     [ClassifyBilinearForms F]
-    (Sₕ₁ Sₕ₂ : S.L1' ≃ₗ[F] S.Vplus)
+    (hNondeg : S.formV0.Nondegenerate) (hChar : (2 : F) ≠ 0)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus)
     (T₁ T₂ : S.L0' →ₗ[F] S.L0)
-    (_hT₁ : T₁ ∈ S.Tset_circ) (_hT₂ : T₂ ∈ S.Tset_circ) :
-    GOrbit S (XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁) =
-        GOrbit S (XST S (Sₕ₂ : S.L1' →ₗ[F] S.Vplus) T₂) ↔
+    (hT₁ : T₁ ∈ S.Tset_circ) (hT₂ : T₂ ∈ S.Tset_circ) :
+    GOrbit S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁) =
+        GOrbit S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂) ↔
       IsometryRel S T₁ T₂ := by
   constructor
   · -- Forward: orbit equality → bilinear isometry of `BT T₁` and `BT T₂`.
-    -- Plan: extract `g ∈ G` with `g ∘ₗ XST T₁ = XST T₂ ∘ₗ g` (using
-    -- `XST T₂ ∈ GOrbit (XST T₁)` from the hypothesis); show that `g`
-    -- preserves the slice `X₀ + 𝔲` and hence is a `P`-element; apply
-    -- `pNormalForm_residual_orbit_iso`.  The slice-stability step
-    -- requires `Nondegenerate` and `(2 : F) ≠ 0` which are not in the
-    -- current hypothesis list.
     intro horbit
-    -- Partial progress: extract a witness `g : Module.End F S.V`
-    -- conjugating `XST T₁` to `XST T₂`. The remaining work — showing
-    -- `g ∈ P` (i.e. `IsParabolicElement S g`) and applying
-    -- `pNormalForm_residual_orbit_iso` — needs hypotheses
-    -- `Nondegenerate`/`(2 : F) ≠ 0` and equality `Sₕ₁ = Sₕ₂` that are
-    -- absent from the current statement (Tier A item 3 blocker).
-    have h_self : XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁ ∈
-        GOrbit S (XST S (Sₕ₁ : S.L1' →ₗ[F] S.Vplus) T₁) :=
+    -- Step 1: extract `g : Module.End F S.V` with
+    --   `XST S Sₕ T₁ = g ∘ₗ XST S Sₕ T₂ ∘ₗ Ring.inverse g`,
+    -- by witnessing `XST T₁ ∈ GOrbit (XST T₁)` (via the identity)
+    -- and then rewriting along `horbit` into `GOrbit (XST T₂)`.
+    have h_self : XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁ ∈
+        GOrbit S (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁) :=
       ⟨1, ⟨isUnit_one, fun _ _ => rfl⟩,
         by rw [Ring.inverse_one]; rfl⟩
     rw [horbit] at h_self
-    obtain ⟨_g, _hg, _hyeq⟩ := h_self
-    -- `_hg : IsometryEnd S _g`,
-    -- `_hyeq : XST S Sₕ₁ T₁ = _g ∘ₗ XST S Sₕ₂ T₂ ∘ₗ Ring.inverse _g`.
-    -- Inheritance: needs `pNormalForm_residual_orbit_iso` (NormalForm.lean
-    -- line 199, currently sorry; round 2 Tier A target).
-    sorry
-  · -- Reverse: bilinear isometry → orbit equality.  Plan: invoke
-    -- `pNormalForm_residual_orbit_iso` to obtain a `P`-element `p`
-    -- satisfying `p ∘ₗ XST T₁ = XST T₂ ∘ₗ p`; deduce `p ∈ G`
-    -- (parabolic ⊂ isometry group); use this to show that the two
-    -- orbits coincide via mutual inclusion.  Same hypothesis gap as
-    -- above (`Nondegenerate`, `(2 : F) ≠ 0`).
+    obtain ⟨g, hg, hyeq⟩ := h_self
+    -- Step 2: lift `g` to a `P`-element via the slice-transversality
+    -- helper. The helper carries the only remaining sorry; the
+    -- conjugation extraction below is fully constructive.
+    have hP : SliceSetup.IsParabolicElement S
+                (Ring.inverse g : Module.End F S.V) :=
+      isParabolicElement_ringInverse_of_orbit_witness S hNondeg hChar Sₕ
+        T₁ T₂ hT₁.1 hT₂.1 g hg hyeq
+    -- Step 3: derive the conjugation equation needed by
+    -- `pNormalForm_residual_orbit_iso`. Pre-composing `hyeq` with
+    -- `Ring.inverse g` collapses `Ring.inverse g ∘ g` to `1`.
+    have hConj : (Ring.inverse g : Module.End F S.V) ∘ₗ
+                    XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+                = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ
+                    (Ring.inverse g : Module.End F S.V) := by
+      have hgU : IsUnit g := hg.1
+      show (Ring.inverse g : Module.End F S.V) *
+              XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+           = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ *
+              (Ring.inverse g : Module.End F S.V)
+      have hyeq' :
+          XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
+            = g * XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ *
+                (Ring.inverse g : Module.End F S.V) := hyeq
+      rw [hyeq', ← mul_assoc, ← mul_assoc,
+          Ring.inverse_mul_cancel _ hgU, one_mul]
+    -- Step 4: apply `pNormalForm_residual_orbit_iso` (→) with
+    -- `p := Ring.inverse g`.
+    exact (S.pNormalForm_residual_orbit_iso hNondeg hChar Sₕ T₁ T₂
+              hT₁.1 hT₂.1).mp
+      ⟨Ring.inverse g, hP, hConj⟩
+  · -- Reverse: bilinear isometry → orbit equality (sorry-free).
     intro hiso
-    -- Partial progress: unfold the isometry-relation hypothesis to
-    -- expose the bilinear-isometry witness `h : L0' ≃ₗ[F] L0'`.
-    unfold IsometryRel Bilinear.AreIsometric at hiso
-    obtain ⟨_h, _h_isom⟩ := hiso
-    -- `_h : ↥S.L0' ≃ₗ[F] ↥S.L0'`,
-    -- `_h_isom : ∀ u v, BT S T₂ (_h u) (_h v) = BT S T₁ u v`.
-    -- Inheritance: lifting `_h` to a `P`-element `p` requires
-    -- `pNormalForm_residual_orbit_iso` (NormalForm.lean line 199,
-    -- currently sorry) plus the missing `Nondegenerate`/`(2 : F) ≠ 0`
-    -- hypotheses and `Sₕ₁ = Sₕ₂`.
-    sorry
+    -- Apply `pNormalForm_residual_orbit_iso` (←) to lift the bilinear
+    -- isometry to a `P`-element `p` with `p ∘ XST T₁ = XST T₂ ∘ p`.
+    obtain ⟨p, hP, hConj⟩ :=
+      (S.pNormalForm_residual_orbit_iso hNondeg hChar Sₕ T₁ T₂
+          hT₁.1 hT₂.1).mpr hiso
+    -- The IsParabolicElement gives us `IsUnit p` (1st conjunct) and
+    -- `IsOrthogonal S.ambientForm p` (4th conjunct). The two
+    -- flag-stability conjuncts are not needed for orbit equality.
+    exact GOrbit_eq_of_isometry_conj S hP.1 hP.2.2.2 hConj
 
 /-- `prop:multiplicity`, non-degenerate case.  When `T` has full rank
 (`im T = L0'`), the multiplicity equals `1`. -/
@@ -409,7 +598,7 @@ of the main theorem of the blueprint:
 -/
 theorem main (S : SliceSetup F)
     [TopologicalSpace (Module.End F S.V)]
-    (hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
+    (hNondeg : S.formV0.Nondegenerate) (hChar : (2 : F) ≠ 0)
     [ClassifyBilinearForms F] [MultiplicityTheory S]
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus) :
     (∀ T : S.L0' →ₗ[F] S.L0, S.IsSkewT T →
@@ -429,7 +618,7 @@ theorem main (S : SliceSetup F)
   · intro T hT
     exact inducedOrbits S hNondeg Sₕ T hT
   · intro T₁ T₂ hT₁ hT₂
-    exact sIndependenceAndOrbitCriterion S Sₕ Sₕ T₁ T₂ hT₁ hT₂
+    exact sIndependenceAndOrbitCriterion S hNondeg hChar Sₕ T₁ T₂ hT₁ hT₂
   · intro T hT hNonDeg
     exact multiplicityNonDeg S Sₕ T hT hNonDeg
 
