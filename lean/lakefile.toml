@@ -1,0 +1,9 @@
+name = "InducedOrbitToy"
+defaultTargets = ["InducedOrbitToy"]
+
+[[require]]
+name = "mathlib"
+path = "/Users/hoxide/mycodes/lean-shared/.lake/packages/mathlib"
+
+[[lean_lib]]
+name = "InducedOrbitToy"

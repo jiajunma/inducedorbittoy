@@ -8,6 +8,17 @@
 # OS
 .DS_Store
 
+# Lean / Lake build state
+lean/.lake/
+
+# Archon runtime logs; keep summaries, task results, and proof journals tracked.
+lean/.archon/logs/
+lean/.archon/proof-journal/current_session/
+
+# Local editor/MCP wiring contains machine-specific paths.
+lean/.mcp.json
+lean/.claude/settings.json
+
 # Vendored Rethlas local runtime artifacts
 Rethlas/.git/
 Rethlas/**/.venv/
