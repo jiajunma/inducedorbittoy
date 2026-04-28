@@ -1,23 +1,23 @@
 # InducedOrbitToy/LocalForms.lean
 
-## Status: NO WORK (file not assigned this round)
+## Round 10 status: NO WORK NEEDED
 
-Per `.archon/PROGRESS.md` § "Files NOT assigned this round" (line 343),
-`InducedOrbitToy/LocalForms.lean` has no remaining `sorry` placeholders
-and is blocked from edits this round.
+Per `.archon/PROGRESS.md` § "Files NOT assigned this round",
+`InducedOrbitToy/LocalForms.lean` is already done with no sorries
+and no Round-10 objectives. Instructions: verify-only, no edits.
 
 ## Verification
 
-- `grep -n "sorry" InducedOrbitToy/LocalForms.lean` → no matches
-  (zero sorries in file).
-- `grep -n "USER:" InducedOrbitToy/LocalForms.lean` → no matches
-  (no file-specific user hints).
-- `lake env lean InducedOrbitToy/LocalForms.lean` → exit 0, no
-  diagnostics. File compiles in isolation.
-- File size: 162 lines, 7814 bytes (unchanged from prior round).
+- **`grep -n "sorry" InducedOrbitToy/LocalForms.lean`** — no matches
+  (no `sorry` placeholders in the file).
+- **`lake env lean InducedOrbitToy/LocalForms.lean`** — compiles
+  cleanly in isolation (no stdout/stderr, exit 0).
+- **File size:** 162 lines.
+- **No axioms added.**
+- **No edits made to the file or any other project file.**
 
-## Actions taken
+## Notes for plan agent
 
-None. Per the harness rules for unassigned files, no edits were made
-to `InducedOrbitToy/LocalForms.lean`. All Round 8 work belongs to the
-`NormalForm.lean`, `Orbits.lean`, and `Slice.lean` provers.
+This file is in maintenance-only state for the remainder of the
+prover stage. No further action required unless an upstream
+signature change in a dependency forces a re-validation.

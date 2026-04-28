@@ -198,17 +198,378 @@ private theorem pNormalForm_witnesses_aux (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
     (_hRank :
-      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup)
+    (_hL1' : Module.finrank F S.L1' = c S.toX0Setup) :
     ∃ (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
       (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
       IsSkewT S T ∧
       uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
         = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
-  -- Gap: full four-step construction outlined above. Round 9 picks
-  -- this up. See body docstring of `pNormalForm_witnesses` (below)
-  -- and `.archon/informal/normalform_round7.md` § Tier A #1 for the
-  -- full informal outline.
-  sorry
+  -- Round 9 decomposition: split the four-step construction into
+  -- focused sub-existentials. Each sorry is localised to the step it
+  -- guards; subsequent rounds can close them independently.
+  classical
+  -- ### Step 0 (closed): build `Sₕ : L1' ≃ Vplus` from dimension match.
+  have hVplus_eq : Module.finrank F S.L1' = Module.finrank F S.Vplus := by
+    rw [_hL1']; exact (finrank_Vplus_eq_c S.toX0Setup).symm
+  let Sₕ : S.L1' ≃ₗ[F] S.Vplus :=
+    LinearEquiv.ofFinrankEq S.L1' S.Vplus hVplus_eq
+  -- ### Step 1 (closed Round 10): build `d : E' ≃ E'` aligning `Cbar ∘ d.symm` with `Sₕ`.
+  -- Round 10 closure: combines `cbarK' : K' ≃ V0/range X0` (via
+  -- bijectivity from `CbarK'_inj` + `CbarK'_surj`), composition
+  -- `f := Sₕ ≪≫ VplusEquivQuotientRange ≪≫ cbarK'.symm : L1' ≃ K'`,
+  -- and `prodCongr (f, gL0)` packaged via two `prodEquivOfIsCompl` calls.
+  -- Concrete plan:
+  --   * `Cbar S C` is surjective: `range Cbar ⊆ V0/range X0`, both
+  --     have dim `c` (by `_hRank` and `c_eq_finrank_quotient`),
+  --     hence `range Cbar = V0/range X0` (equality of submodules of
+  --     equal finite dim).
+  --   * Rank-nullity: `dim ker (Cbar S C) = dim E' - c`.
+  --   * `dim L0' = dim E' - dim L1' = dim E' - c` from `_hL1'` and
+  --     `IsCompl L1' L0'` via `Submodule.IsCompl.finrank_add_eq`.
+  --   * Pick `L0' ≃ ker (Cbar S C)` via `LinearEquiv.ofFinrankEq` (from
+  --     the dim equality just established).
+  --   * Pick complement `K' ⊕ ker (Cbar S C) = E'` via
+  --     `Submodule.exists_isCompl`.
+  --   * `Cbar S C |_{K'} : K' ≃ V0/range X0 ≃ Vplus`.  Compose with
+  --     `Sₕ.symm` to get `K' ≃ L1'`.
+  --   * Build `d.symm` on `L1' ⊕ L0'` as `(L1' ≃ K').inverse` on `L1'`
+  --     and `(L0' ≃ ker(Cbar)).inverse` on `L0'`, packaged via
+  --     `Submodule.prodEquivOfIsCompl`.  Take `d := (d.symm).symm`.
+  -- Round 9 has prepared the dimension equality
+  -- `dim L0' = dim ker (Cbar S C)` as a `have` to anchor Round 10's
+  -- closure of this step.
+  have h_Cbar_surj : Function.Surjective (Cbar S C) := by
+    -- range Cbar has dim c (from _hRank); codomain V0/range X0 has dim c.
+    have hcodim : Module.finrank F (S.V0 ⧸ LinearMap.range S.X0) = c S.toX0Setup :=
+      (c_eq_finrank_quotient S.toX0Setup).symm
+    apply LinearMap.range_eq_top.mp
+    apply Submodule.eq_top_of_finrank_eq
+    rw [_hRank, hcodim]
+  have h_dim_ker_Cbar :
+      Module.finrank F (LinearMap.ker (Cbar S C))
+        = Module.finrank F S.paired.E' - c S.toX0Setup := by
+    have hrank := LinearMap.finrank_range_add_finrank_ker (Cbar S C)
+    rw [_hRank] at hrank
+    -- Bridge the `S.E' ≡ S.paired.E'` abbrev boundary.
+    change c S.toX0Setup + _ = Module.finrank F S.paired.E' at hrank
+    omega
+  have h_dim_L0' :
+      Module.finrank F S.L0' = Module.finrank F S.paired.E' - c S.toX0Setup := by
+    have hcompl := S.isComplL'
+    have hsum : Module.finrank F S.L1' + Module.finrank F S.L0'
+        = Module.finrank F S.paired.E' := by
+      rw [← Submodule.finrank_sup_add_finrank_inf_eq S.L1' S.L0',
+          hcompl.codisjoint.eq_top, hcompl.disjoint.eq_bot,
+          finrank_top, finrank_bot, add_zero]
+    omega
+  have h_dim_match :
+      Module.finrank F S.L0' = Module.finrank F (LinearMap.ker (Cbar S C)) := by
+    rw [h_dim_L0', h_dim_ker_Cbar]
+  -- Pick L0' ≃ ker(Cbar) via the dim equality just established.
+  let gL0 : S.L0' ≃ₗ[F] (LinearMap.ker (Cbar S C)) :=
+    LinearEquiv.ofFinrankEq S.L0' (LinearMap.ker (Cbar S C)) h_dim_match
+  -- Pick K' complementary to ker(Cbar) in E'.
+  obtain ⟨K', hK'_compl⟩ :=
+    Submodule.exists_isCompl (LinearMap.ker (Cbar S C))
+  -- Build `cbarK' : K' ≃ V0/range X0`: Cbar |_K' is bijective.
+  let CbarK'_lin : K' →ₗ[F] (S.V0 ⧸ LinearMap.range S.X0) :=
+    (Cbar S C) ∘ₗ K'.subtype
+  have hCbarK'_inj : Function.Injective CbarK'_lin := by
+    rw [injective_iff_map_eq_zero]
+    intro x hx
+    -- (x : E') is in K' ∩ ker(Cbar S C) = ⊥, hence x = 0.
+    have hx_in_ker : (x : S.paired.E') ∈ LinearMap.ker (Cbar S C) := by
+      change Cbar S C (x : S.paired.E') = 0
+      have hxv : Cbar S C (K'.subtype x) = 0 := hx
+      simpa using hxv
+    have hx_in_K' : (x : S.paired.E') ∈ K' := x.2
+    have hbot : ((x : S.paired.E') : S.paired.E')
+        ∈ (LinearMap.ker (Cbar S C) ⊓ K' : Submodule F S.paired.E') :=
+      ⟨hx_in_ker, hx_in_K'⟩
+    rw [hK'_compl.disjoint.eq_bot] at hbot
+    apply Subtype.ext
+    show (x : S.paired.E') = 0
+    exact (Submodule.mem_bot F).mp hbot
+  have hCbarK'_surj : Function.Surjective CbarK'_lin := by
+    intro y
+    -- Get any preimage of y under Cbar (S surjective), then split via ker ⊕ K'.
+    obtain ⟨z, hz⟩ := h_Cbar_surj y
+    -- z ∈ E' = ker(Cbar) ⊔ K' (codisjoint, since hK'_compl : IsCompl ker K').
+    have hz_top : z ∈ (⊤ : Submodule F S.paired.E') := Submodule.mem_top
+    rw [← hK'_compl.codisjoint.eq_top, Submodule.mem_sup] at hz_top
+    obtain ⟨k, hk_ker, n, hn_K', hsum⟩ := hz_top
+    -- Cbar k = 0 since k ∈ ker(Cbar).
+    have hCbar_k : Cbar S C k = 0 := hk_ker
+    refine ⟨⟨n, hn_K'⟩, ?_⟩
+    show Cbar S C ((⟨n, hn_K'⟩ : K').val) = y
+    rw [show ((⟨n, hn_K'⟩ : K').val) = n from rfl]
+    -- Apply Cbar to hsum: Cbar k + Cbar n = Cbar z = y, and Cbar k = 0.
+    have hcbarsum : Cbar S C k + Cbar S C n = Cbar S C z := by
+      rw [← map_add]; exact congrArg _ hsum
+    rw [hCbar_k, zero_add] at hcbarsum
+    rw [hcbarsum, hz]
+  -- Round 10 Step 1: build `d : E' ≃ E'`.
+  -- Lift `CbarK'_lin` to a `LinearEquiv` via bijectivity.
+  let cbarK' : K' ≃ₗ[F] (S.V0 ⧸ LinearMap.range S.X0) :=
+    LinearEquiv.ofBijective CbarK'_lin ⟨hCbarK'_inj, hCbarK'_surj⟩
+  -- f : L1' ≃ K' via composition Sₕ ≪≫ VplusEquivQuotientRange ≪≫ cbarK'.symm.
+  let f : S.L1' ≃ₗ[F] K' :=
+    Sₕ ≪≫ₗ VplusEquivQuotientRange S.toX0Setup ≪≫ₗ cbarK'.symm
+  -- prodEq for L1' × L0' and K' × ker(Cbar).
+  let prodEq_L : (S.L1' × S.L0') ≃ₗ[F] S.paired.E' :=
+    Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL'
+  let prodEq_K : (↥K' × ↥(LinearMap.ker (Cbar S C))) ≃ₗ[F] S.paired.E' :=
+    Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm
+  -- d.symm := prodEq_L.symm ≪≫ₗ f.prodCongr gL0 ≪≫ₗ prodEq_K.
+  let dsymm : S.paired.E' ≃ₗ[F] S.paired.E' :=
+    prodEq_L.symm ≪≫ₗ f.prodCongr gL0 ≪≫ₗ prodEq_K
+  let d : S.paired.E' ≃ₗ[F] S.paired.E' := dsymm.symm
+  -- Pointwise computation on L1'.
+  have hdsymm_L1' : ∀ a' : S.L1',
+      dsymm (a' : S.paired.E') = ((f a' : K') : S.paired.E') := by
+    intro a'
+    have h1 : (Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL').symm
+        ((a' : S.L1') : S.paired.E') = (a', 0) :=
+      Submodule.prodEquivOfIsCompl_symm_apply_left (p := S.L1') (q := S.L0')
+        S.isComplL' a'
+    show (Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm)
+        (f.prodCongr gL0
+          ((Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL').symm
+            ((a' : S.L1') : S.paired.E'))) = ((f a' : K') : S.paired.E')
+    rw [h1]
+    show (Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm)
+        (f a', gL0 0) = _
+    rw [map_zero]
+    show ((f a' : K') : S.paired.E') + ((0 : LinearMap.ker (Cbar S C)) : S.paired.E')
+        = ((f a' : K') : S.paired.E')
+    rw [ZeroMemClass.coe_zero, add_zero]
+  have hdsymm_L0' : ∀ b' : S.L0',
+      dsymm (b' : S.paired.E')
+        = ((gL0 b' : LinearMap.ker (Cbar S C)) : S.paired.E') := by
+    intro b'
+    have h1 : (Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL').symm
+        ((b' : S.L0') : S.paired.E') = (0, b') :=
+      Submodule.prodEquivOfIsCompl_symm_apply_right (p := S.L1') (q := S.L0')
+        S.isComplL' b'
+    show (Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm)
+        (f.prodCongr gL0
+          ((Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL').symm
+            ((b' : S.L0') : S.paired.E'))) = _
+    rw [h1]
+    show (Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm)
+        (f 0, gL0 b') = _
+    rw [map_zero]
+    show ((0 : K') : S.paired.E')
+        + ((gL0 b' : LinearMap.ker (Cbar S C)) : S.paired.E')
+        = ((gL0 b' : LinearMap.ker (Cbar S C)) : S.paired.E')
+    rw [ZeroMemClass.coe_zero, zero_add]
+  -- Verify the alignment properties.
+  have hd_L1' : ∀ a' : S.L1',
+      Cbar S C ((d.symm : S.paired.E' →ₗ[F] S.paired.E') (a' : S.paired.E'))
+        = (LinearMap.range S.X0).mkQ ((Sₕ a' : S.Vplus) : S.V0) := by
+    intro a'
+    show Cbar S C (dsymm (a' : S.paired.E'))
+      = (LinearMap.range S.X0).mkQ ((Sₕ a' : S.Vplus) : S.V0)
+    rw [hdsymm_L1' a']
+    -- `Cbar S C ((f a' : K') : E') = CbarK'_lin (f a') = cbarK' (f a')`.
+    show CbarK'_lin (f a') = (LinearMap.range S.X0).mkQ ((Sₕ a' : S.Vplus) : S.V0)
+    have hfa' : f a' = cbarK'.symm (VplusEquivQuotientRange S.toX0Setup (Sₕ a')) := rfl
+    -- Apply `cbarK'` to both sides and use `cbarK' ∘ cbarK'.symm = id`.
+    have hgoal : cbarK' (f a')
+        = (LinearMap.range S.X0).mkQ ((Sₕ a' : S.Vplus) : S.V0) := by
+      rw [hfa', cbarK'.apply_symm_apply]
+      -- VplusEquivQuotientRange (Sₕ a') = mkQ ((Sₕ a' : Vplus) : V0).
+      show (Submodule.quotientEquivOfIsCompl
+              (LinearMap.range S.X0) S.Vplus S.isCompl.symm).symm (Sₕ a')
+          = (LinearMap.range S.X0).mkQ ((Sₕ a' : S.Vplus) : S.V0)
+      rw [Submodule.quotientEquivOfIsCompl_symm_apply]
+      rfl
+    -- `cbarK' (f a') = CbarK'_lin (f a')` by definition of `LinearEquiv.ofBijective`.
+    have hcbarK'_apply : cbarK' (f a') = CbarK'_lin (f a') := rfl
+    rw [← hcbarK'_apply]
+    exact hgoal
+  have hd_L0' : ∀ b' : S.L0',
+      Cbar S C ((d.symm : S.paired.E' →ₗ[F] S.paired.E')
+        (b' : S.paired.E')) = 0 := by
+    intro b'
+    show Cbar S C (dsymm (b' : S.paired.E')) = 0
+    rw [hdsymm_L0' b']
+    -- (gL0 b' : ker(Cbar)) ∈ ker(Cbar), so Cbar(...) = 0.
+    exact (gL0 b').2
+  -- ### Step 2 (closed Round 10): build `D : E' →ₗ V0` lifting
+  -- `(C ∘ d.symm - CST Sₕ)` through `X0`.
+  obtain ⟨D, hXD⟩ :
+      ∃ (D : S.paired.E' →ₗ[F] S.V0),
+        S.X0 ∘ₗ D = C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+          - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus) := by
+    -- Step 2a: show the difference lands in `range X0` pointwise.
+    -- Reduce `x ∈ range X0` to `mkQ x = 0` and decompose `e0 = a' + b'`.
+    have hsum_e0 : ∀ e0 : S.paired.E',
+        ((projL1' S e0 : S.L1') : S.paired.E')
+          + ((projL0' S e0 : S.L0') : S.paired.E') = e0 := by
+      intro e0
+      have hh := Submodule.IsCompl.projection_add_projection_eq_self
+        S.isComplL' e0
+      rw [Submodule.IsCompl.projection_apply S.isComplL' e0,
+          Submodule.IsCompl.projection_apply S.isComplL'.symm e0] at hh
+      exact hh
+    -- `CST Sₕ (a' : E') = (Sₕ a' : V0)` for `a' ∈ L1'`.
+    have hCST_L1' : ∀ a' : S.L1',
+        CST S (Sₕ : S.L1' →ₗ[F] S.Vplus) ((a' : S.L1') : S.paired.E')
+          = ((Sₕ a' : S.Vplus) : S.V0) := by
+      intro a'
+      show (S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ projL1' S)
+              ((a' : S.L1') : S.paired.E') = _
+      simp only [LinearMap.comp_apply]
+      have hp1 : projL1' S ((a' : S.L1') : S.paired.E') = a' := by
+        unfold projL1'
+        exact Submodule.linearProjOfIsCompl_apply_left S.isComplL' a'
+      rw [hp1]
+      rfl
+    -- `CST Sₕ (b' : E') = 0` for `b' ∈ L0'`.
+    have hCST_L0' : ∀ b' : S.L0',
+        CST S (Sₕ : S.L1' →ₗ[F] S.Vplus) ((b' : S.L0') : S.paired.E') = 0 := by
+      intro b'
+      show (S.Vplus.subtype ∘ₗ (Sₕ : S.L1' →ₗ[F] S.Vplus) ∘ₗ projL1' S)
+              ((b' : S.L0') : S.paired.E') = 0
+      simp only [LinearMap.comp_apply]
+      have hp1 : projL1' S ((b' : S.L0') : S.paired.E') = 0 := by
+        unfold projL1'
+        exact Submodule.linearProjOfIsCompl_apply_right S.isComplL' b'
+      rw [hp1, map_zero]
+      rfl
+    -- The difference `(C ∘ d.symm - CST Sₕ)` lands in `range X0`.
+    have h_diff_mem_range : ∀ e0 : S.paired.E',
+        (C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+          - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e0 ∈ LinearMap.range S.X0 := by
+      intro e0
+      -- Reduce via `Submodule.ker_mkQ`: x ∈ range ↔ x ∈ ker mkQ ↔ mkQ x = 0.
+      suffices h_mkQ : (LinearMap.range S.X0).mkQ
+          ((C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+            - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e0) = 0 by
+        have h_ker_mem : (C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+            - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e0
+              ∈ LinearMap.ker (LinearMap.range S.X0).mkQ := h_mkQ
+        rw [Submodule.ker_mkQ] at h_ker_mem
+        exact h_ker_mem
+      -- Decompose e0 = (a' : E') + (b' : E') with a' = projL1' e0, b' = projL0' e0.
+      rw [← hsum_e0 e0, map_add, map_add]
+      -- Show each piece's mkQ-image is zero.
+      -- On a' : L1': mkQ (C(d.symm a') - CST Sₕ a') = mkQ(Sₕ a' : V0) - mkQ(Sₕ a' : V0) = 0.
+      have h_a' :
+          (LinearMap.range S.X0).mkQ
+              ((C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+                - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus))
+                ((projL1' S e0 : S.L1') : S.paired.E')) = 0 := by
+        rw [LinearMap.sub_apply, map_sub]
+        -- ha : Cbar S C (d.symm a') = mkQ (Sₕ a' : V0).
+        have ha := hd_L1' (projL1' S e0)
+        -- Cbar S C v = mkQ (C v) definitionally; mkQ ((C ∘ₗ d.symm) a') = mkQ (C (d.symm a')).
+        have h_left :
+            (LinearMap.range S.X0).mkQ
+                ((C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E'))
+                  ((projL1' S e0 : S.L1') : S.paired.E'))
+              = Cbar S C ((d.symm : S.paired.E' →ₗ[F] S.paired.E')
+                  ((projL1' S e0 : S.L1') : S.paired.E')) := rfl
+        rw [h_left, ha, hCST_L1' (projL1' S e0)]
+        simp
+      -- On b' : L0': mkQ(C(d.symm b') - CST Sₕ b') = 0 - 0 = 0.
+      have h_b' :
+          (LinearMap.range S.X0).mkQ
+              ((C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+                - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus))
+                ((projL0' S e0 : S.L0') : S.paired.E')) = 0 := by
+        rw [LinearMap.sub_apply, map_sub]
+        have hb := hd_L0' (projL0' S e0)
+        have h_left :
+            (LinearMap.range S.X0).mkQ
+                ((C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E'))
+                  ((projL0' S e0 : S.L0') : S.paired.E'))
+              = Cbar S C ((d.symm : S.paired.E' →ₗ[F] S.paired.E')
+                  ((projL0' S e0 : S.L0') : S.paired.E')) := rfl
+        rw [h_left, hb, hCST_L0' (projL0' S e0)]
+        simp
+      rw [h_a', h_b', add_zero]
+    -- Step 2b: pick a complement K_X of ker X0.
+    obtain ⟨K_X, hK_X_compl⟩ := Submodule.exists_isCompl (LinearMap.ker S.X0)
+    -- X0 restricted to K_X.subtype.
+    let X0_K_X : K_X →ₗ[F] S.V0 := S.X0 ∘ₗ K_X.subtype
+    -- Injective: K_X ∩ ker X0 = ⊥ (since IsCompl ker_X0 K_X).
+    have hX0_K_X_inj : Function.Injective X0_K_X := by
+      rw [injective_iff_map_eq_zero]
+      intro k hk
+      have hk_ker : (k : S.V0) ∈ LinearMap.ker S.X0 := hk
+      have hk_K : (k : S.V0) ∈ K_X := k.2
+      have hbot : (k : S.V0)
+          ∈ (LinearMap.ker S.X0 ⊓ K_X : Submodule F S.V0) := ⟨hk_ker, hk_K⟩
+      rw [hK_X_compl.disjoint.eq_bot, Submodule.mem_bot] at hbot
+      apply Subtype.ext; exact hbot
+    -- range X0_K_X = range X0.
+    have h_range_eq : LinearMap.range X0_K_X = LinearMap.range S.X0 := by
+      apply le_antisymm
+      · rintro y ⟨k, rfl⟩; exact ⟨k, rfl⟩
+      · rintro y ⟨v, rfl⟩
+        -- Decompose v = n + k with n ∈ ker X0, k ∈ K_X.
+        have h_v_top : v ∈ (⊤ : Submodule F S.V0) := Submodule.mem_top
+        rw [← hK_X_compl.codisjoint.eq_top, Submodule.mem_sup] at h_v_top
+        obtain ⟨n, hn_ker, k, hk_K, hsum⟩ := h_v_top
+        have h_n_zero : S.X0 n = 0 := hn_ker
+        refine ⟨⟨k, hk_K⟩, ?_⟩
+        show S.X0 k = S.X0 v
+        have : S.X0 (n + k) = S.X0 v := by rw [hsum]
+        rw [map_add, h_n_zero, zero_add] at this
+        exact this
+    -- ofInjective: K_X ≃ₗ range X0_K_X.
+    let phi : K_X ≃ₗ[F] LinearMap.range X0_K_X :=
+      LinearEquiv.ofInjective X0_K_X hX0_K_X_inj
+    -- Codomain-restrict the diff to range X0_K_X (using h_range_eq + h_diff_mem_range).
+    have h_diff_in_range_KX : ∀ e0 : S.paired.E',
+        (C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+          - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)) e0 ∈ LinearMap.range X0_K_X := by
+      intro e0; rw [h_range_eq]; exact h_diff_mem_range e0
+    let diff : S.paired.E' →ₗ[F] S.V0 :=
+      C ∘ₗ (d.symm : S.paired.E' →ₗ[F] S.paired.E')
+        - CST S (Sₕ : S.L1' →ₗ[F] S.Vplus)
+    let diff_cod : S.paired.E' →ₗ[F] LinearMap.range X0_K_X :=
+      LinearMap.codRestrict (LinearMap.range X0_K_X) diff h_diff_in_range_KX
+    let D : S.paired.E' →ₗ[F] S.V0 :=
+      K_X.subtype ∘ₗ phi.symm.toLinearMap ∘ₗ diff_cod
+    -- Verify X0 ∘ D = diff.
+    refine ⟨D, ?_⟩
+    apply LinearMap.ext
+    intro e0
+    show S.X0 (K_X.subtype (phi.symm (diff_cod e0))) = diff e0
+    -- X0 (K_X.subtype k) = X0_K_X k.
+    have hX0_subtype : S.X0 (K_X.subtype (phi.symm (diff_cod e0)))
+        = X0_K_X (phi.symm (diff_cod e0)) := rfl
+    rw [hX0_subtype]
+    -- X0_K_X (phi.symm y) = (y : V0) for y : range X0_K_X.
+    have hphi_inv : X0_K_X (phi.symm (diff_cod e0))
+        = ((diff_cod e0 : LinearMap.range X0_K_X) : S.V0) :=
+      LinearEquiv.ofInjective_symm_apply X0_K_X (h := hX0_K_X_inj) (diff_cod e0)
+    rw [hphi_inv]
+    -- (diff_cod e0 : V0) = diff e0.
+    rfl
+  -- ### Step 3 (sorry): identify `T : L0' →ₗ L0` with the skew condition.
+  -- Gap (Round 9 → 10): `T`-construction + skewness.  After `leviGL_E_conj_XCB`
+  -- and `uD_conj_XCB`, the conjugated operator becomes
+  --   `XCB (CST Sₕ) B''` where
+  --   `B'' = lambdaDualE d.symm ∘ B ∘ d.symm + (Cdual D ∘ C - Cdual C ∘ D
+  --          - Cdual D ∘ X0 ∘ D) ∘ d.symm`.
+  --   Choose `D|_{L1'}` carefully (via `vplusKerPairing_isPerfPair`)
+  --   so that `B''(L1') ⊂ L1` (i.e., the L0-component vanishes), and
+  --   the skew condition forces `B''(L0') ⊂ L0`.  Define
+  --   `T u := codRestrict L0 (B'' u) <proof>` for `u ∈ L0'`.  Skewness
+  --   propagates from `_hB` through Levi+unipotent transformations.
+  obtain ⟨T, hTskew⟩ :
+      ∃ (T : S.L0' →ₗ[F] S.L0),
+        IsSkewT S T ∧
+          uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
+            = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
+    sorry
+  -- ### Final assembly (closed): glue Steps 0–3 into the 4-tuple existential.
+  exact ⟨Sₕ, D, d, T, hTskew.1, hTskew.2⟩
 
 /-- Map equality from inclusion: `Submodule.map (uD D) F0 ≤ F0` plus
 `Submodule.map (uD (-D)) F0 ≤ F0` upgrades to equality. -/
@@ -265,18 +626,18 @@ private theorem pNormalForm_witnesses (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
     (_hRank :
-      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup)
+    (_hL1' : Module.finrank F S.L1' = c S.toX0Setup) :
     ∃ (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (D : S.E' →ₗ[F] S.V0)
       (d : S.E' ≃ₗ[F] S.E') (T : S.L0' →ₗ[F] S.L0),
       IsSkewT S T ∧
       uD S D ∘ₗ leviGL_E S d ∘ₗ XCB S C B
         = XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T ∘ₗ uD S D ∘ₗ leviGL_E S d := by
-  -- TIER A #1 (Round 8). Single isolated helper sorry: the full
-  -- four-step construction (Sₕ, D, d, T + skewness + conjugation) is
-  -- packaged in `pNormalForm_witnesses_aux` above. Round 9 closes the
-  -- helper. See `pNormalForm_witnesses_aux` Gap docstring for the full
-  -- informal outline.
-  exact pNormalForm_witnesses_aux S _hNondeg _hChar C B _hB _hRank
+  -- Round 9: `_hL1' : dim L1' = c` cascade through the witness chain.
+  -- The full four-step construction is packaged in
+  -- `pNormalForm_witnesses_aux` above and decomposed into Step 0/1/2/3
+  -- focused sorrys.
+  exact pNormalForm_witnesses_aux S _hNondeg _hChar C B _hB _hRank _hL1'
 
 /-- `prop:p-normal-form` (existence of normal form).  Existence of a
 `P`-conjugacy (encoded by `IsParabolicElement`) of `XCB S C B` to some
@@ -307,15 +668,16 @@ theorem pNormalForm
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (C : S.E' →ₗ[F] S.V0) (B : S.E' →ₗ[F] S.E) (_hB : IsSkewB S B)
     (_hRank :
-      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup) :
+      Module.finrank F (LinearMap.range (Cbar S C)) = c S.toX0Setup)
+    (_hL1' : Module.finrank F S.L1' = c S.toX0Setup) :
     ∃ (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0),
       IsSkewT S T ∧
         ∃ (p : Module.End F S.V), IsParabolicElement S p ∧
           p ∘ₗ XCB S C B = XST S Sₕ T ∘ₗ p := by
   -- Step 1: Pull (Sₕ, D, d, T) plus the conjugation equation from the helper.
-  -- (Round 7 signature: pNormalForm_witnesses now exposes a Levi factor `d`.)
+  -- (Round 9 signature: `pNormalForm_witnesses` now consumes `_hL1'`.)
   obtain ⟨Sₕ, D, d, T, hT, hConj⟩ :=
-    pNormalForm_witnesses S _hNondeg _hChar C B _hB _hRank
+    pNormalForm_witnesses S _hNondeg _hChar C B _hB _hRank _hL1'
   -- The parabolic conjugator is `p := uD D ∘ leviGL_E d`.
   refine ⟨(Sₕ : S.L1' →ₗ[F] S.Vplus), T, hT,
     uD S D ∘ₗ leviGL_E S d, ?_, ?_⟩

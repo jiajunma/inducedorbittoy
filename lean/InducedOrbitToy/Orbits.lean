@@ -411,6 +411,71 @@ private lemma GOrbit_eq_of_isometry_conj (S : SliceSetup F)
               (Ring.inverse (g * p : Module.End F S.V) : Module.End F S.V)
       rw [hyx, hInvFmla]; noncomm_ring
 
+/-- **Conjugation rearrangement.**
+
+Given the orbit-conjugation `XST T₁ = g ∘ₗ XST T₂ ∘ₗ Ring.inverse g`, derive
+the symmetric form `Ring.inverse g ∘ₗ XST T₁ = XST T₂ ∘ₗ Ring.inverse g`,
+and the dual form `g ∘ₗ XST T₂ = XST T₁ ∘ₗ g`.  Both follow by pre/post
+multiplication by `g` or `Ring.inverse g`, using
+`Ring.inverse_mul_cancel` / `Ring.mul_inverse_cancel`. -/
+private lemma orbit_conj_rearr (S : SliceSetup F)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T₁ T₂ : S.L0' →ₗ[F] S.L0)
+    (g : Module.End F S.V) (hgU : IsUnit g)
+    (hyeq : XST S Sₕ T₁
+        = g ∘ₗ XST S Sₕ T₂ ∘ₗ (Ring.inverse g : Module.End F S.V)) :
+    (Ring.inverse g : Module.End F S.V) ∘ₗ XST S Sₕ T₁
+      = XST S Sₕ T₂ ∘ₗ (Ring.inverse g : Module.End F S.V)
+    ∧ g ∘ₗ XST S Sₕ T₂ = XST S Sₕ T₁ ∘ₗ g := by
+  -- Move into multiplication form: `*` on `Module.End F S.V`.
+  refine ⟨?_, ?_⟩
+  · show (Ring.inverse g : Module.End F S.V) * XST S Sₕ T₁
+       = XST S Sₕ T₂ * (Ring.inverse g : Module.End F S.V)
+    have hyeq' :
+        XST S Sₕ T₁ = g * XST S Sₕ T₂ * (Ring.inverse g : Module.End F S.V) := hyeq
+    rw [hyeq', ← mul_assoc, ← mul_assoc, Ring.inverse_mul_cancel _ hgU, one_mul]
+  · show g * XST S Sₕ T₂ = XST S Sₕ T₁ * g
+    have hyeq' :
+        XST S Sₕ T₁ = g * XST S Sₕ T₂ * (Ring.inverse g : Module.End F S.V) := hyeq
+    rw [hyeq', mul_assoc, mul_assoc, Ring.inverse_mul_cancel _ hgU, mul_one]
+
+/-- **`ker XST = flagE` when `T` is injective.**  By `kernelImage_ker`
+(NormalForm.lean), `ker XST = ⊤ ×ˢ ⊥ ×ˢ (ker T).map L0'.subtype`.  When
+`ker T = ⊥`, this collapses to `flagE = ⊤ ×ˢ ⊥ ×ˢ ⊥`. -/
+private lemma ker_XST_eq_flagE_of_injective (S : SliceSetup F)
+    (hNondeg : S.formV0.Nondegenerate)
+    (Sₕ : S.L1' ≃ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0)
+    (hT : SliceSetup.IsSkewT S T) (hker : LinearMap.ker T = ⊥) :
+    LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T) = S.flagE := by
+  rw [SliceSetup.kernelImage_ker S hNondeg Sₕ T hT]
+  unfold SliceSetup.kerXST_submod SliceSetup.flagE
+  rw [hker, Submodule.map_bot]
+
+/-- **`flagE ⊆ ker XST`.**  The kernel of `XST Sₕ T` always contains the
+flag step `flagE = E ⊕ 0 ⊕ 0`, since `XST(e, 0, 0) = (0, 0, 0)`.  This is
+the "easy" direction of `kernelImage_ker`.  The proof unfolds
+`XST = XCB (CST Sₕ) (BST T)` and uses the local `XCB_apply`. -/
+private lemma flagE_le_ker_XST (S : SliceSetup F)
+    (Sₕ : S.L1' →ₗ[F] S.Vplus) (T : S.L0' →ₗ[F] S.L0) :
+    S.flagE ≤ LinearMap.ker (XST S Sₕ T) := by
+  intro x hx
+  -- `flagE = ⊤ ×ˢ ⊥ ×ˢ ⊥`, so `x.2.1 = 0` and `x.2.2 = 0`.
+  have hxx : x.2 ∈ Submodule.prod (⊥ : Submodule F S.V0)
+      (⊥ : Submodule F S.paired.E') :=
+    (Submodule.mem_prod.mp hx).2
+  have hv : x.2.1 = 0 :=
+    (Submodule.mem_bot _).mp (Submodule.mem_prod.mp hxx).1
+  have he' : x.2.2 = 0 :=
+    (Submodule.mem_bot _).mp (Submodule.mem_prod.mp hxx).2
+  obtain ⟨e, v, e'⟩ := x
+  simp only at hv he'
+  subst hv
+  subst he'
+  rw [LinearMap.mem_ker]
+  -- `XST = XCB S (CST Sₕ) (BST T)` definitionally.
+  show XCB S (CST S Sₕ) (BST S T) (e, 0, 0) = 0
+  rw [XCB_apply]
+  ext <;> simp
+
 /-- **Slice-stability for the forward direction.**
 
 If `g : Module.End F S.V` is an isometry of `S.ambientForm` and conjugates
@@ -425,34 +490,162 @@ from `IsometryEnd`-level closure (`IsOrthogonal_ringInverse`,
 argument from the blueprint (every G-conjugacy that conjugates one
 slice-form to another must already lie in `P`).
 
-**Gap (Round 8):** the two flag-stability conjuncts carry `sorry`.  The
-classical argument uses Bruhat decomposition: any `g ∈ G` that maps the
-slice `O₀ + 𝔲` to itself must preserve the flag, since the slice is
-transverse to the parabolic and the unipotent radical acts freely on the
-quotient.  Reducing this to the conjugation hypothesis uses
-`parametrizeX0PlusU_uniqueness` plus a transversality argument that
-requires upgrading the `Sₕ`-data; this is left for Round 9.  See
-`InducedOrbitToy/Slice.lean :: parabolic_decompose` for the related
-construction and `.archon/informal/orbits.md` § Forward-direction for
-the informal sketch. -/
+**Round 9 progress (partial).** The proof structure has been refactored:
+the conjugation `_hyeq` is rearranged into the symmetric forms via
+`orbit_conj_rearr`, and the kernel containment `flagE ⊆ ker(XST Sₕ T)`
+holds always (via `flagE_le_ker_XST`).  Together these reduce the
+flag-stability claim to: identifying `ker(XST Sₕ T) = flagE`.  By
+`kernelImage_ker` (with `_hNondeg`), `ker(XST Sₕ T) = E ⊕ 0 ⊕ (ker T).map
+L0'.subtype`.  So flag-equality holds iff `ker T = ⊥` (i.e. `T`
+injective).  For `T ∈ Tset_circ`, `dim(range T) = MaximalRank`:
+* `ε = -1`: `MaximalRank = dim L0'`, so `T` injective.
+* `ε = +1, l even`: `MaximalRank = dim L0'`, so `T` injective.
+* `ε = +1, l odd`: `MaximalRank = dim L0' - 1`, so `dim ker T = 1`.
+
+In the first two cases the helper's claim follows from kernel
+preservation under conjugation.  The third case (ε=+1 odd l) needs a
+genuinely different argument: the blueprint handles it via uniqueness of
+alternating forms of fixed rank, which does *not* go through `g ∈ P`.
+This means the helper as currently stated is too strong in case 3, and
+its caller should ideally split by case.
+
+**Gap.** The remaining `sorry` blocks document the precise
+sub-obligations: `g(flagE) ⊆ flagE` and `Ring.inverse g(flagE) ⊆ flagE`,
+plus the analogues for `flagEV0`.  Both reduce, via the kernel
+containment chain, to identifying `ker XST T_i = flagE` (which holds iff
+`T_i` injective).  For Tset_circ-elements in cases 1-2, this is true; in
+case 3 the helper is mis-stated.  Closing requires either:
+(a) tightening the helper's hypotheses to `ker T₁ = ⊥ ∧ ker T₂ = ⊥`,
+    plus restructuring `sIndependenceAndOrbitCriterion` to split by case;
+(b) generalising via a Bruhat-decomposition argument (out of scope).
+
+See `references/blueprint_verified.md` lines 658–676 for the case split.
+See `.archon/informal/orbits.md` § Forward-direction for the sketch. -/
 private lemma isParabolicElement_ringInverse_of_orbit_witness
     (S : SliceSetup F)
     (_hNondeg : S.formV0.Nondegenerate) (_hChar : (2 : F) ≠ 0)
     (Sₕ : S.L1' ≃ₗ[F] S.Vplus)
     (T₁ T₂ : S.L0' →ₗ[F] S.L0)
-    (_hT₁ : S.IsSkewT T₁) (_hT₂ : S.IsSkewT T₂)
+    (hT₁ : T₁ ∈ S.Tset_circ) (hT₂ : T₂ ∈ S.Tset_circ)
     (g : Module.End F S.V) (hg : IsometryEnd S g)
     (_hyeq : XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁
         = g ∘ₗ XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ ∘ₗ
             (Ring.inverse g : Module.End F S.V)) :
     SliceSetup.IsParabolicElement S
       (Ring.inverse g : Module.End F S.V) := by
+  -- Setup: rearrange the conjugation into both symmetric forms.
+  obtain ⟨hConj_inv, hConj_dual⟩ :=
+    orbit_conj_rearr S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁ T₂ g hg.1 _hyeq
+  -- `hConj_inv : Ring.inverse g ∘ XST T₁ = XST T₂ ∘ Ring.inverse g`
+  -- `hConj_dual : g ∘ XST T₂ = XST T₁ ∘ g`
+  -- Convenient unit data on `g` and `Ring.inverse g`.
+  have hgU : IsUnit g := hg.1
+  have hg_cancel_left : ∀ w, (Ring.inverse g : Module.End F S.V) (g w) = w := by
+    intro w
+    have h1 : (Ring.inverse g : Module.End F S.V) * g = 1 :=
+      Ring.inverse_mul_cancel g hgU
+    have h2 := congrArg (fun f : Module.End F S.V => f w) h1
+    simpa [Module.End.mul_apply] using h2
+  have hg_cancel_right : ∀ w, g ((Ring.inverse g : Module.End F S.V) w) = w := by
+    intro w
+    have h1 : g * (Ring.inverse g : Module.End F S.V) = 1 :=
+      Ring.mul_inverse_cancel g hgU
+    have h2 := congrArg (fun f : Module.End F S.V => f w) h1
+    simpa [Module.End.mul_apply] using h2
+  -- **Sub-claim.** Identify `ker XST T_i = flagE` for `i = 1, 2`.
+  -- This holds when `ker T_i = ⊥` (cases ε=-1 or ε=+1 with l even, by
+  -- rank-nullity from `Tset_circ`).  The hard case (ε=+1, l odd) needs a
+  -- different argument; see helper docstring (Gap kept below).
+  have h_kerXST_eq_flagE :
+      LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁) = S.flagE ∧
+        LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂) = S.flagE := by
+    by_cases h_easy : ¬ (S.eps = 1 ∧ Odd (Module.finrank F S.L0'))
+    · -- Easy cases (ε = -1, or ε = +1 with l even).
+      have hMR : S.MaximalRank = Module.finrank F S.L0' := by
+        unfold SliceSetup.MaximalRank
+        rw [if_neg h_easy]
+      -- For `T ∈ Tset_circ`, `finrank (range T) = MaximalRank = finrank L0'`.
+      -- Combined with rank-nullity, `finrank (ker T) = 0`, so `ker T = ⊥`.
+      have hker_eq_bot : ∀ T : S.L0' →ₗ[F] S.L0,
+          T ∈ S.Tset_circ → LinearMap.ker T = ⊥ := by
+        intro T hT
+        have h_rank := LinearMap.finrank_range_add_finrank_ker T
+        rw [hT.2, hMR] at h_rank
+        have hker_zero : Module.finrank F (LinearMap.ker T) = 0 := by omega
+        exact Submodule.finrank_eq_zero.mp hker_zero
+      have hker1 : LinearMap.ker T₁ = ⊥ := hker_eq_bot T₁ hT₁
+      have hker2 : LinearMap.ker T₂ = ⊥ := hker_eq_bot T₂ hT₂
+      refine ⟨?_, ?_⟩
+      · exact ker_XST_eq_flagE_of_injective S _hNondeg Sₕ T₁ hT₁.1 hker1
+      · exact ker_XST_eq_flagE_of_injective S _hNondeg Sₕ T₂ hT₂.1 hker2
+    · -- Hard case (ε = +1, l odd): `dim ker T_i = 1`, so kernel-equality
+      -- with `flagE` fails.  Closing requires a different argument
+      -- (uniqueness of alternating forms of fixed rank, blueprint
+      -- lines 658–676), or restructuring the caller to avoid this code
+      -- path in case 3.  See helper docstring.
+      -- **Gap (Round 10):** case 3 (ε = +1, l odd) — kernel-identification
+      -- helper is mis-stated; deferred to polish via Tier S #6/#7.
+      sorry
+  obtain ⟨hkerT1, hkerT2⟩ := h_kerXST_eq_flagE
   refine ⟨hg.1.ringInverse, ?_, ?_, IsOrthogonal_ringInverse S hg.1 hg.2⟩
-  · -- Gap: Submodule.map (Ring.inverse g) S.flagE = S.flagE
-    -- Slice-transversality argument (see Gap comment on the lemma).
-    sorry
-  · -- Gap: Submodule.map (Ring.inverse g) S.flagEV0 = S.flagEV0
-    -- Slice-transversality argument (see Gap comment on the lemma).
+  · -- `Submodule.map (Ring.inverse g) S.flagE = S.flagE`.
+    -- Step 1: Show `(Ring.inverse g)(flagE) ⊆ ker XST T₂ = flagE`.
+    have h_inv_in_kerT2 :
+        ∀ x ∈ S.flagE,
+          (Ring.inverse g : Module.End F S.V) x ∈
+            LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂) := by
+      intro x hx
+      have hxker : XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁ x = 0 :=
+        flagE_le_ker_XST S _ T₁ hx
+      have happ := congrArg
+        (fun f : Module.End F S.V => f x) hConj_inv
+      simp only [LinearMap.coe_comp, Function.comp_apply] at happ
+      rw [LinearMap.mem_ker]
+      rw [← happ, hxker, map_zero]
+    -- Step 2 (symmetric): Show `g(flagE) ⊆ ker XST T₁ = flagE`.
+    have h_g_in_kerT1 :
+        ∀ x ∈ S.flagE,
+          g x ∈ LinearMap.ker (XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₁) := by
+      intro x hx
+      have hxker : XST S (Sₕ : S.L1' →ₗ[F] S.Vplus) T₂ x = 0 :=
+        flagE_le_ker_XST S _ T₂ hx
+      have happ := congrArg
+        (fun f : Module.End F S.V => f x) hConj_dual
+      simp only [LinearMap.coe_comp, Function.comp_apply] at happ
+      rw [LinearMap.mem_ker]
+      rw [← happ, hxker, map_zero]
+    -- Step 3: With `ker XST T_i = flagE`, the kernel containments become
+    -- flag containments, and we close via injectivity of `Ring.inverse g`.
+    apply le_antisymm
+    · rintro y ⟨x, hx, rfl⟩
+      have h := h_inv_in_kerT2 x hx
+      rw [hkerT2] at h
+      exact h
+    · -- `flagE ⊆ (Ring.inverse g)(flagE)`: for `y ∈ flagE`, witness via
+      -- `g y` (which lies in `flagE` by Step 2 + `hkerT1`).
+      intro y hy
+      have hgy : g y ∈ S.flagE := by
+        have h := h_g_in_kerT1 y hy
+        rw [hkerT1] at h
+        exact h
+      refine ⟨g y, hgy, ?_⟩
+      exact hg_cancel_left y
+  · -- `Submodule.map (Ring.inverse g) S.flagEV0 = S.flagEV0`.
+    -- The same kernel-based strategy does NOT directly apply to
+    -- `flagEV0`, since `flagEV0 ⊄ ker XST` in general (XST has
+    -- nontrivial action on the V0 component).  Instead, the right
+    -- approach uses `range XST ⊆ flagEV0` (every output of XST has
+    -- zero E'-component).  But `range XST ⊊ flagEV0` generically, so
+    -- this alone doesn't yield `g(flagEV0) = flagEV0`.
+    --
+    -- The classical proof routes through a Bruhat-decomposition
+    -- argument: an isometry conjugating one slice-form to another must
+    -- factor through the Levi+unipotent decomposition of `P`, and the
+    -- Levi factor preserves `flagEV0` automatically.  This is what
+    -- `Slice.lean :: parabolic_decompose` is meant to provide; that
+    -- lemma carries its own deferred Gap (Tier S #6).
+    --
+    -- **Gap (Round 9):** the slice-transversality argument for flagEV0.
     sorry
 
 /-! ## Theorems -/
@@ -528,7 +721,7 @@ theorem sIndependenceAndOrbitCriterion (S : SliceSetup F)
     have hP : SliceSetup.IsParabolicElement S
                 (Ring.inverse g : Module.End F S.V) :=
       isParabolicElement_ringInverse_of_orbit_witness S hNondeg hChar Sₕ
-        T₁ T₂ hT₁.1 hT₂.1 g hg hyeq
+        T₁ T₂ hT₁ hT₂ g hg hyeq
     -- Step 3: derive the conjugation equation needed by
     -- `pNormalForm_residual_orbit_iso`. Pre-composing `hyeq` with
     -- `Ring.inverse g` collapses `Ring.inverse g ∘ g` to `1`.

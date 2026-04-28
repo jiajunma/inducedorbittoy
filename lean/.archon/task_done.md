@@ -588,3 +588,295 @@ round; 0 custom axioms.  Single-file dispatch — only
   `[propext, Classical.choice, Quot.sound]`. `pNormalForm`
   transitively depends on `sorryAx` via `pNormalForm_witnesses`
   body (expected per Round 7 plan). **No custom axioms.**
+
+## Prover Round 8 (session 10 — three-file parallel; partial closure + mathematical finding)
+
+Net: 3 → 3 declaration-use `sorry` (positions changed; bare body-sorries
+relocated into focused private helpers). `lake build` ✅ end of round;
+0 custom axioms. **All public-theorem bodies are now sorry-free**;
+remaining sorries are confined to private helpers. `pNormalForm`,
+`sIndependenceAndOrbitCriterion`, and `main` carry transitive `sorryAx`
+through those helpers, but the consumer-facing surface is clean.
+
+### `InducedOrbitToy/Orbits.lean` — `sIndependenceAndOrbitCriterion` body sorry-free
+
+**Public effect:** body of `sIndependenceAndOrbitCriterion` (line 502)
+contains zero `sorry`s.  Both forward and reverse directions are fully
+constructive.  Two scoped sorries on flag-stability conjuncts moved
+into a focused private helper `isParabolicElement_ringInverse_of_orbit_witness`
+(line 438), where they are documented with a Gap comment.
+
+- **Signature change (option (a) + option (i) per Round 8 plan):** added
+  `(hNondeg : S.formV0.Nondegenerate) (hChar : (2 : F) ≠ 0)` hypotheses;
+  collapsed `(Sₕ₁ Sₕ₂)` to a single `(Sₕ : S.L1' ≃ₗ[F] S.Vplus)`.
+  Cascaded through `main`.
+
+- **Reverse direction (sorry-free):** two-line proof:
+  ```lean
+  obtain ⟨p, hP, hConj⟩ :=
+    (S.pNormalForm_residual_orbit_iso hNondeg hChar Sₕ T₁ T₂
+        hT₁.1 hT₂.1).mpr hiso
+  exact GOrbit_eq_of_isometry_conj S hP.1 hP.2.2.2 hConj
+  ```
+  Key insight: parabolic flag-stability is *not* needed for orbit
+  equality — only the unit/orthogonal data of `p`. Helper
+  `GOrbit_eq_of_isometry_conj` exposes this weakened hypothesis.
+
+- **Forward direction (sorry-free body modulo helper):** four-step
+  Route-B construction:
+  1. Extract orbit witness `g` via `XST T₁ ∈ GOrbit (XST T₁)` +
+     `rw [horbit]`.
+  2. Lift `g` to `IsParabolicElement (Ring.inverse g)` via the new
+     helper `isParabolicElement_ringInverse_of_orbit_witness` (the
+     helper carries the only remaining sorries).
+  3. Algebraically derive
+     `Ring.inverse g ∘ XST T₁ = XST T₂ ∘ Ring.inverse g` via
+     `Ring.inverse_mul_cancel`.
+  4. Apply `pNormalForm_residual_orbit_iso (→)` with
+     `p := Ring.inverse g`.
+
+- **3 new private helpers added (sorry-free):**
+  - `IsOrthogonal_mul` — composition closure under `IsOrthogonal`.
+  - `IsOrthogonal_ringInverse` — `Ring.inverse` of an invertible
+    isometry is an isometry.
+  - `GOrbit_eq_of_isometry_conj` — orbit equality from a single
+    conjugating isometry.  Uses an inline derivation of
+    `Ring.inverse (g * Ring.inverse p) = p * Ring.inverse g` via
+    `noncomm_ring`.
+
+- **1 new private helper with documented sorries:**
+  `isParabolicElement_ringInverse_of_orbit_witness` — extracts an
+  `IsParabolicElement` witness from `IsometryEnd` + a slice
+  conjugation.  Sorry-free conjuncts: `IsUnit`, `IsOrthogonal`.
+  Sorry'd conjuncts: `Submodule.map p flagE = flagE`,
+  `Submodule.map p flagEV0 = flagEV0` (slice-transversality
+  argument; needs `parametrizeX0PlusU_uniqueness`).
+
+### `InducedOrbitToy/NormalForm.lean` — Tier A relocated to helper
+
+Round 8 NormalForm prover punted the four-step
+`pNormalForm_witnesses` construction, restructuring the bare body
+sorry into a single isolated private helper.
+
+- **`pNormalForm_witnesses_aux` (line 197) — sorry'd helper.** Holds
+  the entire `(Sₕ, D, d, T) + IsSkewT + conjugation` existential.
+  Carries the only remaining `sorry` in this file.  Body docstring
+  (lines 152–196) walks through the full four-step blueprint plan.
+- **`pNormalForm_witnesses` body (line 264) — sorry-free one-liner.**
+  Replaced the body sorry with `exact pNormalForm_witnesses_aux ...`.
+- **`pNormalForm` body** unchanged (already sorry-free).
+
+This relocation is permitted by the Round-8 PROGRESS.md acceptance
+criterion: "Acceptable to introduce one isolated helper `private def`
+with its own sorry if Step 1 (d-construction) is intractable; in that
+case the helper sorry must be documented with a `Gap:` comment block."
+
+### `InducedOrbitToy/Slice.lean` — substantial structural data + mathematical gap finding
+
+`parabolic_decompose` (line 1109) still carries one body-sorry, but
+the proof body now contains ~460 lines of sorry-free structural data
+(blocks, isos, isometry/pairing identities) and a mathematical
+analysis identifying that the *statement* of `parabolic_decompose`
+is too narrow.
+
+- **Sorry-free data extracted:**
+  - `pE_equiv : S.E ≃ₗ[F] S.E`, `pV0_equiv : S.V0 ≃ₗ[F] S.V0`,
+    `pE'_equiv : S.E' ≃ₗ[F] S.E'` — diagonal-block actions of `p` and
+    `p⁻¹`, packaged as `LinearEquiv`s.
+  - Round-trip identities (`pE_round_left/right`, etc.) via
+    decomposition `(βi, γi, pE'_inv e') = (βi, 0, 0) + (0, γi, 0) +
+    (0, 0, pE'_inv e')` + linearity of `p`.
+  - `pV0_iso : ∀ u v, S.formV0 (pV0_fn u) (pV0_fn v) = S.formV0 u v`
+    via `_hpIso` on V0-pairs.
+  - `hkey : ∀ e e', λ(pE_fn e, pE'_fn e') = λ(e, e')` — forces
+    `pE = lambdaDualE pE'_equiv.symm`.
+
+- **Mathematical gap identified.** Setting `d := pE'_equiv`, `g := pV0_equiv`,
+  `D e' := (p (0, 0, d.symm e')).2.1`, the V0- and E'-components match
+  automatically and the E-component splits into:
+  - `(p (0, v, 0)).1 = Cdual D (pV0_fn v)` — provable from `_hpIso`.
+  - `(p (0, 0, e')).1 = ½ Cdual D (D (pE'_fn e'))` — **NOT provable**
+    from `_hpIso` alone.  Setting
+    `f e' := (p (0, 0, e')).1 - ½ Cdual D (D (pE'_fn e'))`, the
+    isometry only forces
+    `λ(f e₁', pE'_fn e₂') + ε λ(f e₂', pE'_fn e₁') = 0` — i.e.
+    `f` is `IsSkewB`-shaped.  In general `f ≠ 0`.
+
+- **Conclusion:** `parabolic_decompose` as stated requires the
+  unipotent factor to have shape `uD D` (i.e. zero residual `B'`),
+  but a general parabolic isometry decomposes as
+  `(uD D) ∘ (uB' B')_skew ∘ leviGL_E d ∘ leviGL_V0 g` where
+  `B' : E' →ₗ E` is `IsSkewB`-shaped.  The current `uD` definition
+  is missing the `B'` parameter.
+
+- **Recommendation:** option (a) generalise `uD` to accept a residual
+  `B'`, restate `parabolic_decompose` to expose `(D, B', d, g)`.
+  Option (b) narrow the hypothesis to "geometric parabolic" elements
+  satisfying `B' = 0` implicitly.  Round 7 consumers
+  (`residual_levi_extract`, `residual_levi_build`) sidestepped
+  `parabolic_decompose` via Option B, so this signature change is
+  **non-blocking** for the public theorems.
+
+- **`parabolic_decompose` has zero consumers** in the project — the
+  helper is purely structural.  Carrying its sorry does not block
+  any public-theorem axiom-cleanliness goal.
+
+### Cross-cutting wins (session 10 / Round 8)
+
+- **`Ring.inverse` for orbit/conjugation algebra on `Module.End F V`.**
+  `Ring.inverse_mul_cancel`, `Ring.mul_inverse_cancel`,
+  `IsUnit.ringInverse` are the canonical tools for "best-effort
+  inverse" constructions in orbit predicates.  No division-ring
+  needed.
+- **`noncomm_ring` for module-endomorphism associativity.** Closes
+  associativity-only goals on `Module.End F V` where `ring`
+  (commutative-only) fails.  Critical for the inline derivation
+  `Ring.inverse (g * Ring.inverse p) = p * Ring.inverse g`.
+- **Body-sorry → helper-sorry refactor pattern.** When a body proof
+  requires substantial new infrastructure but the surrounding
+  theorem-shape is correct, extract the obstruction into a focused
+  private helper with its own sorry + Gap comment.  The public-facing
+  body becomes a one-liner; the sorry is pinned to a specific
+  construction.  Acceptance criterion explicitly permits this when
+  the helper Gap is documented.
+- **Mathematical-gap finding via partial closure.** The Slice prover
+  attempted a full closure of `parabolic_decompose`, extracted ~460
+  lines of structural data, then identified that the statement is
+  itself imprecise.  This is a **structural-fix outcome**, not a
+  prover failure: the next round needs a `parabolic_decompose`
+  signature change, not a "try harder" pass.
+- **Public-surface vs helper-surface accounting.** End-of-round audit
+  separated public-theorem axioms (clean for
+  `pNormalForm_residual_orbit_iso`, `inducedOrbits`, `multiplicity*`)
+  from transitive `sorryAx` (in `pNormalForm`,
+  `sIndependenceAndOrbitCriterion`, `main`).  This framing makes
+  partial-closure outcomes legible to the next round's planner.
+
+## Prover Round 9 (session 11 — partial; build break in NormalForm; signature cascade landed)
+
+**Net (verified by plan agent):** `lake build` is **NOT green** at end
+of round — `InducedOrbitToy/NormalForm.lean` has compilation errors at
+lines 302–308 from a partial Step 0.75 sub-construction the prover
+left in unfinished form.  The prover's report claimed `lake build` is
+green; this is incorrect.  `Orbits.lean` and `Slice.lean` both compile
+in isolation.
+
+Round 9 still delivered real partial progress that Round 10 inherits:
+
+### `InducedOrbitToy/NormalForm.lean` — signature cascade + dim chain
+
+- **`_hL1' : Module.finrank F S.L1' = c S.toX0Setup` hypothesis** added
+  and threaded through:
+  - `pNormalForm_witnesses_aux` (line 197),
+  - `pNormalForm_witnesses` (line 264),
+  - `pNormalForm` (line 306, public).
+  No cross-file cascade (verified: `pNormalForm` has zero in-project
+  consumers).  `pNormalForm_residual_orbit_iso` is independent and
+  remains unchanged.
+- **Step 0 (sorry-free):** `Sₕ : L1' ≃ Vplus` constructed via
+  `LinearEquiv.ofFinrankEq` using `_hL1'` + `finrank_Vplus_eq_c`.
+- **Step 0.5 — full dimension chain (sorry-free):**
+  - `h_Cbar_surj : Function.Surjective (Cbar S C)` — via
+    `LinearMap.range_eq_top.mp` + `Submodule.eq_top_of_finrank_eq` +
+    `_hRank` + `c_eq_finrank_quotient`.
+  - `h_dim_ker_Cbar : finrank (ker (Cbar S C)) = finrank E' - c` —
+    rank-nullity via `LinearMap.finrank_range_add_finrank_ker`.
+  - `h_dim_L0' : finrank L0' = finrank E' - c` — uses `IsCompl L1' L0'`
+    + `_hL1'` + `Submodule.finrank_sup_add_finrank_inf_eq`.
+  - `h_dim_match : finrank L0' = finrank (ker (Cbar S C))`.
+- **Step 0.75 — partial isomorphism setup (sorry-free):**
+  - `gL0 : S.L0' ≃ₗ[F] (LinearMap.ker (Cbar S C))` via
+    `LinearEquiv.ofFinrankEq`.
+  - `K' ⊕ ker(Cbar)` complement extracted via
+    `Submodule.exists_isCompl`.
+- **Step 0.75 partial-broken:** the inline `CbarK'_inj`/`CbarK'_surj`
+  closure attempt at lines 277–310 is unfinished and contains TWO
+  bugs:
+  1. **Variable swap:** at line 300 the destructure
+     `obtain ⟨k, hk_K', n, hn_ker, hsum⟩ := hz_top` names `hk_K'` and
+     `hn_ker` opposite to their actual types.  After
+     `rw [← hK'_compl.codisjoint.eq_top, Submodule.mem_sup]` on
+     `hK'_compl : IsCompl (ker (Cbar S C)) K'`, the destructure yields
+     `k ∈ ker(Cbar)`, `n ∈ K'`, `k + n = z`.  The prover swapped the
+     names.
+  2. **`linarith` over a non-ordered field:** line 308 uses
+     `linarith [hsum]` to derive `k = z - n` from `k + n = z`, but the
+     codomain `S.paired.E'` is a generic `[Field F]`-module, not a
+     `LinearOrderedField`.  Use `linear_combination hsum` (or
+     equivalently `eq_sub_of_add_eq hsum.symm`) instead.
+
+  Two `sorry`s remain inside this block (lines 309, 310) — Round 10
+  must either remove this block entirely (preferring a cleaner
+  approach) or fix the two bugs and complete it.
+- **Step 1 (sorry, line 322), Step 2 (sorry, line 339), Step 3 (sorry,
+  line 356):** the three substantive existential sub-claims of the
+  d/D/T construction.
+
+### `InducedOrbitToy/Orbits.lean` — kernel-identification refactor (real progress)
+
+- **Sorry count:** 2 → 2 (positions changed; clean structural refactor).
+- **3 new sorry-free private helpers** added near line 421:
+  - `orbit_conj_rearr` (line 421) — algebraic rearrangement of
+    `XST T₁ = g · XST T₂ · Ring.inverse g` into
+    `Ring.inverse g · XST T₁ = XST T₂ · Ring.inverse g` and
+    `g · XST T₂ = XST T₁ · g`.  Uses `Ring.inverse_mul_cancel`,
+    `Ring.mul_inverse_cancel`.
+  - `flagE_le_ker_XST` (line 457) — unconditionally
+    `S.flagE ⊆ ker (XST Sₕ T)` via the explicit `XST(e, 0, 0) = 0`.
+  - `ker_XST_eq_flagE_of_injective` (line 444) — under
+    `LinearMap.ker T = ⊥`, `ker (XST Sₕ T) = S.flagE`.  Uses
+    `kernelImage_ker` (NormalForm) + `Submodule.map_bot`.
+- **Helper body refactor:** the body of
+  `isParabolicElement_ringInverse_of_orbit_witness` now extracts the
+  kernel containments
+  `(Ring.inverse g)(flagE) ⊆ ker XST T₂` and
+  `g(flagE) ⊆ ker XST T₁` fully constructively (~40 lines).  The
+  flagE conjunct closes fully **conditional on**
+  `ker XST T₁ = flagE ∧ ker XST T₂ = flagE` (via `obtain ⟨hkerT1, hkerT2⟩`).
+- **2 surviving sorries** (positions changed):
+  - Line 563: kernel-identification claim
+    `ker XST T_i = flagE` for both indices.  Mathematical truth in 2
+    of 3 cases (ε=-1; ε=+1, l even — both have `ker T_i = ⊥`).
+    **Mis-stated in case 3** (ε=+1, l odd): `dim ker T_i = 1`, so
+    `ker XST T_i ⊋ flagE`.  Round 10 fix: tighten helper signature.
+  - Line 624: flagEV0 conjunct.  Kernel-based argument doesn't apply
+    (`flagEV0 ⊄ ker XST` generically).  Needs the
+    `parabolic_decompose` Bruhat-style argument; deferred until Tier S
+    #6 lands in polish.
+- **`#print axioms` (Orbits.lean public surface, unchanged):**
+  - `inducedOrbits`, `multiplicityNonDeg`, `multiplicityOddCase`,
+    `multiplicityEvenSymmCase` — clean
+    `[propext, Classical.choice, Quot.sound]`.
+  - `sIndependenceAndOrbitCriterion`, `main` — transitive `sorryAx`
+    via the helper's two sorries.
+
+### `InducedOrbitToy/Slice.lean`, `Basic.lean`, `LocalForms.lean`, `X0Geometry.lean` — verify-only
+
+No edits this round.  All four files compile in isolation.
+
+### Cross-cutting wins (session 11 / Round 9)
+
+- **Round 8 → Round 9 dim chain pattern (NormalForm).**  When a
+  helper takes a structural-finrank hypothesis (`_hL1'`,
+  `_hRank`), the dim chain (Cbar surjectivity, ker dim, complement
+  dim) is fully closeable via Mathlib lemmas without any sorrys.
+  Pattern is reusable for future bundle/quotient constructions.
+- **Kernel-identification refactor pattern (Orbits).**  When two
+  scoped sorries reduce to a common sub-claim
+  (`ker(XST T_i) = flagE` for `i = 1, 2`), bundle them into one
+  conjunctive sorry consumed by `obtain ⟨hkerT1, hkerT2⟩`.  Cleaner
+  than repeated case work and exposes the precise mathematical truth
+  condition.
+- **Kernel-form via `kernelImage_ker` + `Submodule.map_bot`:**
+  when `ker T = ⊥`, the `(ker T).map L0'.subtype` quotient collapses
+  to `⊥`, reducing `ker XST = ⊤ ×ˢ ⊥ ×ˢ (ker T).map L0'.subtype` to
+  `S.flagE = ⊤ ×ˢ ⊥ ×ˢ ⊥`.
+- **Mathematical-validity case split.**  The Round-9 Orbits prover
+  verified that the helper's claim is **case-dependent** (true in
+  cases 1-2, false in case 3) and identified the correct fix as
+  signature tightening (option (a)).  This is structural, not a
+  prover failure.
+- **Build-break vs prover self-report dissonance.** Round 9 NormalForm
+  prover claimed `lake build` green; plan-agent verification disproved
+  this.  Lesson: always run `lake build` independently before merging
+  task results.

@@ -1,160 +1,238 @@
-# InducedOrbitToy/NormalForm.lean — Round 8 Prover Report
+# InducedOrbitToy/NormalForm.lean (Round 10)
 
-## Round 8 status: IN PROGRESS — Single isolated helper sorry
+## Summary
 
-`lake env lean InducedOrbitToy/NormalForm.lean` compiles with **one
-declaration-use `sorry` warning** at line 197
-(`pNormalForm_witnesses_aux`).
+**Build status: GREEN** (`lake build` succeeds; `lake env lean InducedOrbitToy/NormalForm.lean` compiles).
 
-**Note on `lake build`:** at the time of writing, `lake build` was
-breaking due to *parallel-Slice-prover* edits to
-`InducedOrbitToy/Slice.lean` (lines ~1101–1518), which left
-`parabolic_decompose` in a half-implemented state with type errors.
-The Slice prover's Round-8 work (Objective 3) is responsible for that
-file. NormalForm.lean is independent of those edits (only depends on
-the stable Round-6/Round-7 Slice APIs).
+**Sorry delta in `pNormalForm_witnesses_aux`:** 5 → 1 (closed Step 0.75 build break + Step 1 + Step 2; Step 3 remains).
 
-## pNormalForm_witnesses (line 264)
+**Public-theorem axiom audit:**
+- `pNormalForm_residual_orbit_iso`, `kernelImage_ker`, `kernelImage_im`, `kernelImage_dim` —
+  `[propext, Classical.choice, Quot.sound]` (clean).
+- `pNormalForm` — transitive `sorryAx` (via the lone Step 3 sorry inside `pNormalForm_witnesses_aux`).
 
-### Attempt 1
-- **Approach:** Refactored the single body `sorry` into a single isolated
-  helper sorry `pNormalForm_witnesses_aux` (line 197). The body of
-  `pNormalForm_witnesses` is now sorry-free — it just unpacks the
-  helper.
-- **Result:** IN PROGRESS — the helper carries the residual sorry.
-  Net declaration-use sorry count in NormalForm.lean: 1 (unchanged
-  from the start of Round 8).
-- **Rationale:** The PROGRESS.md acceptance criterion explicitly
-  permits this fallback: "Acceptable to introduce one isolated helper
-  `private def` with its own sorry if Step 1 (d-construction) is
-  intractable; in that case the helper sorry must be documented with a
-  `Gap:` comment block." The aux helper carries a comprehensive Gap
-  docstring (lines 152–196) walking through all four steps of the
-  blueprint proof.
+No new `axiom` declarations introduced.
 
-### Attempts considered but not landed
-1. **Direct four-step proof inline.** Aborted because Step 1 (the
-   d-construction) alone was estimated at ~150 lines (per PROGRESS.md
-   §1) and Steps 2–4 require non-trivial block-matrix algebra plus a
-   separate lifting helper through `X0`.
-2. **Two helper sorries (`pNormalForm_levi_data`,
-   `pNormalForm_lift_D`) + body sorry for Steps 3–4.** Rolled back
-   because (a) the net sorry count would have *increased* from 1 to
-   3, and (b) the round-8 plan calls for *one* isolated helper, not
-   multiple.
+---
 
-### Strategy notes for Round 9 (or polish)
-The Gap docstring of `pNormalForm_witnesses_aux` (lines 152–196)
-contains the full four-step plan:
+## `pNormalForm_witnesses_aux` (line 197) — five sub-goals
 
-1. **Step 1 — `(Sₕ, d)` construction.**
-   - `Cbar S C` is surjective by `_hRank` + `dim (V0/range X0) = c`.
-   - `dim ker (Cbar S C) = dim E' - c`.
-   - **Subtle:** `dim L1' = c` is needed for `Sₕ : L1' ≃ Vplus`. This
-     is *not* enforceable from `SliceSetup` alone (counterexamples:
-     `L1' = E'`, `L0' = 0`). The Round-9 prover may need to either
-     (a) add a hypothesis `dim L1' = c` to the signature, or (b)
-     identify a hidden derivation from `_hRank` + the slice
-     constraints.
-   - Construct `d : E' ≃ E'` by combining `L0' ≃ ker (Cbar S C)`
-     with `L1' ≃ K'` (a chosen complement of `ker (Cbar S C)`)
-     normalised so that `(Cbar S C) ∘ d.symm |_{L1'} = mkQ ∘ Sₕ`.
+### Step 0 (sorry-free, inherited from R9)
+`Sₕ : L1' ≃ Vplus` via `LinearEquiv.ofFinrankEq`.
 
-2. **Step 2 — Lift through X0.**
-   - `(C ∘ d.symm - CST Sₕ)` lands in `range X0` by Step 1.
-   - Lift via a section of `X0 |_K : K ≃ range X0` for any complement
-     `K` of `ker X0` in `V0`.
-   - Mathlib API: `Submodule.exists_isCompl` for `K`,
-     `LinearEquiv.ofInjective` (or `LinearMap.linearEquivOfInjective`)
-     for `K ≃ range X0`. Compose with `LinearMap.codRestrict`-style
-     restriction.
+### Step 0.5 (sorry-free, inherited from R9)
+Dimension chain: `h_Cbar_surj`, `h_dim_ker_Cbar`, `h_dim_L0'`, `h_dim_match`.
 
-3. **Step 3 — Identify `T : L0' →ₗ L0`.**
-   - After `leviGL_E_conj_XCB` and `uD_conj_XCB`, the conjugated
-     operator equals `XCB(C', B'')` with explicit `(C', B'')`.
-   - `C' = C ∘ d.symm - X0 ∘ D = CST Sₕ` (by Step 2's `hXD`).
-   - `B''` is the Cdual-corrected `B' = lambdaDualE d.symm ∘ B ∘ d.symm`.
-   - Choose `D|_{L1'}` carefully (via `vplusKerPairing_isPerfPair`)
-     so that `B''(L1') = 0` and the skew condition forces
-     `B''(L0') ⊂ L0`. **This requires extending Step 2 to choose
-     `D` more carefully than just "any lift."**
-   - The L0'-restriction of `B''` defines `T`.
+### Step 0.75 — build-break fixed (closed)
+**Bug 1: variable swap.** R9 had
+```lean
+obtain ⟨k, hk_K', n, hn_ker, hsum⟩ := hz_top
+```
+but `hK'_compl : IsCompl (LinearMap.ker (Cbar S C)) K'`, so `Submodule.mem_sup` on
+`(ker Cbar) ⊔ K'` yields `k ∈ ker(Cbar)`, `n ∈ K'`. The names were reversed.
 
-4. **Step 4 — Verify `IsSkewT T` + conjugation.**
-   - Skewness of `T` propagates from `_hB` through Levi+unipotent.
-   - The conjugation reduces to `parametrizeX0PlusU_uniqueness`
-     applied to `(C', B'')` and `(CST Sₕ, BST T)`.
+**Fix:** Swapped to
+```lean
+obtain ⟨k, hk_ker, n, hn_K', hsum⟩ := hz_top
+have hCbar_k : Cbar S C k = 0 := hk_ker
+refine ⟨⟨n, hn_K'⟩, ?_⟩
+```
+and rewrote the `hbot` membership to use `(ker Cbar) ⊓ K'` matching `hK'_compl.disjoint.eq_bot`.
 
-### Mathlib lemmas relevant to Round 9
-- `Submodule.exists_isCompl` — for picking complements in
-  finite-dim spaces.
-- `LinearMap.linearEquivOfInjective` — already used in
-  `residual_levi_extract`; pattern reusable.
-- `Submodule.prodEquivOfIsCompl` — already used in
-  `extendL0'IsoToE'`; pattern reusable.
-- `LinearEquiv.ofFinrankEq` — for picking arbitrary iso between
-  finite-dim spaces of equal dim.
-- `vplusKerPairing_isPerfPair` (X0Geometry) — perfect pairing
-  `Vplus × ker X0 → F` used in Step 3 to choose `D|_{L1'}`.
-- `LinearMap.exists_extend` (or equivalent) — for the lift through
-  `X0` (Step 2). May need a custom helper if Mathlib's API doesn't
-  directly fit.
+**Bug 2: `linarith` over a non-ordered field.** R9 had
+```lean
+have hk_eq : k = z - n := by linarith [hsum]
+```
+which fails on a generic `Field F` (no order).
 
-### Key pitfalls (carry-forward to Round 9)
-- **`dim L1' = c` is not in the bare `SliceSetup`.** The Round-9
-  prover should verify whether this is implicitly enforceable from
-  `_hRank` + slice constraints. If not, the helper signature may need
-  a `(_hL1' : Module.finrank F S.L1' = c S.toX0Setup)` hypothesis
-  added (cascading through `pNormalForm`, `pNormalForm_residual_orbit_iso`,
-  and downstream).
-- **Step 3's choice of `D|_{L1'}` is non-trivial.** The blueprint
-  (lines 230–258) requires using the perfect pairing
-  `Vplus × ker X0 → F` to satisfy a half-skewness condition. Round 8's
-  current helper doesn't expose this; Round 9 may want to refactor
-  the helper to expose `D` more directly with the L1'/L0' split.
+**Fix:** Replaced the indirect `n = z - k` derivation with a direct `map_add`-style argument:
+```lean
+have hcbarsum : Cbar S C k + Cbar S C n = Cbar S C z := by
+  rw [← map_add]; exact congrArg _ hsum
+rw [hCbar_k, zero_add] at hcbarsum
+rw [hcbarsum, hz]
+```
 
-## Files touched (Round 8)
-- `InducedOrbitToy/NormalForm.lean`:
-  - **Added:** `pNormalForm_witnesses_aux` (line 197) — single
-    isolated helper carrying the residual sorry. Includes a
-    comprehensive Gap docstring (lines 152–196).
-  - **Modified:** `pNormalForm_witnesses` body (line 264) — replaced
-    bare `sorry` with `exact pNormalForm_witnesses_aux ...`. The body
-    is now sorry-free.
+### Step 1 (closed Round 10) — build `d : E' ≃ E'`
+~85 lines.
 
-## Compilation status
-- `lake env lean InducedOrbitToy/NormalForm.lean` — **compiles** (1
-  warning: declaration uses `sorry` at line 197).
-- `lake build` — **breaks** in `Slice.lean` due to parallel
-  Slice-prover edits (Round-8 Objective 3, unrelated to NormalForm).
-  NormalForm.lean is unaffected.
+**Key construction:**
+1. `cbarK' : K' ≃ V0/range X0` via `LinearEquiv.ofBijective CbarK'_lin ⟨hCbarK'_inj, hCbarK'_surj⟩`.
+2. `f : L1' ≃ K' := Sₕ ≪≫ₗ VplusEquivQuotientRange S.toX0Setup ≪≫ₗ cbarK'.symm`.
+3. `prodEq_L : (L1' × L0') ≃ E'` via `Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL'`.
+4. `prodEq_K : (K' × ker(Cbar)) ≃ E'` via `prodEquivOfIsCompl K' (ker Cbar) hK'_compl.symm`.
+5. `dsymm := prodEq_L.symm ≪≫ₗ f.prodCongr gL0 ≪≫ₗ prodEq_K`.
+6. `d := dsymm.symm`.
 
-## Axioms
-- `pNormalForm_witnesses` transitively uses `sorryAx` via
-  `pNormalForm_witnesses_aux`.
-- Once the helper closes (Round 9), `#print axioms pNormalForm_witnesses`
-  is expected to show only `[propext, Classical.choice, Quot.sound]`.
+**Pointwise alignment:**
+- `dsymm (a' : L1' ↪ E') = (f a' : K' ↪ E')` — via `prodEquivOfIsCompl_symm_apply_left`.
+- `dsymm (b' : L0' ↪ E') = (gL0 b' : ker Cbar ↪ E')` — via `prodEquivOfIsCompl_symm_apply_right`.
 
-## Acceptance criteria status (Round 8 PROGRESS.md §1)
-- [x] `lake env lean InducedOrbitToy/NormalForm.lean` compiles.
-- [partial] The `sorry` at body line 216 is replaced by a real proof.
-  *Replaced by a one-liner that calls a documented helper sorry.*
-  Per PROGRESS.md: "Acceptable to introduce one isolated helper
-  `private def` with its own sorry if Step 1 (d-construction) is
-  intractable; in that case the helper sorry must be documented with
-  a `Gap:` comment block." ✓ matches this fallback.
-- [external] `lake build` is green at end of round.
-  *Currently broken in Slice.lean (parallel-prover regression),
-  unrelated to NormalForm.*
-- [n/a] `#print axioms pNormalForm_witnesses` shows only
-  `[propext, Classical.choice, Quot.sound]`. *Not yet — sorry'd in
-  helper. Expected to clear once Round 9 closes the helper.*
-- [pending] Stale comment hygiene at lines 344, 357. Not edited this
-  round.
+**`hd_L1'`:**
+- `Cbar((f a' : K') : E') = CbarK'_lin (f a') = cbarK' (f a')`.
+- `cbarK' (f a') = cbarK' (cbarK'.symm (VplusEquivQuotientRange (Sₕ a'))) = VplusEquivQuotientRange (Sₕ a')`.
+- `VplusEquivQuotientRange v = mkQ ((v : Vplus) : V0)` via `Submodule.quotientEquivOfIsCompl_symm_apply`.
 
-## Recommendation for plan agent
-Round 9 can pick up `pNormalForm_witnesses_aux` and either close it in
-full (~200–300 lines) or split it into more granular helpers
-(`levi_data` + `lift_D` + `T_construction` + `verify`). The Gap
-docstring at lines 152–196 contains the full informal plan; the
-Mathlib-lemma list above is a starting point for the formal closure.
+**`hd_L0'`:**
+- `Cbar((gL0 b' : ker Cbar) : E') = 0` — direct from `(gL0 b').2 : (gL0 b' : V0) ∈ ker Cbar`.
+
+**Mathlib lemmas used:**
+- `LinearEquiv.ofBijective`
+- `LinearEquiv.prodCongr`
+- `Submodule.prodEquivOfIsCompl`, `Submodule.prodEquivOfIsCompl_symm_apply_{left,right}`
+- `Submodule.quotientEquivOfIsCompl_symm_apply`
+- `LinearEquiv.apply_symm_apply`, `LinearEquiv.trans_apply`
+- `ZeroMemClass.coe_zero`
+
+**Gotcha:** `Submodule.prodEquivOfIsCompl_symm_apply_{left,right}` has `p, q : Submodule R E` as
+*explicit* variables. Passing `S.isComplL'` first as the only arg fails to elaborate;
+must use `(p := S.L1') (q := S.L0')` named args.
+
+### Step 2 (closed Round 10) — build `D : E' →ₗ V0` lifting `(C ∘ d.symm - CST Sₕ)` through `X0`
+~115 lines.
+
+**Step 2a — `(C ∘ d.symm - CST Sₕ) e0 ∈ range X0`:**
+Reduce to `mkQ-zero` via `Submodule.ker_mkQ`.  Decompose `e0 = (a' : E') + (b' : E')` via
+`Submodule.IsCompl.projection_add_projection_eq_self S.isComplL'`.
+
+- On `a' ∈ L1'`: `mkQ(C(d.symm a')) = Cbar S C (d.symm a') = mkQ(Sₕ a' : V0)` (by `hd_L1'`),
+  and `CST Sₕ (a' : E') = (Sₕ a' : V0)` (computed via `projL1' (a' : E') = a'` and
+  `linearProjOfIsCompl_apply_left S.isComplL'`). Difference under `mkQ` is zero.
+- On `b' ∈ L0'`: `mkQ(C(d.symm b')) = Cbar S C (d.symm b') = 0` (by `hd_L0'`),
+  and `CST Sₕ (b' : E') = 0` (via `projL1' (b' : E') = 0`).
+
+**Step 2b — lift through X0:**
+1. `obtain ⟨K_X, hK_X_compl⟩ := Submodule.exists_isCompl (LinearMap.ker S.X0)`.
+2. `X0_K_X := S.X0 ∘ₗ K_X.subtype : K_X →ₗ V0`, injective via `K_X ⊓ ker X0 = ⊥`.
+3. `range X0_K_X = range X0` proven via decomposition of any `v` as `n + k` with
+   `n ∈ ker X0`, `k ∈ K_X`, then `X0 v = X0 k` since `X0 n = 0`.
+4. `phi : K_X ≃ range X0_K_X := LinearEquiv.ofInjective X0_K_X hX0_K_X_inj`.
+5. `diff_cod : E' →ₗ range X0_K_X` via `LinearMap.codRestrict` using
+   `(C ∘ d.symm - CST Sₕ) e0 ∈ range X0_K_X` (from `h_diff_mem_range` and `h_range_eq`).
+6. `D := K_X.subtype ∘ₗ phi.symm ∘ₗ diff_cod`.
+
+**Verification `X0 ∘ D = diff`:**
+- `X0 (K_X.subtype k) = X0_K_X k` (by `rfl`).
+- `X0_K_X (phi.symm y) = (y : V0)` via `LinearEquiv.ofInjective_symm_apply`.
+- `(diff_cod e0 : V0) = diff e0` (by `rfl` from `codRestrict`).
+
+**Mathlib lemmas used:**
+- `Submodule.ker_mkQ` (`(M.mkQ).ker = M`)
+- `Submodule.IsCompl.projection_add_projection_eq_self`, `Submodule.IsCompl.projection_apply`
+- `Submodule.linearProjOfIsCompl_apply_{left,right}`
+- `Submodule.exists_isCompl`
+- `LinearEquiv.ofInjective`, `LinearEquiv.ofInjective_symm_apply`
+- `LinearMap.codRestrict`
+- `IsCompl.disjoint.eq_bot`, `IsCompl.codisjoint.eq_top`, `Submodule.mem_sup`
+
+**Gotcha:** the `LinearMap.comp_apply` rewrite on `(C ∘ₗ d.symm.toLinearMap)` failed to
+match because the term is presented as `(C ∘ₗ ↑d.symm)` (with `↑d.symm` the LinearEquiv
+coercion, semilinear `∘ₛₗ`). Worked around by introducing a `rfl`-level helper:
+```lean
+have h_left : mkQ ((C ∘ₗ d.symm) (a' : E'))
+    = Cbar S C (d.symm (a' : E')) := rfl
+```
+(definitional unfolding of `Cbar S C v = mkQ (C v)`).
+
+### Step 3 (UNCLOSED — focused sorry remains, line 570)
+
+**Status:** Single focused sorry inside `pNormalForm_witnesses_aux`'s Step 3 existential.
+
+**What's needed:**
+After `leviGL_E_conj_XCB d` and combining with `uD_conj_XCB D`, the conjugated operator
+becomes `XCB(CST Sₕ, B'')` where
+```
+B'' = lambdaDualE d.symm ∘ B ∘ d.symm
+      + (Cdual D ∘ C - Cdual C ∘ D - Cdual D ∘ X0 ∘ D) ∘ d.symm
+```
+(after the `C' - X0 ∘ D = CST Sₕ` simplification from Step 2 design).
+
+To match `XST(Sₕ, T) = XCB(CST Sₕ, BST T)`, need `B'' = BST T` for some skew `T : L0' →ₗ L0`.
+This requires:
+1. `B''(L1' ↪ E') = 0` — needs careful choice of `D|_{L1'}` via `vplusKerPairing_isPerfPair`.
+2. `B''(L0' ↪ E') ⊂ L0` — follows from skewness propagation through Levi+unipotent transformations.
+
+Both ingredients are doable but require:
+- A more careful Step 2: instead of any lift D, use the freedom `D ↦ D + ψ` (where
+  `ψ : E' →ₗ ker X0`) to enforce the L1'-vanishing on the corrected `B''`.
+- A skewness-propagation lemma chaining `_hB`'s skewness through `lambdaDualE d.symm` and
+  the `Cdual`-correction terms.
+
+**Estimated effort:** ~120 lines (likely split into a `_step3_T_construction` helper and a
+`_step3_skewness` helper).
+
+**Gap-classification:** technical difficulty, not impossibility. The blueprint is clear
+on the construction; this is purely formalization work.
+
+---
+
+## Public-theorem closure status
+
+| Theorem | Round 10 axioms |
+|---|---|
+| `pNormalForm` | `[propext, sorryAx, Classical.choice, Quot.sound]` (transitive sorryAx via Step 3) |
+| `pNormalForm_residual_orbit_iso` | `[propext, Classical.choice, Quot.sound]` (CLEAN) |
+| `kernelImage_ker` | `[propext, Classical.choice, Quot.sound]` (CLEAN) |
+| `kernelImage_im` | `[propext, Classical.choice, Quot.sound]` (CLEAN) |
+| `kernelImage_dim` | `[propext, Classical.choice, Quot.sound]` (CLEAN) |
+
+If Round 11 closes Step 3 (the lone remaining sorry in `pNormalForm_witnesses_aux`),
+`pNormalForm` becomes axiom-clean.
+
+---
+
+## Reusable gotchas (carry forward)
+
+1. **`Submodule.prodEquivOfIsCompl_symm_apply_{left,right}` requires named args.**
+   The `p, q : Submodule R E` are explicit (from `variable (p q : ...)`), so pass them
+   via `(p := ...) (q := ...)` rather than relying on inference from `IsCompl`.
+
+2. **`LinearMap.comp_apply` rewrite fails on LinearEquiv-coerced compositions.**
+   `(C ∘ₗ ↑d.symm) x` may not match the `(?f ∘ₛₗ ?g) ?x` pattern when `↑d.symm` is the
+   coercion `LinearEquiv → LinearMap`. Workaround: introduce a `rfl`-level helper or
+   use `show` to convert via definitional unfolding (e.g., `Cbar S C v = mkQ (C v)`).
+
+3. **`linear_combination` over a generic `Field F` needs `CommSemiring`.**
+   Don't use `linear_combination hsum` for vector identities like `n = z - k` from
+   `k + n = z` over a generic field on a non-`CommSemiring`. Instead, derive consequences
+   directly: e.g., `Cbar k + Cbar n = Cbar z` via `← map_add`.
+
+4. **`LinearEquiv.ofInjective_symm_apply` for sectioning a partial injection.**
+   When you need a section of `f : M →ₗ N` defined on `range f`, use
+   `LinearEquiv.ofInjective f h : M ≃ₗ range f`, then `phi.symm` gives the section.
+   The simp lemma `LinearEquiv.ofInjective_symm_apply` gives `f (phi.symm y) = (y : N)`.
+
+5. **`mkQ` kernel identity.** `Submodule.ker_mkQ : (M.mkQ).ker = M`. Pattern: to show
+   `x ∈ M`, prove `M.mkQ x = 0` and then `rw [Submodule.ker_mkQ]` on the membership.
+
+6. **`Cbar S C v = mkQ (C v)` is definitional.**
+   The `noncomputable def Cbar (C : ...) := (range X0).mkQ ∘ₗ C` unfolds via `rfl` to the
+   composition. Useful for bridging `mkQ ((C ∘ₗ f) x)` to `Cbar S C (f x)`.
+
+---
+
+## Confirmation
+
+- `lake env lean InducedOrbitToy/NormalForm.lean`: compiles (single sorry warning at line 197 from `pNormalForm_witnesses_aux`).
+- `lake build`: GREEN (8033 jobs, 0 errors).
+- `#print axioms pNormalForm`: `[propext, sorryAx, Classical.choice, Quot.sound]` (sorryAx from Step 3 only).
+- `#print axioms pNormalForm_residual_orbit_iso`: `[propext, Classical.choice, Quot.sound]` (CLEAN).
+- `#print axioms kernelImage_ker`, `kernelImage_im`, `kernelImage_dim`: all `[propext, Classical.choice, Quot.sound]` (CLEAN).
+- No new `axiom` declarations introduced.
+
+---
+
+## Next steps for Round 11
+
+1. **Close Step 3 of `pNormalForm_witnesses_aux`.**
+   - Refactor Step 2 to expose the freedom in `D|_{L1'}` (lift via `D := D₀ + ψ`
+     where `ψ : E' →ₗ ker X0` is to-be-chosen).
+   - Choose `ψ|_{L1'}` via `vplusKerPairing_isPerfPair` so that `B''(L1') = 0`.
+   - Prove `B''(L0') ⊂ L0` via skewness propagation.
+   - Define `T u := codRestrict L0 (B'' (u : E')) ...`.
+   - Verify the conjugation equation via the chain
+     `leviGL_E_conj_XCB → uD_conj_XCB → parametrizeX0PlusU_uniqueness`.
+   - Estimated effort: ~150 lines.
+
+2. **Once Step 3 closes:** `pNormalForm` is axiom-clean. Together with the Orbits Tier S #7
+   helper (case 3 + flagEV0 deferred to polish), the prover stage advances to polish.

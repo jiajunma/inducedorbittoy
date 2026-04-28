@@ -6,7 +6,7 @@ prover
 ## Stages
 - [x] init
 - [x] autoformalize
-- [ ] prover  ← current (round 8)
+- [ ] prover  ← current (round 10)
 - [ ] polish
 
 ## Authoritative Sources
@@ -19,65 +19,79 @@ prover
 - Round 7 informal sketch: `.archon/informal/normalform_round7.md` —
   full proof outline for `pNormalForm_witnesses` (Tier A #1) plus the
   two `residual_levi_*` helpers.
-- Latest review: `.archon/proof-journal/sessions/session_9/summary.md`
-  and `.archon/proof-journal/sessions/session_9/recommendations.md`.
+- Round 9 task results (archived): `.archon/task_results/processed/round9/`.
 - Cumulative state: `.archon/PROJECT_STATUS.md`.
 
-## Verified State (independent checks, end of Round 7)
+## Verified State (independent checks, end of Round 9)
 
-- `lake build` succeeds; only `sorry` warnings + 1 unused-variable lint
-  (`InducedOrbitToy/X0Geometry.lean:221:35: unused variable hlambda` —
-  pre-existing, do not remove; the hypothesis is part of the
-  autoformalised statement of `sDual_restrict_ker_isIso`).
-- Custom `axiom` declarations: 0. `#print axioms` on every sorry-free
-  public theorem returns only `[propext, Classical.choice, Quot.sound]`.
-- Round-7 progress: 5 → 3 declaration-use `sorry` warnings.
-  - `residual_levi_extract` (NormalForm) closed sorry-free.
-  - `residual_levi_build` (NormalForm) closed sorry-free.
-  - `pNormalForm_residual_orbit_iso` (public consumer) sorry-free.
-  - Tier S #5 signature restructure landed (Sₕ : L1' ≃ₗ Vplus,
-    Levi factor `d` exposed in `pNormalForm_witnesses`).
-- Remaining declaration-use `sorry` lines (verified by
-  `lake build` 2026-04-28):
-  - `InducedOrbitToy/NormalForm.lean:203` — `pNormalForm_witnesses`
-    (single isolated body sorry at line 216; declaration line 203).
-    **Round 8 primary.**
-  - `InducedOrbitToy/Slice.lean:1078` — `parabolic_decompose`
-    (deferred from Round 6, Gap comment at lines 1062–1077).
-    **Round 8 tertiary (parallel, optional).**
-  - `InducedOrbitToy/Orbits.lean:324` — `sIndependenceAndOrbitCriterion`
-    (two scoped sorries at body lines 358 + 376).
-    **Round 8 secondary.**
+- `lake build` is **NOT green** — `InducedOrbitToy/NormalForm.lean`
+  has compilation errors at lines 302–308 from the Round-9 prover's
+  unfinished Step 0.75 sub-construction (variable swap + `linarith`
+  over a non-ordered field).  Round 10 must fix the build first.
+- `lake env lean InducedOrbitToy/Orbits.lean` compiles in isolation
+  (single declaration-use sorry warning at line 524).
+- `lake env lean InducedOrbitToy/Slice.lean` compiles in isolation
+  (single declaration-use sorry warning at line 1109).
+- `lake env lean InducedOrbitToy/Basic.lean`,
+  `InducedOrbitToy/X0Geometry.lean`,
+  `InducedOrbitToy/LocalForms.lean` — all compile cleanly.
+- Custom `axiom` declarations: 0.
+- **Public-theorem axiom audit (frozen end of Round 8; Round 9 did
+  not change the public surface):**
+  - `pNormalForm_residual_orbit_iso`, `inducedOrbits`,
+    `multiplicityNonDeg`, `multiplicityOddCase`,
+    `multiplicityEvenSymmCase` —
+    `[propext, Classical.choice, Quot.sound]` (clean).
+  - `pNormalForm` — transitive `sorryAx` via
+    `pNormalForm_witnesses_aux`.
+  - `sIndependenceAndOrbitCriterion`, `main` — transitive `sorryAx`
+    via `isParabolicElement_ringInverse_of_orbit_witness`.
+
+### Remaining declaration-use `sorry` warnings (verified end of Round 9)
+
+| File | Line | Declaration | Round 10 priority |
+|---|---|---|---|
+| `InducedOrbitToy/NormalForm.lean` | 197 | `pNormalForm_witnesses_aux` (5 internal sorries: 309, 310, 322, 339, 356) | **Primary — also fix build** |
+| `InducedOrbitToy/Orbits.lean` | 524 | `isParabolicElement_ringInverse_of_orbit_witness` (2 sorries: 563, 624) | **Secondary** |
+| `InducedOrbitToy/Slice.lean` | 1109 | `parabolic_decompose` | Deferred (no consumers; Tier S #6) |
+
+If Round 10 (a) fixes the NormalForm build and (b) closes Steps 1, 2,
+3 in `pNormalForm_witnesses_aux`, AND (c) closes the easy-case branch
+of the Orbits helper via Tier S #7 signature tightening, then:
+- `pNormalForm` becomes axiom-clean
+  (`[propext, Classical.choice, Quot.sound]`).
+- `sIndependenceAndOrbitCriterion` and `main` retain transitive
+  `sorryAx` via the case-3 + flagEV0 sub-cases (deferred to polish).
+- Project advances `prover` → `polish` once build is green and all
+  Tier S #6 / #7 deferrals are documented.
 
 ## Round Plan
 
 | Round | Focus | Files | Sorry Δ |
 |---|---|---|---|
 | 6 (done) | Add Levi machinery to `Slice.lean` | Slice | 4 → 5 (additive) |
-| 7 (done) | Close `residual_levi_extract`, `residual_levi_build`, restructure `pNormalForm_witnesses` signature | NormalForm | 5 → 3 |
-| **8 (this round)** | **Close `pNormalForm_witnesses` body + `sIndependenceAndOrbitCriterion` (+ optional `parabolic_decompose`)** | NormalForm + Orbits + Slice (parallel) | **3 → 0 (target)** |
+| 7 (done) | Close `residual_levi_*`; restructure `pNormalForm_witnesses` signature | NormalForm | 5 → 3 |
+| 8 (done) | Body sorries on public theorems closed; sorries relocated to private helpers; mathematical gap identified for `parabolic_decompose` | NormalForm + Orbits + Slice | 3 → 3 (positions changed) |
+| 9 (done) | `_hL1'` cascade + dim chain in NormalForm; kernel-identification refactor in Orbits | NormalForm + Orbits | 3 → 3 (positions changed; build broke late) |
+| **10 (this round)** | **Fix NormalForm build; close Steps 1-3 of `pNormalForm_witnesses_aux`; tighten Orbits helper signature (option (a))** | NormalForm + Orbits (parallel) | **3 → 1 or 2 (target; flagEV0 + case-3 deferred)** |
 
-If Round 8 closes all 3 declaration-use sorries, the project advances
-from `prover` to `polish`. If only 2 of 3 close (most likely:
-`pNormalForm_witnesses` and `sIndependenceAndOrbitCriterion` close,
-`parabolic_decompose` is left for a Round 9 cleanup), the project still
-advances on the **public-theorem** axis: every public theorem will be
-sorry-free. `parabolic_decompose` carries its `sorry` purely for an
-internal helper and does not block any downstream consumer (Round 7
-sidestepped it via Option B in `residual_levi_*`).
+If Round 10 closes the NormalForm Steps 1-3 (or even just Step 1 +
+Step 2), `pNormalForm` becomes axiom-clean.  If Round 10 also lands
+the Orbits Tier S #7 signature tightening, the case-3 + flagEV0
+sorries are clearly isolated as the only blockers, and the project
+advances `prover` → `polish`.
 
-## Current Objectives (Round 8)
+## Current Objectives (Round 10)
 
-**Three independent files, three independent objectives, dispatched
-in parallel.** No cross-file edit overlap; harness runs them
-concurrently.
+**Two independent files, two independent objectives, dispatched in
+parallel.** No cross-file edit overlap; harness runs them concurrently.
 
-### 1. `InducedOrbitToy/NormalForm.lean` — close `pNormalForm_witnesses` body (line 216)
+### 1. `InducedOrbitToy/NormalForm.lean` — fix build, close Steps 1-3 of `pNormalForm_witnesses_aux`
 
-**Reference:** in-file docstring at lines 175–202; full informal
+**Reference:** in-file docstring at lines 152–196; full informal
 proof outline at `.archon/informal/normalform_round7.md` § Tier A #1;
-session 9 recommendations at
-`.archon/proof-journal/sessions/session_9/recommendations.md` § Option A.
+Round 9 prover's "Strategy notes for Round 10" in
+`.archon/task_results/processed/round9/InducedOrbitToy_NormalForm.lean.md`.
 
 **Reference (blueprint):** `references/blueprint_verified.md` lines
 200–264 — the `prop:p-normal-form` proof.
@@ -86,250 +100,232 @@ session 9 recommendations at
 - `Slice.lean` Round 6 Levi machinery: `lambdaDualE`,
   `lambdaDualE_pairing_eq`, `leviGL_E`, `leviGL_E_apply`,
   `leviGL_E_isParabolic`, `leviGL_E_conj_XCB`,
-  `leviGL_E_symm_inverse`. All sorry-free; APIs stable.
+  `leviGL_E_symm_inverse`. All sorry-free.
 - `Slice.lean` unipotent half: `parametrizeX0PlusU_existence`,
   `parametrizeX0PlusU_uniqueness`, `uD`, `uD_apply`, `uD_neg_inverse`,
   `uD_conj_XCB`, `uD_isParabolic`. All sorry-free.
-- `NormalForm.lean` already-landed Round 7 helpers: `XST_apply`,
+- `NormalForm.lean` Round 7 helpers: `XST_apply`,
   `extendL0'IsoToE'` (private), and the `kernelImage_*` API.
 - `X0Geometry.lean`: `vplusKerPairing_isPerfPair`,
-  `sDual_restrict_ker_isIso`.
+  `sDual_restrict_ker_isIso`, `finrank_Vplus_eq_c`,
+  `VplusEquivQuotientRange`.
 
-**Concrete deliverable:** close the single `sorry` at body line 216.
-The body docstring at lines 188–202 outlines a four-step plan:
+**Round 9 inheritance (sorry-free preparation):**
 
-1. **Build `(Sₕ, d)` from `_hRank : rank Cbar = c`.** Use
-   `LinearEquiv.ofBijective` on a `LinearMap.codRestrict` of
-   `Cbar S C` to its image, then dim-match against
-   `Module.finrank F S.Vplus` via `_hRank` and the `c` accountancy
-   in `X0Setup`. Lift the resulting `L0' ≃ ker (Cbar S C)` to
-   `d : E' ≃ E'` extending by `id` on L1' — same
-   `Submodule.prodEquivOfIsCompl` pattern as Round 7's
-   `extendL0'IsoToE'`.
-2. **Apply `leviGL_E_conj_XCB`.** Sets the LHS to
-   `XCB(C ∘ d.symm, lambdaDualE d.symm ∘ B ∘ d.symm) ∘ leviGL_E d`.
-   The C-block of `C ∘ d.symm` now has `ker = L0'` and the L1'
-   restriction is `mkQ ∘ Sₕ`.
-3. **Build `D` so `X0 ∘ D = C' - CST Sₕ`.** Note `C' - CST Sₕ`
-   lands in `range X0` because the L0' part of `C'` is zero
-   (Step 1 construction) and the L1' part equals `CST Sₕ` by
-   definition of `Sₕ`. Use `S.isCompl : Vplus ⊕ range X0 = V0`
-   plus surjectivity of `X0` onto its range to extract `D`. `T`
-   reads off the `B`-block residual after the unipotent
-   normalisation.
-4. **Combine via `uD_conj_XCB` + `parametrizeX0PlusU_uniqueness`
-   + `uD_neg_inverse`.** `parametrizeX0PlusU_uniqueness` identifies
-   the resulting `(C'', B'')` with `(CST Sₕ, BST T)`.
+The Round 9 prover landed sorry-free preparation up through Step
+0.75 (modulo 2 build bugs):
+- Step 0: `Sₕ : L1' ≃ Vplus` via `LinearEquiv.ofFinrankEq`.
+- Step 0.5: full dimension chain (`h_Cbar_surj`, `h_dim_ker_Cbar`,
+  `h_dim_L0'`, `h_dim_match`).
+- Step 0.75: `gL0 : L0' ≃ ker(Cbar)`, `K' ⊕ ker(Cbar)` complement.
+
+**The `_hL1' : Module.finrank F S.L1' = c S.toX0Setup` hypothesis is
+already cascaded** through `pNormalForm_witnesses_aux` (line 197),
+`pNormalForm_witnesses` (line 264), and `pNormalForm` (line 306).
+No further signature changes needed.
+
+**Build break to fix first:**
+
+Lines 277–310 contain an unfinished inline `CbarK'_inj` /
+`CbarK'_surj` proof with TWO bugs:
+
+1. **Variable-name swap at line 300.** Since
+   `hK'_compl : IsCompl (LinearMap.ker (Cbar S C)) K'`, after
+   `rw [← hK'_compl.codisjoint.eq_top, Submodule.mem_sup]` on
+   `z ∈ ⊤`, the destructure
+   `obtain ⟨k, hk_K', n, hn_ker, hsum⟩ := hz_top`
+   yields `k ∈ ker(Cbar)`, `n ∈ K'`, `k + n = z` — opposite to the
+   chosen names.  Fix:
+
+   ```lean
+   obtain ⟨k, hk_ker, n, hn_K', hsum⟩ := hz_top
+   ```
+
+   Then update lines 302–305: `hCbar_n` should be derived from
+   `hk_ker` (typo: rename `hCbar_n` → `hCbar_k` if needed for
+   readability); `refine ⟨⟨n, hn_K'⟩, ?_⟩` (using `n` instead of `k`
+   for the K'-element); `show Cbar S C ((⟨n, hn_K'⟩ : K').val) = y`,
+   etc.
+
+2. **`linarith` over a non-ordered field at line 308.**  Replace
+   `linarith [hsum]` with `linear_combination hsum` (or
+   `eq_sub_of_add_eq hsum.symm` — `linear_combination` is the
+   already-documented gotcha-pattern for module-vector identities).
+
+After fixing these two bugs, lines 309 and 310 (the remaining
+sub-`sorry`s) close via `map_sub` + `hCbar_k` (Cbar k = 0) + `hz`
+(Cbar z = y), yielding `Cbar S C n = y`.
+
+**Round 10 strategy (post-fix):**
+
+After the Step 0.75 build-break is resolved:
+
+1. **Step 1 (~80 lines, line 322).** Build the `d : E' ≃ E'`:
+   - Wrap `CbarK'_lin` as `cbarK' : K' ≃ V0/range X0` via
+     `LinearEquiv.ofBijective`.
+   - `f : L1' ≃ K'` via composition
+     `Sₕ ≪≫ VplusEquivQuotientRange.symm ≪≫ cbarK'.symm`.
+   - `(f, gL0) : L1' × L0' ≃ K' × ker(Cbar)` via
+     `LinearEquiv.prodCongr`.
+   - `prodEq_L : L1' × L0' ≃ E'` via
+     `Submodule.prodEquivOfIsCompl S.L1' S.L0' S.isComplL'`.
+   - `prodEq_K : K' × ker(Cbar) ≃ E'` via
+     `Submodule.prodEquivOfIsCompl K' (LinearMap.ker (Cbar S C)) hK'_compl.symm`.
+   - `d.symm := prodEq_L.symm ≪≫ (f.prodCongr gL0) ≪≫ prodEq_K`.
+   - `d := d.symm.symm`.
+   - Verify `hd_L1'`: for `a' ∈ L1'`,
+     `Cbar(d.symm a') = mkQ(Sₕ a')` via the explicit composition
+     unfolding.
+   - Verify `hd_L0'`: for `b' ∈ L0'`, `Cbar(d.symm b') = 0` via
+     `gL0 b' ∈ ker(Cbar)`.
+
+2. **Step 2 (~60 lines, line 339).** Build `D : E' →ₗ V0`:
+   - Show `(C ∘ d.symm - CST Sₕ) e0 ∈ range S.X0` for every `e0`,
+     using `hd_L1'` and `hd_L0'`.
+   - Pick `K ⊕ ker X0 = V0` via `Submodule.exists_isCompl`.
+   - `X0|_K : K ≃ range X0` via `LinearMap.linearEquivOfInjective`.
+   - Compose to get `D : E' →ₗ V0` with the alignment property.
+
+3. **Step 3 (~120 lines, line 356).** Build `T : L0' →ₗ L0`:
+   - After `leviGL_E_conj_XCB d` and `uD_conj_XCB D`, the conjugated
+     operator equals `XCB (CST Sₕ) B''` for an explicit `B''`.
+   - Choose `D|_{L1'}` carefully (via `vplusKerPairing_isPerfPair`)
+     so that `B''(L1') ⊂ L1`.
+   - Skewness propagates from `_hB`.
+   - `T := codRestrict L0 (B'' |_{L0'}) <proof>`.
+   - Verify the conjugation equation via `parametrizeX0PlusU_uniqueness`.
+
+**Decomposition strategy:** if the full body proves too large, split
+each Step into a focused private helper (`_step1`, `_step2`,
+`_step3`).  Each carries its own sorry if intractable.  Round 9
+already partially set this up.
 
 **Stop conditions:**
-- If Step 1 (the d-construction) proves intractable due to
-  `Module.finrank` plumbing, extract Step 1 as a separate
-  `private def` skeleton with its own `sorry`, then close
-  Steps 2–4 against the opaque `(Sₕ, d)`. The sorry localises
-  to a smaller, more tractable piece for Round 9.
-- If `lake build` breaks: revert and re-attempt smaller pieces.
-  `pNormalForm_witnesses` is private; only its body may change.
-  Do NOT modify the signature (the Tier S #5 restructure landed
-  in Round 7).
-- Estimated effort: ~150 lines.
+- If the build cannot be repaired in the first 20% of round budget,
+  back out the broken Step 0.75 sub-construction entirely (replace
+  `CbarK'_lin` with `LinearEquiv.ofFinrankEq` on a dim equality),
+  even at the cost of a slightly harder Step 1 alignment proof.
+- If Step 3 is intractable: ship Steps 1+2, leave Step 3 as a
+  focused sorry inside `_step3` helper.
+- Estimated total effort: ~260 lines.
 
 **Acceptance criteria:**
 - `lake env lean InducedOrbitToy/NormalForm.lean` compiles.
-- The `sorry` at body line 216 is replaced by a real proof.
-  Acceptable to introduce one isolated helper `private def`
-  with its own sorry if Step 1 (d-construction) is intractable;
-  in that case the helper sorry must be documented with a
-  `Gap:` comment block.
 - `lake build` is green at end of round.
-- `#print axioms pNormalForm_witnesses` shows only
-  `[propext, Classical.choice, Quot.sound]` (no `sorryAx`),
-  unless the prover punted on Step 1 with a documented helper
-  sorry.
-- `#print axioms pNormalForm` then also shows clean axioms
-  (the body is already sorry-free; only the transitive
-  dependence on `pNormalForm_witnesses` brought in `sorryAx`).
-- Stale comment hygiene: refresh lines 344, 357 if they still
-  reference the removed `L0_isotropic` field (Round 6 carry-forward).
+- Step 0.75 build-break (lines 277–310) is fixed.
+- Step 1 (line 322) sorry replaced by real proof.
+- Step 2 (line 339) sorry replaced or moved to `_step2` helper.
+- Step 3 (line 356) sorry replaced or moved to `_step3` helper.
+- `#print axioms pNormalForm` shows
+  `[propext, Classical.choice, Quot.sound]` IF all sub-steps close.
+- No new `axiom` declarations.
 
-### 2. `InducedOrbitToy/Orbits.lean` — close `sIndependenceAndOrbitCriterion` (line 324)
+### 2. `InducedOrbitToy/Orbits.lean` — Tier S #7: tighten helper signature, close easy cases of kernel-identification
 
-**Reference:** session 9 recommendations
-(`.archon/proof-journal/sessions/session_9/recommendations.md`
-§ Option B "Orbits prover's plan"); session 8 task report's "Next
-session note" (archived under
-`.archon/task_results/processed/round6/Orbits.lean.md`).
+**Reference:** Gap docstring at Orbits.lean lines 487–523;
+Round 9 prover's "Next steps (Round 10 candidates)" in
+`.archon/task_results/processed/round9/InducedOrbitToy_Orbits.lean.md`.
 
 **Reference (project files):**
-- `NormalForm.lean :: pNormalForm_residual_orbit_iso` — sorry-free
-  public theorem (Round 7). Returns
-  `IsParabolicElement S p ∧ p ∘ₗ XST T₁ = XST T₂ ∘ₗ p ↔ IsometryRel S T₁ T₂`
-  conjugation/isometry equivalence. Now usable as a black box.
-- `Basic.lean :: IsParabolicElement`, `IsometryEnd`, `GOrbit`,
-  `IndPG`, `Tset_circ`, `IsometryRel`, `BT`, `XST`.
-- `Slice.lean :: parabolic_decompose` (still sorry'd, but the
-  *statement* is callable; if Objective 3 lands in parallel its
-  proof becomes available).
+- `NormalForm.lean :: MaximalRank` (line 54), `Tset_circ` (line 62) —
+  `Tset_circ T ↔ IsSkewT T ∧ finrank (range T) = MaximalRank`.
+- `Orbits.lean :: ker_XST_eq_flagE_of_injective` (line 444, Round 9
+  helper) — `LinearMap.ker T = ⊥ → ker XST = flagE`.
+- `Orbits.lean :: orbit_conj_rearr` (line 421, Round 9 helper) —
+  conjugation rearrangement, sorry-free.
+- `Orbits.lean :: flagE_le_ker_XST` (line 457, Round 9 helper) —
+  unconditional `flagE ⊆ ker XST`, sorry-free.
 
-**Concrete deliverables:** close both scoped sorries.
+**Round 9 inheritance:**
 
-**Reverse direction (line 376) — direct, do this first:**
-1. `unfold IsometryRel Bilinear.AreIsometric at hiso` already
-   landed (Round 4). Have `_h : L0' ≃ₗ L0'` and
-   `_h_isom : ∀ u v, BT T₂ (_h u) (_h v) = BT T₁ u v`.
-2. Apply `pNormalForm_residual_orbit_iso` (or its appropriate
-   half) to lift `_h` to a P-element `p` with
-   `p ∘ₗ XST T₁ = XST T₂ ∘ₗ p`. Need `Sₕ₁ = Sₕ₂` to do this
-   directly; see Hypothesis additions below.
-3. Use parabolic ⊂ isometry group: `IsParabolicElement → IsometryEnd`
-   (extract from `IsParabolicElement`'s 4th conjunct
-   `IsOrthogonal S.ambientForm p`, which is exactly `IsometryEnd`).
-4. Mutual inclusion of orbits via `p ∈ G` membership-witnessing.
+The body of `isParabolicElement_ringInverse_of_orbit_witness` (line
+524) is structurally sound modulo the kernel-identification
+sub-claim (line 563):
 
-**Forward direction (line 358) — harder, do this second:**
-1. Have `_g : Module.End F S.V`, `_hg : IsometryEnd S _g`,
-   `_hyeq : XST S Sₕ₁ T₁ = _g ∘ₗ XST S Sₕ₂ T₂ ∘ₗ Ring.inverse _g`
-   (already extracted via `obtain` in Round 4).
-2. Need `_g ∈ P` (i.e. `IsParabolicElement S _g`). Two routes:
-   - **Route A — use `parabolic_decompose`:** if Objective 3 (Slice
-     prover) lands `parabolic_decompose` in parallel, applying it
-     to `_g` (after upgrading `IsometryEnd` to `IsParabolicElement`
-     via slice-stability) yields the decomposition directly. **But
-     parabolic_decompose itself takes `IsParabolicElement` as input,
-     not `IsometryEnd`** — so this route still needs the
-     slice-stability step.
-   - **Route B (preferred for round-8 independence):** direct
-     flag-stability argument from `_hg` + `_hyeq`. The conjugation
-     equation forces `_g` to preserve flagE and flagEV0 (since
-     `XST` does, and `_hg` is an isometry, and the conjugation
-     equation translates the flag conditions). With
-     `Nondegenerate` and `(2 : F) ≠ 0`, this can be proved
-     directly without invoking `parabolic_decompose`.
-3. Apply `pNormalForm_residual_orbit_iso` (forward half) to extract
-   the bilinear isometry `h : L0' ≃ L0'` matching `BT T₁` and
-   `BT T₂`, repackage as `IsometryRel S T₁ T₂`.
+```lean
+have h_kerXST_eq_flagE :
+    LinearMap.ker (XST S Sₕ T₁) = S.flagE
+      ∧ LinearMap.ker (XST S Sₕ T₂) = S.flagE :=
+  sorry  -- TODO: case-split on (eps = 1 ∧ Odd l)
+```
 
-**Hypothesis additions.** Both directions need extra hypotheses:
-- `S.formV0.Nondegenerate`,
-- `(2 : F) ≠ 0`,
-- `Sₕ₁ = Sₕ₂` (or equivalently, replace the two distinct `Sₕ₁`,
-  `Sₕ₂` in the statement with a single `Sₕ`).
+The flagE conjunct closes fully once this sub-claim lands.  The
+flagEV0 conjunct (line 624) is independently sorry'd and remains so
+(deferred to polish via `parabolic_decompose`).
 
-**Recommended approach (option (b) per session-9 review):**
-strengthen `pNormalForm_residual_orbit_iso` to absorb the
-`Nondegenerate` and `(2 : F) ≠ 0` hypotheses, keeping
-`sIndependenceAndOrbitCriterion`'s public statement clean. Note
-that this is a NormalForm.lean signature change, which means the
-Orbits prover should NOT edit NormalForm.lean (file-ownership rule).
-Instead:
-- Option (a): add hypotheses to `sIndependenceAndOrbitCriterion`
-  directly. Cleaner for Round 8 (no cross-file race with the
-  NormalForm prover); slightly less clean public API. **Take
-  option (a).**
-- The downstream `main` theorem in `Orbits.lean` calls
-  `sIndependenceAndOrbitCriterion`; thread the new hypotheses
-  through there as well (`main` already takes
-  `hNondeg : S.formV0.Nondegenerate` and
-  `_hChar : (2 : F) ≠ 0` — those are reusable).
-- For the `Sₕ₁ = Sₕ₂` issue, Round 8 may either (i) restrict the
-  statement to a single `Sₕ` parameter (cleaner, breaks API
-  symmetry with two separate `Sₕ`s), or (ii) keep two `Sₕ`s but
-  add `Sₕ₁ = Sₕ₂` as an explicit hypothesis. **Option (i)
-  preferred** — replace `Sₕ₁ Sₕ₂ : S.L1' ≃ₗ[F] S.Vplus` with a
-  single `Sₕ : S.L1' ≃ₗ[F] S.Vplus`, since the blueprint argument
-  uses a single `Sₕ` anyway.
+**Round 10 strategy — Tier S #7 (option (a) signature tightening):**
+
+1. **Tighten helper signature.** Replace
+   `(_hT₁ : SliceSetup.IsSkewT S T₁) (_hT₂ : SliceSetup.IsSkewT S T₂)`
+   with
+   `(hT₁ : T₁ ∈ S.Tset_circ) (hT₂ : T₂ ∈ S.Tset_circ)`.
+
+2. **Add `by_cases h_easy : ¬ (S.eps = 1 ∧ Odd (Module.finrank F S.L0'))`
+   wrapping the `h_kerXST_eq_flagE` derivation.**
+
+   - **Easy branch (cases 1, 2):**
+     ```lean
+     have hMR : S.MaximalRank = Module.finrank F S.L0' := by
+       unfold SliceSetup.MaximalRank
+       rw [if_neg h_easy]
+     have hker_eq_bot : ∀ T : S.L0' →ₗ[F] S.L0,
+         T ∈ S.Tset_circ → LinearMap.ker T = ⊥ := by
+       intro T hT
+       have h_rank := LinearMap.finrank_range_add_finrank_ker T
+       rw [hT.2, hMR] at h_rank
+       have hker_zero : Module.finrank F (LinearMap.ker T) = 0 := by omega
+       exact Submodule.finrank_eq_zero.mp hker_zero
+     have hker1 : LinearMap.ker T₁ = ⊥ := hker_eq_bot T₁ hT₁
+     have hker2 : LinearMap.ker T₂ = ⊥ := hker_eq_bot T₂ hT₂
+     refine ⟨?_, ?_⟩
+     · exact ker_XST_eq_flagE_of_injective S _hNondeg Sₕ T₁ hT₁.1 hker1
+     · exact ker_XST_eq_flagE_of_injective S _hNondeg Sₕ T₂ hT₂.1 hker2
+     ```
+   - **Hard branch (case 3, ε=+1, l odd):** `sorry` with a Gap
+     comment noting that the helper as currently stated is
+     mis-stated in this case (the kernel-identification fails when
+     `dim ker T_i = 1`).  Closing case 3 requires either a separate
+     argument via uniqueness of alternating forms (blueprint lines
+     658–676), or restructuring the caller
+     `sIndependenceAndOrbitCriterion` to avoid this code path in
+     case 3.
+
+3. **Update caller `sIndependenceAndOrbitCriterion`.** Find the call
+   site of `isParabolicElement_ringInverse_of_orbit_witness` (around
+   line 700+ in Orbits.lean) and replace the `hT_i.1` extraction
+   (currently passing `IsSkewT` projected from `Tset_circ`) with
+   `hT_i` directly.  The caller already has `hT₁ hT₂ ∈ Tset_circ` in
+   scope.
+
+4. **flagEV0 conjunct (line 624) — no change.**  Document the
+   case-3 dependency on `parabolic_decompose` more explicitly in
+   the Gap comment if needed.  Sorry remains.
 
 **Stop conditions:**
-- If the forward direction (Route B) proves intractable — i.e.
-  the slice-stability argument requires significant new
-  infrastructure — reduce it to a separate `private lemma
-  isParabolic_of_isometry_conj` with its own sorry. The Round 8
-  delivers reverse direction sorry-free + forward direction
-  reduced to the skeleton.
-- Estimated effort: ~80 lines (forward + reverse combined).
+- If the rank-nullity `ker T = ⊥` derivation runs into an obstacle
+  (e.g., `Submodule.finrank_eq_zero` doesn't unify cleanly), package
+  it as a private helper.
+- If the caller cascade hits more than 1 site, revert and re-plan.
+- Estimated effort: ~50 lines.
 
 **Acceptance criteria:**
 - `lake env lean InducedOrbitToy/Orbits.lean` compiles.
-- Both scoped sorries (lines 358, 376) replaced. If forward
-  direction punted, the surviving sorry is in a private helper,
-  not in `sIndependenceAndOrbitCriterion`'s body.
-- `lake build` is green at end of round.
-- `#print axioms sIndependenceAndOrbitCriterion` shows only
-  `[propext, Classical.choice, Quot.sound]` (or transitive
-  `sorryAx` if a private helper still carries a sorry).
-- `main` in Orbits.lean compiles after the
-  `sIndependenceAndOrbitCriterion` signature update (any new
-  hypotheses are threaded through).
-- Stale comment refresh: line 357 reference to `L0_isotropic`,
-  if any (carry-forward).
-
-### 3. `InducedOrbitToy/Slice.lean` — close `parabolic_decompose` (line 1078, OPTIONAL)
-
-**Reference:** Gap comment block in-file at lines 1062–1077;
-`.archon/informal/levi.md` § 6.6.
-
-**Reference (project files):**
-- `Slice.lean` Round 6 Levi machinery: all sorry-free in scope.
-- `Slice.lean :: parametrizeX0PlusU_existence`,
-  `parametrizeX0PlusU_uniqueness` — used in Step C.
-- `X0Geometry.lean :: vplusKerPairing_isPerfPair` — used in Step B.
-
-**Concrete deliverable:** close the single `sorry` at line 1089
-(declaration line 1078).
-
-**Three substantive sub-constructions per `informal/levi.md` §6.6:**
-1. **Step A (g₀ extraction):** action of `p` on the quotient
-   `flagEV0 / flagE ≃ V0`. Since `p` preserves both `flagE` and
-   `flagEV0`, it descends to a quotient automorphism, which —
-   under the canonical iso `flagEV0/flagE ≃ V0` — yields
-   `g₀ : V0 ≃ V0`. Need to verify `g₀` commutes with `S.X0` (or
-   equivalently is a `formV0`-isometry under the
-   `vplusKerPairing` perfect pairing).
-2. **Step B (`(d⁻¹)^∨` extraction):** action of `p` on
-   `flagE = E`. Restricting `p` to `flagE` (a 1-dim'l submodule
-   isomorphic to `E`) gives `pE : E ≃ E`. Take its inverse-dual
-   `d := lambdaDualE pE.symm` interpreted on `E'`.
-3. **Step C (residual D):** apply
-   `parametrizeX0PlusU_uniqueness` to
-   `p ∘ leviGL_E d.symm ∘ leviGL_V0 g₀.symm`. The resulting
-   element fixes both `flagE` and `flagEV0` *with the identity
-   action on quotients*, so it factors through `uD D` for some
-   `D : E' →ₗ V0` by `parametrizeX0PlusU_uniqueness`.
-
-**Stop conditions:**
-- This objective is **OPTIONAL** for Round 8. Round 7 sidestepped
-  `parabolic_decompose` via Option B (direct construction in
-  `residual_levi_extract` / `residual_levi_build`), and the
-  Orbits prover (Objective 2) has Route B as its primary plan,
-  also independent of `parabolic_decompose`.
-- If `parabolic_decompose` proves intractable in one round (which
-  is plausible — Round 6 already deferred it once), the prover
-  may stop and report. The `sorry` stays. Round 9 (or polish stage)
-  picks it up.
-- The prover should NOT spend more than ~50% of the round budget
-  on this objective if it stalls; redirect to verifying the rest
-  of `Slice.lean` compiles cleanly and reporting progress.
-- Estimated effort: ~85 lines if all three steps land cleanly.
-
-**Acceptance criteria (if the prover attempts to close):**
-- `lake env lean InducedOrbitToy/Slice.lean` compiles.
-- The `sorry` at line 1089 is replaced by a real proof.
-- `lake build` is green at end of round.
-- `#print axioms parabolic_decompose` shows only
-  `[propext, Classical.choice, Quot.sound]`.
-- All existing Slice.lean declarations through line 1077 are
-  byte-for-byte unchanged (the proof is body-only).
-
-**Acceptance criteria (if the prover does NOT attempt or fails):**
-- `lake build` remains green; no regressions.
-- A "no work" or "attempted but stalled" report is filed in
-  task_results/InducedOrbitToy_Slice.lean.md with a brief note on
-  what was tried.
+- `lake build` green at end of round.
+- Helper signature uses `T_i ∈ Tset_circ` (not `IsSkewT`).
+- The kernel-identification sub-claim (line 563) is split:
+  - Easy cases (1, 2): closed sorry-free via
+    `ker_XST_eq_flagE_of_injective` + rank-nullity from `Tset_circ`.
+  - Hard case (3): focused sorry with documented Gap.
+- flagEV0 sorry (line 624) remains; deferred to polish.
+- Caller `sIndependenceAndOrbitCriterion` updated.
+- `#print axioms sIndependenceAndOrbitCriterion`,
+  `#print axioms main` — still transitive `sorryAx` via case 3
+  + flagEV0 (expected).
 
 ### Files NOT assigned this round
 
-The following files have no remaining sorries and are blocked from
-edits this round.  If the harness dispatches a prover anyway, the
-prover should:
+The following files have no Round-10 sorries assigned. If the harness
+dispatches a prover anyway, the prover should:
 - verify the file compiles in isolation
   (`lake env lean InducedOrbitToy/<File>.lean`),
 - write a brief "no work" `task_results/<File>.md`, and
@@ -341,34 +337,37 @@ prover should:
   line 221 must be left intact (part of the autoformalised
   signature).
 - `InducedOrbitToy/LocalForms.lean` — already done; no sorries.
+- `InducedOrbitToy/Slice.lean` — `parabolic_decompose` (line 1109)
+  carries a documented mathematical gap (Tier S #6, deferred).
+  **Do NOT attempt to close `parabolic_decompose` with the current
+  signature.**  If a prover is dispatched: verify-only, "no work"
+  report.
 
-## Coordination notes for Round 8 (parallel-safety)
+## Coordination notes for Round 10 (parallel-safety)
 
-- **Three files edited simultaneously.** No source-level overlap:
-  NormalForm prover edits lines ~190–230, Orbits prover edits
-  lines ~324–376 + main signature thread, Slice prover edits
-  lines ~1078–1089 (body of `parabolic_decompose` only).
+- **Two files edited simultaneously.** No source-level overlap:
+  NormalForm prover edits lines ~277–360 (Step 0.75 fix + Steps
+  1, 2, 3), Orbits prover edits lines ~524–610 (helper signature +
+  kernel-identification body) plus the call site in
+  `sIndependenceAndOrbitCriterion` (around line 700+).
 - **Cross-file dependencies:**
-  - NormalForm Objective 1 has `Slice.lean` Round 6 + Round 7
-    APIs as dependencies — all stable, sorry-free.
-  - Orbits Objective 2 has `pNormalForm_residual_orbit_iso` as
-    its main dependency — sorry-free (Round 7).
-  - Slice Objective 3 has `parametrizeX0PlusU_uniqueness` and the
-    Round 6 Levi machinery as dependencies — all stable.
-  - **Critical:** if Orbits Objective 2 attempts Route A (uses
-    `parabolic_decompose`), it depends on Objective 3 landing.
-    Round 8 plan recommends Route B to maintain independence.
-  - **Signature change in Orbits Objective 2:** the prover will
-    add hypotheses to `sIndependenceAndOrbitCriterion` and update
-    `main`. Both edits are inside `Orbits.lean`; no cross-file
-    cascade unless the prover takes option (b) (strengthen
-    `pNormalForm_residual_orbit_iso`), which we discourage.
-- **End-of-round merge:** harness merges all three file edits.
-  Mid-round build breakage is possible (e.g., if Orbits prover's
-  signature change cascades through `main`); end-of-round build
-  must be green.
+  - NormalForm Objective 1 has `Slice.lean` Round 6 + Round 7 APIs
+    + `X0Geometry.lean` `VplusEquivQuotientRange` /
+    `vplusKerPairing_isPerfPair` as dependencies — all stable and
+    sorry-free.
+  - Orbits Objective 2 has `NormalForm.lean :: Tset_circ`,
+    `MaximalRank`, `kernelImage_ker` (via Round 9 helper) as
+    dependencies — all stable.
+  - **No cross-file race risk.** Both are file-local edits.
+- **Build coupling:** Round 9 ended with NormalForm broken.  Round 10
+  NormalForm prover MUST get a green isolated build before merging.
+  Orbits prover can proceed independently as Orbits.lean is currently
+  green in isolation.
+- **End-of-round merge:** harness merges both file edits.  Plan
+  agent must verify `lake build` independently (Round 9's prover
+  self-report contradicted reality).
 
-## Reusable Gotchas (carry forward, augmented through Round 7)
+## Reusable Gotchas (carry forward, augmented through Round 9)
 
 - `LinearMap.IsAdjointPair`, **not** `LinearMap.BilinForm.IsAdjointPair`.
 - `LinearMap.IsOrthogonal B g` unfolds to `∀ x y, B (g x) (g y) = B x y`.
@@ -390,36 +389,30 @@ prover should:
 - `change Module.finrank F S.paired.E + _ = _` to bridge `S.E ≡ S.paired.E`
   abbrev boundary before `omega`.
 - Block-matrix `_apply` helpers: write the fully unfolded RHS in a
-  `show` clause before `rfl` (multi-`let` defs aren't definitionally
-  equal to their RHS without the `show`).
+  `show` clause before `rfl`.
 - `(2 : F)⁻¹ + (2 : F)⁻¹ = 1`: `rw [← two_mul, mul_inv_cancel₀ hChar]`
-  (do **not** `field_simp` — leaves residual `1 + 1 = 2`).
+  (do **not** `field_simp`).
 - `Ring.inverse` on `Module.End F V` is the right packaging for
   "best-effort inverse" in orbit predicates (no division-ring needed).
-- `Units.mkOfMulEqOne` for `IsUnit` from one-sided inverse on
-  `Module.End F V` (finite-dim V):
-  `(Units.mkOfMulEqOne _ _ h).isUnit`. Replaces the deprecated
-  `LinearMap.mul_eq_one_of_mul_eq_one`.
+- `Units.mkOfMulEqOne` for `IsUnit` from one-sided inverse.
 - `obtain ⟨a, b, c⟩ := <existential>` makes destructured fields opaque
-  — fix by packaging the equation directly in helper's conclusion
-  (avoid the existential wrapper).
+  — fix by packaging the equation directly in helper's conclusion.
 - Verify structure location via `grep` before scoping a refactor.
 - **Adjoint-pair → orthogonal via paired inverse:**
   given `IsAdjointPair B B f g` and `g ∘ f = id`, conclude
-  `IsOrthogonal B f` via `intro u v; calc B (f u) (f v) = B u (g (f v))
-  := hAdj u (f v) _ = B u v := by rw [hinv_apply]`.
+  `IsOrthogonal B f` via 3-line calc chain.
 - **Cross-file proof structure validation via `lean_run_code`:** when a
-  proof depends on a sister-prover's signature change not yet landed,
-  validate the local proof shape with hypothetical inputs of the correct
-  shape via a standalone `example`.
+  proof depends on a sister-prover's signature change.
 - **Bilinear-form identities via block-decomposition + `linear_combination`:**
-  destruct vectors as `(e, v, e')`, apply `*_apply` lemmas, use the
-  standard `simp only [SliceSetup.ambientForm, LinearMap.mk₂_apply, …]`
-  set, apply pairing-eq lemmas, then close with `linear_combination`
-  using ε-symmetry hypotheses.
+  destruct vectors as `(e, v, e')`, apply `*_apply` lemmas, simp the
+  ambient form, apply pairing-eq lemmas, then close with
+  `linear_combination`.
 - **`IsSkewAdjoint` closure proofs over generic `[Field F]`:** use
   `linear_combination hf + hg` (add) / `linear_combination c * hf` (smul).
   **Do not use `linarith`** — it requires `LinearOrderedField`.
+- **Submodule-vector identities (e.g. `k = z - n` from `k + n = z`)
+  over a generic field:** use `linear_combination hsum`, NOT
+  `linarith` (Round 9 build-break diagnosis).
 - **`Submodule.IsCompl.projection_add_projection_eq_self`** combined
   with `Submodule.IsCompl.projection_apply` to bridge the
   `IsCompl.projection` and `linearProjOfIsCompl`-coerced-subtype forms.
@@ -427,26 +420,21 @@ prover should:
 - **Cross-file 4-tuple cascade:** when a structure or predicate gains a
   new conjunct, every `obtain ⟨...⟩` and `refine ⟨..., ?_⟩` site needs
   a parallel arity bump.
-- **`linear_combination` is scalar-only over generic Modules.** It
-  synthesises `CommSemiring`/`CommRing` on the *target* type. For module
-  identities, drop to `rw` chains + `abel`.
+- **`linear_combination` is scalar-only over generic Modules.** For
+  module identities, drop to `rw` chains + `abel`.
 - **Subtype-wrapping anti-pattern for `Iso + Property`:**
-  packaging `{φ : … // ∀ w, …}` inside a helper `def` fails when the
-  proof needs `cases` on `IsCompl.codisjoint` (Prop-eliminator
-  restriction). Inline the `obtain` at each Prop-conclusion call site.
+  inline the `obtain` at each Prop-conclusion call site.
 - **Drop explicit `LinearMap` coercion in `rw` arguments** once the
-  callee accepts `LinearEquiv` — Lean auto-inserts.
+  callee accepts `LinearEquiv`.
 - **`lean_leansearch` natural-language >> `lean_loogle`** for
   projection / `IsCompl.projection_*` API discovery.
 - **`#print axioms` via `Bash` + `/tmp/check_axioms.lean`:** standard
   closure-check pattern.
 - **(Round 7) `prodEquivOfIsCompl` symm via
-  `Submodule.toLinearMap_prodEquivOfIsCompl_symm`:** the symm coerces
-  to `(linearProjOfIsCompl p q h).prod (linearProjOfIsCompl q p _)`.
+  `Submodule.toLinearMap_prodEquivOfIsCompl_symm`.**
 - **(Round 7) `set ... with hdef` for opaque shorthands, BUT NOT for
   sums you'll later `LinearMap.add_apply`-rewrite.**
 - **(Round 7) `congr 1` does NOT split through outer `LinearMap.comp`.**
-  Prove component identities as separate `have`s.
 - **(Round 7) Linearity in 1st arg of `S.paired.pairing`: `map_add`
   first, then `add_apply`.**
 - **(Round 7) `(qFun l : L0').val = qFunRaw l` is *definitionally* equal**
@@ -454,29 +442,67 @@ prover should:
 - **(Round 7) Trailing `rfl` after `simp only [..., map_zero]` is
   "No goals" lint.**
 - **(Round 7) LinearEquiv at definition; pass directly at use site.**
-  Lean auto-coerces via `LinearEquiv.toLinearMap`-via-CoeFun. Explicit
-  coercion fails type-check.
 - **(Round 7) `S.V` ≡ `S.paired.E'` abbrev boundary requires explicit
-  type ascription in helper defs:** every `↑d.symm e'` needs
-  `(d.symm : S.paired.E' →ₗ[F] S.paired.E')`.
+  type ascription in helper defs.**
 - **(Round 7) `XST_apply` private helper near top of consuming
-  section.** Saves ~10 lines per consumer.
+  section.**
 - **(Round 7) `extendL0'IsoToE'` block-extension pattern.** Build
   `E' ≃ E'` extending an `L0' ≃ L0'` iso by `id` on `L1'` via
-  `prodEq.symm ≪≫ₗ (refl × h) ≪≫ₗ prodEq`. The two bridge lemmas
-  (`projL1' ∘ d.symm = projL1'`, `projL0' ∘ d.symm = h.symm ∘ projL0'`)
-  are reusable.
+  `prodEq.symm ≪≫ₗ (refl × h) ≪≫ₗ prodEq`.
+- **(Round 8) `Ring.inverse` algebra on `Module.End F V`:**
+  `Ring.inverse_mul_cancel`, `Ring.mul_inverse_cancel`,
+  `IsUnit.ringInverse` are the canonical tools.  No division-ring
+  needed.
+- **(Round 8) `noncomm_ring` for module-endomorphism associativity.**
+  Closes goals where `ring` (commutative-only) fails.
+- **(Round 8) Body-sorry → helper-sorry refactor pattern.** Extract
+  obstruction into focused private helper with own sorry + Gap
+  comment.  Public-facing body becomes a one-liner.
+- **(Round 8) Mathematical-gap finding via partial closure.** When a
+  proof attempt extracts substantial structural data and then hits an
+  obstruction that's not just plumbing, investigate the *statement*
+  before retrying.  The Slice prover's `parabolic_decompose`
+  finding (residual `B'` parameter missing) is a structural-fix
+  outcome, not a prover failure.
+- **(Round 9) Dim chain pattern.** When a helper takes a structural
+  finrank hypothesis (`_hL1'`, `_hRank`), the dim chain (Cbar
+  surjectivity, ker dim, complement dim) is fully closeable via
+  Mathlib lemmas: `LinearMap.range_eq_top.mp` +
+  `Submodule.eq_top_of_finrank_eq` for surjectivity from dim;
+  `LinearMap.finrank_range_add_finrank_ker` + `omega` for
+  rank-nullity; `Submodule.finrank_sup_add_finrank_inf_eq` +
+  `IsCompl.codisjoint.eq_top` + `IsCompl.disjoint.eq_bot` +
+  `finrank_top` + `finrank_bot` for sum-decomposition dim.
+- **(Round 9) Kernel-identification refactor.** When two scoped
+  sorries reduce to a common sub-claim, bundle them into one
+  conjunctive sorry (e.g.
+  `ker XST T₁ = flagE ∧ ker XST T₂ = flagE`) consumed by
+  `obtain ⟨h1, h2⟩`.
+- **(Round 9) `kernelImage_ker` + `Submodule.map_bot`:** when
+  `ker T = ⊥`, the `(ker T).map L0'.subtype` quotient collapses to
+  `⊥`, reducing kernel descriptions to flag descriptions.
+- **(Round 9) `MaximalRank` case split:** `unfold
+  SliceSetup.MaximalRank; rw [if_neg h_easy]` for the
+  `¬ (eps = 1 ∧ Odd l)` branch; `if_pos` for the hard case.
+- **(Round 9) `Submodule.mem_sup` destructure: variable order
+  matters.** `IsCompl A B` → `Submodule.mem_sup` on `A ⊔ B` yields
+  `⟨a, hA, b, hB, hsum⟩` where `hA : a ∈ A`, `hB : b ∈ B`.  Match
+  variable names to types or downstream proofs break.
+- **(Round 9) Plan-agent verification of `lake build`:** prover
+  self-reports of "build green" can be wrong.  Always run
+  `lake build` independently after merging task results.
 
 ## Reporting
 
 Each prover writes `.archon/task_results/<File>.md` with:
 - which sorries were closed (line numbers + theorem names);
 - which definitions / theorems were *added* (private helpers, signature
-  updates);
+  updates, hypothesis cascades);
 - exact Mathlib lemmas used;
 - any helper that was punted as `sorry` with a one-line gap explanation;
 - confirmation that the assigned file compiles in isolation
   (`lake env lean InducedOrbitToy/<File>.lean`);
-- confirmation that `lake build` is green at end of round;
+- **confirmation that `lake build` is green at end of round**
+  (run `lake build` directly; do not rely on isolated-file checks);
 - confirmation that no `axiom` was introduced
   (`#print axioms` for each newly-closed theorem in the file).
