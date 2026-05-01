@@ -101,9 +101,9 @@ and write $S^\vee:=C_S^\vee:V_0\to L_1$.
 
 For a map $T:L'_0\to L_0$, let $B(T):E'\to E$ be $T$ on $L'_0$ and zero on $L'_1$, and set
 $$
-\mathscr T:=\{T:L'_0\to L_0:\ B(T)\text{ satisfies (B)}\}.
+\operatorname{Herm}_{-\epsilon}(L'_0):=\{T:L'_0\to L_0:\ B(T)\text{ satisfies (B)}\}.
 $$
-For $T\in\mathscr T$, put
+For $T\in\operatorname{Herm}_{-\epsilon}(L'_0)$, put
 $$
 B_T(u,v):=\langle Tu,v\rangle,
 \qquad
@@ -120,7 +120,7 @@ $$
 and
 $$
 \operatorname{Form}_r(L'_0)
-:=\{T\in\mathscr T:\operatorname{rank}_D T=r\}.
+:=\{T\in\operatorname{Herm}_{-\epsilon}(L'_0):\operatorname{rank}_D T=r\}.
 $$
 
 ## Lemma A.1: classification of the open induced orbits
@@ -180,13 +180,13 @@ $$
 
 ## Proof of Lemma A.1
 
-The proof is a calculation of the open orbits of
+Fix $X_0\in\mathcal O_0$.  The computation reduces to classifying the open orbits of
 $$
-H_{X_0}:=(\operatorname{GL}_D(E)\times S_{X_0})\ltimes U
+P_{X_0}:=(\operatorname{GL}_D(E)\times S_{X_0})\ltimes U
 $$
 on the slice $X_0+\mathfrak u$, where
 $$
-S_{X_0}:=\{g\in G_0:gX_0g^{-1}=X_0\}
+S_{X_0}:=\{g\in G_0:\operatorname{Ad}(g)X_0=X_0\}
 $$
 and $U$ is the unipotent radical of $P$.  Indeed, since $G_0$ is contained in the Levi factor of $P$ and $\mathfrak u$ is stable under $P$,
 $$
@@ -197,9 +197,25 @@ $$
 \operatorname{Ind}_P^G(\mathcal O_0)
 =\overline{G\cdot(X_0+\mathfrak u)}.                 \tag{8}
 $$
-After fixing $X_0$, the remaining parabolic action on the slice is exactly the action of $H_{X_0}$.
+After fixing $X_0$, the remaining parabolic action on the slice is exactly the action of $P_{X_0}$.
 
-**Step 1: the linear part of the action.**  Let $h\in\operatorname{GL}_D(E)$ and $s\in S_{X_0}$.  Define $h^\vee:E'\to E'$ by
+Recall from (1) that each element of $X_0+\mathfrak u$ has the form $X_{C,B}$.  For each $C:E'\to V_0$, let
+$$
+\bar C:E'\to V_0/\operatorname{Im}X_0
+$$
+be the composition of $C$ with the quotient map.  Since
+$$
+\dim_D E'=\kappa\ge c=\dim_D\ker X_0=\dim_D(V_0/\operatorname{Im}X_0),
+$$
+the condition
+$$
+\operatorname{rank}_D\bar C=c                         \tag{12}
+$$
+defines an open dense subset of $X_0+\mathfrak u$.
+
+**Claim.**  Every $X_{C,B}$ satisfying (12) is $P_{X_0}$-conjugate to $X_{S,T}$ for some $T\in\operatorname{Herm}_{-\epsilon}(L'_0)$.
+
+**Proof of the claim.**  Let $h\in\operatorname{GL}_D(E)$ and $s\in S_{X_0}$.  Define $h^\vee:E'\to E'$ by
 $$
 \langle he,e'\rangle=\langle e,h^\vee e'\rangle
 \qquad(e\in E,\ e'\in E').
@@ -228,7 +244,7 @@ $$
 $$
 where $\bar s$ is the induced action of $s$ on $V_0/\operatorname{Im}X_0$.
 
-**Step 2: the unipotent part of the action.**  Let $R:E'\to V_0$.  Write
+For $R:E'\to V_0$, write
 $$
 u_R=
 \begin{bmatrix}
@@ -258,13 +274,7 @@ B'=hB h^\vee+R^\vee sC h^\vee-(sC h^\vee)^\vee R-R^\vee X_0R. \tag{11}
 $$
 These are the formulas used below.
 
-**Step 3: the open condition and normalization of the $C$-block.**  The open condition is
-$$
-\operatorname{rank}_D\bar C=c.                         \tag{12}
-$$
-It is open because $c=\dim_D(V_0/\operatorname{Im}X_0)$, and it is non-empty precisely because $\kappa\ge c$.
-
-On this open locus, $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Using the $\operatorname{GL}_D(E)$-part of (9), we may arrange
+Now assume (12).  Then $\bar C$ is surjective and $\ker\bar C$ has dimension $l=\kappa-c$.  Since $h^\vee$ ranges over $\operatorname{GL}_D(E')$, the $\operatorname{GL}_D(E)$-part of (9) lets us arrange
 $$
 \ker\bar C=L'_0,
 \qquad
@@ -278,9 +288,9 @@ By (10), conjugating by $u_R$ replaces $C$ by
 $$
 C-X_0R=C_S.
 $$
-Thus every point of the open locus is $H_{X_0}$-conjugate to one with $C$-block equal to $C_S$.
+Thus $X_{C,B}$ is $P_{X_0}$-conjugate to an element with $C$-block equal to $C_S$.
 
-**Step 4: reduction of the $B$-block.**  Keep $C=C_S$ fixed.  To preserve this $C$-block, use only unipotents $u_R$ with
+Keep $C=C_S$ fixed.  To preserve this $C$-block, use only unipotents $u_R$ with
 $$
 R(E')\subset\ker X_0.
 $$
@@ -312,13 +322,11 @@ S^\vee|_{\ker X_0}:\ker X_0\xrightarrow{\sim}L_1
 $$
 is an isomorphism.  Hence the term $-S^\vee R_0$ can be chosen to kill the $L'_0\to L_1$ cross-block of $B$; the adjoint cross-block then vanishes by (B).  After the cross-blocks are killed, the remaining $L'_1\to L_1$ block is killed by choosing $R_1$, using the term $R_1^\vee S-S^\vee R_1$ in (14).  Thus the only surviving block comes from some
 $$
-T\in\mathscr T,
+T\in\operatorname{Herm}_{-\epsilon}(L'_0),
 $$
-and the normal form is $X_{S,T}$.
+and the normal form is $X_{S,T}$.  This proves the claim.  $\square$
 
-In the older notation using $n_u$, the middle-right block denoted $B$ is the present $C$, the top-right block denoted $C$ is the present $B$, and the parameter $u$ is the present $R$.
-
-**Step 5: the residual invariant.**  The stabilizer of the normalized $C$-block contains the block-diagonal subgroup which is the identity on $L'_1$ and acts by
+**The residual invariant.**  The stabilizer of the normalized $C$-block contains the block-diagonal subgroup which is the identity on $L'_1$ and acts by
 $$
 \gamma\in\operatorname{GL}_D(L'_0)
 $$
@@ -330,7 +338,7 @@ This is exactly change of coordinates for the form
 $$
 B_T(u,v)=\langle Tu,v\rangle.
 $$
-The unipotent part preserving $C_S$ does not change the residual $L'_0\to L_0$ block, by (14).  Consequently, the remaining $H_{X_0}$-orbits in the normalized slice are classified by the class
+The unipotent part preserving $C_S$ does not change the residual $L'_0\to L_0$ block, by (14).  Consequently, the remaining $P_{X_0}$-orbits in the normalized slice are classified by the class
 $$
 [B_T]\in\operatorname{Iso}_{r,-\epsilon}.
 $$
@@ -341,7 +349,7 @@ S_1h^\vee|_{L'_1}=S_2.
 $$
 Then (9), with $s=1$, sends $X_{S_1,T}$ to $X_{S_2,T}$.
 
-**Step 6: the open induced orbits.**  The condition (12) is open in $X_0+\mathfrak u$.  Inside the normalized slice, the open part is obtained by requiring the residual form to have maximal possible rank, namely
+**The open induced orbits.**  Inside the normalized slice, the open part is obtained by requiring the residual form to have maximal possible rank, namely
 $$
 T\in\operatorname{Form}_r(L'_0).
 $$
@@ -352,9 +360,9 @@ $$
 \qquad
 [B_T]\longmapsto G\cdot X_{S,T}
 $$
-is the claimed classification map, and Step 5 shows that it is a bijection.
+is the claimed classification map, and the residual-invariant calculation shows that it is a bijection.
 
-**Step 7: the multiplicity.**  Let $x=X_{S,T}$ with $T\in\operatorname{Form}_r(L'_0)$.  We first record
+**The multiplicity.**  Let $x=X_{S,T}$ with $T\in\operatorname{Form}_r(L'_0)$.  We first record
 $$
 \ker x=E\oplus\ker T,                                  \tag{16}
 $$
