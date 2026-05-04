@@ -1,0 +1,1630 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\setlist{nosep}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+\setlength{\headheight}{14pt}
+\emergencystretch=4em
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Short-Kappa Branch}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {\thesection}
+  {0.75em}
+  {}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection}
+  {0.75em}
+  {}
+
+\newcommand{\rethlaslabel}[1]{\textnormal{\small\texttt{#1}}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Short-Kappa Branch of Maximal-Parabolic Induction},
+  pdfauthor={Rethlas verified blueprint},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Short-Kappa Branch of Maximal-Parabolic Induction}
+\author{Rethlas verified blueprint}
+\date{May 4, 2026}
+
+\begin{document}
+\maketitle
+
+\section{lemma lem:x0-geometry-and-k}\label{lemma-lemx0-geometry-and-k}
+
+\subsection{statement}\label{statement}
+
+One has \[
+(\operatorname{Im} X_0)^\perp=\ker X_0.
+\] Hence the restriction of \(\langle\cdot,\cdot\rangle_0\) to
+\(\ker X_0\) has radical \[
+R:=\ker X_0\cap \operatorname{Im} X_0,
+\] and therefore induces a non-degenerate \(\epsilon\)-symmetric form on
+\[
+K_{X_0}:=\ker X_0/R.
+\]
+
+Moreover there exists a subspace \[
+V_1\subset \ker X_0
+\] such that the quotient map \[
+q:\ker X_0\to K_{X_0}
+\] restricts to an isometric isomorphism \[
+q|_{V_1}:V_1\xrightarrow{\sim} K_{X_0}.
+\] For such a choice one has an orthogonal decomposition \[
+\ker X_0=V_1\oplus R
+\] and \[
+V_0=V_1\oplus V_1^\perp,
+\] where \(V_1^\perp\) is \(X_0\)-stable.
+
+Finally, if
+\(h\in \operatorname{Isom}(K_{X_0},\langle\cdot,\cdot\rangle_K)\), then
+there is an element \[
+\widetilde h\in Z_{G_0}(X_0)
+\] whose restriction to \(V_1\) is \((q|_{V_1})^{-1} h (q|_{V_1})\) and
+which acts trivially on \(V_1^\perp\).
+
+\subsection{proof}\label{proof}
+
+If \(w\in \ker X_0\) and \(y=X_0 z\in \operatorname{Im} X_0\), then \[
+\langle w,y\rangle_0=\langle w,X_0 z\rangle_0=-\langle X_0 w,z\rangle_0=0.
+\] So \[
+\ker X_0\subseteq (\operatorname{Im} X_0)^\perp.
+\] Since \[
+\dim (\operatorname{Im} X_0)^\perp
+=\dim V_0-\dim \operatorname{Im} X_0
+=\dim \ker X_0,
+\] the inclusion is an equality.
+
+Therefore the radical of the restriction of
+\(\langle\cdot,\cdot\rangle_0\) to \(\ker X_0\) is \[
+\ker X_0\cap (\ker X_0)^\perp
+=\ker X_0\cap \operatorname{Im} X_0
+=R,
+\] so the form descends to a non-degenerate \(\epsilon\)-symmetric form
+on \(K_{X_0}\).
+
+Choose any linear section \(s:K_{X_0}\to \ker X_0\) of \(q\). The
+pulled-back form \[
+(a,b)\longmapsto \langle s(a),s(b)\rangle_0
+\] is exactly \(\langle a,b\rangle_K\), hence is non-degenerate.
+Therefore the image \[
+V_1:=s(K_{X_0})
+\] is a non-degenerate subspace of \(\ker X_0\), \(q|_{V_1}\) is an
+isometric isomorphism, and \[
+\ker X_0=V_1\oplus R
+\] orthogonally.
+
+Because \(V_1\) is non-degenerate in \(V_0\), we have \[
+V_0=V_1\oplus V_1^\perp.
+\] If \(v\in V_1^\perp\) and \(u\in V_1\), then \(X_0u=0\), so \[
+\langle X_0v,u\rangle_0=-\langle v,X_0u\rangle_0=0.
+\] Thus \(X_0v\in V_1^\perp\), proving that \(V_1^\perp\) is
+\(X_0\)-stable.
+
+Now let \(h\in \operatorname{Isom}(K_{X_0})\). Via the isometry
+\(q|_{V_1}:V_1\to K_{X_0}\), it defines an isometry of \(V_1\), still
+denoted \(h\). Extend it to \(V_0\) by letting it act trivially on
+\(V_1^\perp\). Since \(V_0=V_1\oplus V_1^\perp\) is orthogonal, this
+extension is an element \(\widetilde h\in G_0\).
+
+Because \(X_0\) vanishes on \(V_1\) and preserves \(V_1^\perp\), and
+because \(\widetilde h\) acts as the identity on \(V_1^\perp\), we have
+\[
+\widetilde h X_0 = X_0 \widetilde h.
+\] So \(\widetilde h\in Z_{G_0}(X_0)\), as required.
+
+\section{lemma
+lem:parametrize-x0-plus-u}\label{lemma-lemparametrize-x0-plus-u}
+
+\subsection{statement}\label{statement-1}
+
+For \(C\in \operatorname{Hom}_F(E',V_0)\) let \(C^\vee:V_0\to E\) be
+defined by \[
+\lambda(C^\vee v,e')=-\langle v,Ce'\rangle_0.
+\] For \(B\in \operatorname{Hom}_F(E',E)\) satisfying \[
+\lambda(Bu,v)+\epsilon \lambda(Bv,u)=0
+\qquad (u,v\in E'),
+\] define \[
+X_{C,B}(e+v+e'):=C^\vee v+Be'+X_0 v+Ce'.
+\] Then \(X_{C,B}\in X_0+\mathfrak u\).
+
+Conversely, every element of \(X_0+\mathfrak u\) is uniquely of the form
+\(X_{C,B}\).
+
+\subsection{proof}\label{proof-1}
+
+Relative to the decomposition \(V=E\oplus V_0\oplus E'\), an element
+\(Y\in \mathfrak u\) has the shape \[
+Y=
+\begin{pmatrix}
+0&A&B\\
+0&0&C\\
+0&0&0
+\end{pmatrix}
+\] with \(A:V_0\to E\), \(B:E'\to E\), \(C:E'\to V_0\). The condition
+\(Y\in \mathfrak g\) is \[
+\langle Yx,y\rangle+\langle x,Yy\rangle=0.
+\] Testing this on \((v,e')\in V_0\times E'\) gives \[
+\lambda(Av,e')+\langle v,Ce'\rangle_0=0,
+\] so \(A=C^\vee\). Testing it on \((u,v)\in E'\times E'\) gives \[
+\lambda(Bu,v)+\epsilon\lambda(Bv,u)=0.
+\] Hence every \(Y\in \mathfrak u\) is uniquely of the form \[
+Y_{C,B}(e+v+e')=C^\vee v+Be'+Ce'.
+\] Therefore every element of \(X_0+\mathfrak u\) is uniquely \[
+X_0+Y_{C,B}=X_{C,B}.
+\]
+
+\section{lemma
+lem:unipotent-conjugation}\label{lemma-lemunipotent-conjugation}
+
+\subsection{statement}\label{statement-2}
+
+For \(D\in \operatorname{Hom}_F(E',V_0)\) define \[
+u_D(e+v+e')
+:=\left(e+D^\vee v+\frac12 D^\vee D\,e'\right)+(v+De')+e'.
+\] Then \(u_D\in P\). Moreover, for every pair \((C,B)\) as above, \[
+u_D X_{C,B} u_D^{-1}
+=X_{C-X_0D,\;B+D^\vee C-C^\vee D-D^\vee X_0D}.
+\]
+
+\subsection{proof}\label{proof-2}
+
+In block form, \[
+u_D=
+\begin{pmatrix}
+1&D^\vee&\frac12 D^\vee D\\
+0&1&D\\
+0&0&1
+\end{pmatrix},
+\] and its inverse is \[
+u_D^{-1}=
+\begin{pmatrix}
+1&-D^\vee&\frac12 D^\vee D\\
+0&1&-D\\
+0&0&1
+\end{pmatrix}.
+\] To check that \(u_D\) preserves the form, it is enough to test it on
+pairs involving the \(E'\)-summand.
+
+For \(v\in V_0\) and \(e'\in E'\), \[
+\langle D^\vee v,e'\rangle=\lambda(D^\vee v,e')=-\langle v,De'\rangle_0,
+\] so the mixed \((V_0,E')\)-terms cancel.
+
+For \(u',v'\in E'\), \begin{align*}
+\langle u_Du',u_Dv'\rangle
+&=\lambda\!\left(\frac12 D^\vee D\,u',v'\right)
++\epsilon\lambda\!\left(\frac12 D^\vee D\,v',u'\right)
++\langle Du',Dv'\rangle_0 \\
+&=-\frac12\langle Du',Dv'\rangle_0
+-\frac{\epsilon}{2}\langle Dv',Du'\rangle_0
++\langle Du',Dv'\rangle_0 \\
+&=0,
+\end{align*} because
+\(\langle Dv',Du'\rangle_0=\epsilon\langle Du',Dv'\rangle_0\). Hence
+\(u_D\in G\), and since it fixes \(E\) and stabilizes \(E^\perp\), in
+fact \(u_D\in P\).
+
+Now \[
+X_{C,B}=
+\begin{pmatrix}
+0&C^\vee&B\\
+0&X_0&C\\
+0&0&0
+\end{pmatrix}.
+\] Multiplying the three block matrices \(u_D\), \(X_{C,B}\), and
+\(u_D^{-1}\) gives \begin{align*}
+u_DX_{C,B}u_D^{-1}
+&=
+\begin{pmatrix}
+0&C^\vee+D^\vee X_0&B+D^\vee C-C^\vee D-D^\vee X_0D\\
+0&X_0&C-X_0D\\
+0&0&0
+\end{pmatrix}.
+\end{align*} Since \[
+\bigl(C-X_0D\bigr)^\vee=C^\vee+D^\vee X_0
+\] by the defining relation for \((-)^\vee\), this is exactly \[
+X_{C-X_0D,\;B+D^\vee C-C^\vee D-D^\vee X_0D}.
+\] This proves the formula.
+
+\section{proposition
+prop:generic-normal-form}\label{proposition-propgeneric-normal-form}
+
+\subsection{statement}\label{statement-3}
+
+Fix a \(d\)-dimensional subspace \[
+A\subset V_1\simeq K_{X_0}.
+\] Let \[
+W_A\subset V_0/\operatorname{Im} X_0
+\] be the annihilator of \(A\) under the perfect pairing \[
+(V_0/\operatorname{Im} X_0)\times \ker X_0\to F,
+\qquad (\overline v,k)\mapsto \langle k,v\rangle_0.
+\] Then \(\dim W_A=\kappa\).
+
+Choose any \(\kappa\)-dimensional subspace \(V_A\subset V_0\) mapping
+isomorphically to \(W_A\), and any isomorphism \[
+S_A:E'\xrightarrow{\sim} V_A.
+\] Set \[
+x_A:=X_{S_A,0}\in X_0+\mathfrak u.
+\]
+
+Then:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The restriction \[
+  S_A^\vee|_{\ker X_0}:\ker X_0\to E
+  \] is surjective, with kernel exactly \(A\).
+\item
+  Let \(x=X_{C,B}\in X_0+\mathfrak u\), and suppose that \[
+  \phi_C:=C^\vee|_{\ker X_0}:\ker X_0\to E
+  \] is surjective. Put \[
+  L:=\ker \phi_C.
+  \] Assume that \[
+  L\cap R=0.
+  \] Then \(q|_L:L\xrightarrow{\sim} q(L)\subset K_{X_0}\) is an
+  isomorphism onto a \(d\)-dimensional subspace \(A:=q(L)\), and \(x\)
+  is \(P\)-conjugate to \(x_A\).
+\end{enumerate}
+
+Moreover, for a fixed \(A\), the \(P\)-orbit of \(x_A\) is independent
+of the auxiliary choices of \(V_A\) and \(S_A\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  If \(A_1,A_2\subset V_1\simeq K_{X_0}\) are isometric inside
+  \(K_{X_0}\), then \(x_{A_1}\) and \(x_{A_2}\) are \(P\)-conjugate,
+  hence certainly \(G\)-conjugate.
+\end{enumerate}
+
+\subsection{proof}\label{proof-3}
+
+Since \(A\subset \ker X_0\) has dimension \(d\), its annihilator in
+\(V_0/\operatorname{Im} X_0\) has dimension \[
+c_1-d=\kappa,
+\] which proves \(\dim W_A=\kappa\).
+
+Now let \(a\in A\). By definition of \(W_A\), one has \[
+\langle a,S_Ae'\rangle_0=0\qquad \forall e'\in E',
+\] so \(S_A^\vee a=0\). Thus \[
+A\subseteq \ker(S_A^\vee|_{\ker X_0}).
+\] Conversely, if \(k\in \ker X_0\) satisfies \(S_A^\vee k=0\), then
+\(k\) pairs trivially with \(V_A\). Because \[
+\ker X_0=(\operatorname{Im} X_0)^\perp,
+\] the value \(\langle k,v\rangle_0\) depends only on the class of \(v\)
+in \(V_0/\operatorname{Im} X_0\). Since \(V_A\) maps isomorphically onto
+\(W_A\), the condition \(S_A^\vee k=0\) says exactly that \(k\)
+annihilates \(W_A\) under the perfect pairing \[
+(V_0/\operatorname{Im} X_0)\times \ker X_0\to F.
+\] But \(W_A\) was defined as the annihilator of \(A\) in this perfect
+pairing, so the double-annihilator property gives \[
+k\in \operatorname{Ann}(W_A)=A.
+\] Thus the kernel is exactly \(A\). Since \[
+\dim \ker X_0-\dim A=c_1-d=\kappa=\dim E,
+\] the map \(S_A^\vee|_{\ker X_0}\) is surjective. This proves (1).
+
+For (2), surjectivity of \(\phi_C\) gives \[
+\dim L=c_1-\kappa=d.
+\] The assumption \(L\cap R=0\) implies that \(q|_L\) is injective, so
+\[
+A:=q(L)
+\] is a \(d\)-dimensional subspace of \(K_{X_0}\).
+
+We first normalize the restriction of \(C^\vee\) to \(\ker X_0\). Both
+maps \[
+\phi_C:\ker X_0\to E
+\qquad\text{and}\qquad
+S_A^\vee|_{\ker X_0}:\ker X_0\to E
+\] are surjective and have the same kernel \(L\). Hence there exists a
+unique \(a\in \operatorname{GL}(E)\) such that \[
+a\circ \phi_C = S_A^\vee|_{\ker X_0}.
+\] Let \(d_E\in \operatorname{GL}(E')\) be the unique element satisfying
+\[
+a=(d_E^{-1})^\vee.
+\] Conjugating by the corresponding Levi element of \(P\), we may
+replace \((C,B)\) by a new pair for which already \[
+C^\vee|_{\ker X_0}=S_A^\vee|_{\ker X_0}.
+\]
+
+Then \((C-S_A)^\vee\) vanishes on \(\ker X_0\). Equivalently, \[
+\langle k,(C-S_A)e'\rangle_0=0
+\qquad \forall k\in \ker X_0,\ \forall e'\in E'.
+\] Since \((\ker X_0)^\perp=\operatorname{Im} X_0\), it follows that \[
+(C-S_A)(E')\subseteq \operatorname{Im} X_0.
+\] Hence there exists \(D_1:E'\to V_0\) with \[
+X_0D_1=C-S_A.
+\] By Lemma \texttt{lem:unipotent-conjugation}, conjugation by
+\(u_{D_1}\) replaces \(C\) by \(S_A\).
+
+So we may assume from now on that \(x=X_{S_A,B}\). Because
+\(S_A^\vee|_{\ker X_0}\) is surjective, choose \(D_2:E'\to \ker X_0\)
+such that \[
+S_A^\vee D_2=\frac12 B.
+\] Since \(D_2(E')\subset \ker X_0\), one has \(X_0D_2=0\), so
+conjugation by \(u_{D_2}\) keeps \(C=S_A\) fixed. The new \(B\)-block is
+\[
+B' = B + D_2^\vee S_A - S_A^\vee D_2.
+\] For \(u,v\in E'\), \[
+\lambda(D_2^\vee S_Au,v)=-\langle S_Au,D_2v\rangle_0.
+\] Because \(S_A^\vee D_2=\frac12 B\), \[
+\langle D_2u,S_Av\rangle_0
+=-\lambda\!\left(\frac12 Bu,v\right).
+\] Using
+\(\langle S_Au,D_2v\rangle_0=\epsilon\langle D_2v,S_Au\rangle_0\) and \[
+\lambda(Bv,u)=-\epsilon\lambda(Bu,v),
+\] we get \[
+\lambda(D_2^\vee S_Au,v)=-\frac12\lambda(Bu,v).
+\] Also \[
+\lambda(S_A^\vee D_2u,v)=\frac12\lambda(Bu,v).
+\] Therefore \[
+\lambda(B'u,v)=0
+\qquad \forall u,v\in E',
+\] so \(B'=0\). Thus \(x\) is \(P\)-conjugate to \(x_A\).
+
+Now fix \(A\) and let \(\widetilde V_A,\widetilde S_A\) be another
+choice with image in \(W_A\), and put \[
+\widetilde x_A:=X_{\widetilde S_A,0}.
+\] By (1), the map \[
+\widetilde S_A^\vee|_{\ker X_0}
+\] is surjective with kernel \(A\). Since \[
+A\subset V_1
+\qquad\text{and}\qquad
+V_1\cap R=0,
+\] we have \[
+A\cap R=0.
+\] Therefore Part (2), applied to \(\widetilde x_A\), shows that \[
+\widetilde x_A
+\] is \(P\)-conjugate to the already chosen \(x_A\). This proves the
+choice-independence statement.
+
+For (3), let \(h:A_1\to A_2\) be induced by an element of
+\(\operatorname{Isom}(K_{X_0})\). By Lemma
+\texttt{lem:x0-geometry-and-k}, \(h\) lifts to an element
+\(\widetilde h\in Z_{G_0}(X_0)\). Extend \(\widetilde h\) to a Levi
+element of \(P\) as follows. Let \[
+W_{A_2}':=\widetilde h(W_{A_1})\subset V_0/\operatorname{Im} X_0,
+\] choose \[
+V_{A_2}':=\widetilde h(V_{A_1})\subset V_0,
+\] and define \[
+S_{A_2}':=\widetilde h\circ S_{A_1}:E'\xrightarrow{\sim} V_{A_2}'.
+\] Then \[
+V_{A_2}'
+\] maps isomorphically onto \(W_{A_2}\), and the Levi element built from
+\(\widetilde h\) on \(V_0\), from the induced map on \(E'\), and from
+the dual inverse on \(E\), sends \[
+x_{A_1}
+\] exactly to \[
+X_{S_{A_2}',0}.
+\] By the choice-independence already proved, this latter element is
+\(P\)-conjugate to the originally chosen representative \(x_{A_2}\).
+Hence \(x_{A_1}\) and \(x_{A_2}\) are \(P\)-conjugate.
+
+\section{lemma
+lem:maximal-rank-classes}\label{lemma-lemmaximal-rank-classes}
+
+\subsection{statement}\label{statement-4}
+
+Let \(\mathscr A^{\mathrm{mr}}\) be the maximal-rank locus inside the
+Grassmannian of \(d\)-dimensional subspaces of the real non-degenerate
+\(\epsilon\)-space \(K_{X_0}\).
+
+Then the possible isometry classes of elements of
+\(\mathscr A^{\mathrm{mr}}\) are finite, and each isometry class is open
+in \(\mathscr A^{\mathrm{mr}}\).
+
+More precisely:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  If \(\epsilon=-1\) and \(d\) is even, then every element of
+  \(\mathscr A^{\mathrm{mr}}\) is a non-degenerate symplectic space of
+  dimension \(d\), hence the isometry class is unique.
+\item
+  If \(\epsilon=-1\) and \(d\) is odd, then every element of
+  \(\mathscr A^{\mathrm{mr}}\) is a symplectic space of rank \(d-1\)
+  with one-dimensional radical, hence the isometry class is unique.
+\item
+  If \(\epsilon=+1\), then every element of \(\mathscr A^{\mathrm{mr}}\)
+  is a non-degenerate symmetric real bilinear space of dimension \(d\),
+  hence is classified by its signature. In particular only finitely many
+  signatures occur, and each signature class is open.
+\end{enumerate}
+
+\subsection{proof}\label{proof-4}
+
+If \(\epsilon=-1\), the restricted form is alternating. On an
+even-dimensional space a non-degenerate alternating form is unique up to
+isometry, and on an odd-dimensional space an alternating form of maximal
+rank \(d-1\) is unique up to isometry: in a suitable basis it is
+standard symplectic on a \((d-1)\)-dimensional subspace and zero on a
+radical line.
+
+We also need ambient transitivity in these two symplectic cases. If
+\(\epsilon=-1\) and \(d\) is even, let
+\(A,B\in \mathscr A^{\mathrm{mr}}\). Choose symplectic bases \[
+a_1,b_1,\dots,a_{d/2},b_{d/2}
+\] of \(A\) and \[
+a_1',b_1',\dots,a_{d/2}',b_{d/2}'
+\] of \(B\), and extend both to symplectic bases of the ambient space
+\(K_{X_0}\). The basis-to-basis map is an element of \[
+\operatorname{Isom}(K_{X_0},\langle\cdot,\cdot\rangle_K)
+\] carrying \(A\) to \(B\).
+
+If \(\epsilon=-1\) and \(d\) is odd, let \(r\) and \(r'\) span the
+radicals of \(A\) and \(B\). Choose symplectic bases \[
+a_1,b_1,\dots,a_{(d-1)/2},b_{(d-1)/2}
+\] of a complement to \(Fr\) in \(A\), and \[
+a_1',b_1',\dots,a_{(d-1)/2}',b_{(d-1)/2}'
+\] of a complement to \(Fr'\) in \(B\). Choose vectors
+\(s,s'\in K_{X_0}\) such that \[
+\langle r,s\rangle_K=1,
+\qquad
+\langle r',s'\rangle_K=1,
+\] and extend \[
+r,a_1,b_1,\dots,a_{(d-1)/2},b_{(d-1)/2},s
+\] and \[
+r',a_1',b_1',\dots,a_{(d-1)/2}',b_{(d-1)/2}',s'
+\] to symplectic bases of \(K_{X_0}\). Again the basis-to-basis map is
+an ambient isometry carrying \(A\) to \(B\). Thus the ambient isometry
+orbit is unique in both symplectic cases.
+
+If \(\epsilon=+1\), the restricted form is symmetric. Maximal rank then
+means non-degenerate. Over \(\mathbb R\), such a form is classified by
+its signature, and the signature is locally constant on the
+non-degenerate locus. So only finitely many signatures occur, each open
+in \(\mathscr A^{\mathrm{mr}}\).
+
+It remains to see that, for a fixed signature, the corresponding
+\(d\)-planes form a single orbit under
+\(\operatorname{Isom}(K_{X_0},\langle\cdot,\cdot\rangle_K)\). Let
+\(A,B\subset K_{X_0}\) be non-degenerate \(d\)-dimensional subspaces
+with the same signature. Then there is an isometry \[
+u:A\xrightarrow{\sim} B.
+\] Because \(A\) and \(B\) are non-degenerate, the orthogonal
+complements \[
+A^\perp,\qquad B^\perp
+\] are also non-degenerate, and their signatures are the signature of
+\(K_{X_0}\) minus the common signature of \(A\) and \(B\). Hence there
+is an isometry \[
+v:A^\perp\xrightarrow{\sim} B^\perp.
+\] Taking orthogonal direct sums gives an ambient isometry \[
+u\oplus v\in \operatorname{Isom}(K_{X_0},\langle\cdot,\cdot\rangle_K)
+\] with \[
+(u\oplus v)(A)=B.
+\] Thus every fixed-signature locus is a single ambient isometry orbit.
+
+\section{proposition
+prop:kernel-image-quotient}\label{proposition-propkernel-image-quotient}
+
+\subsection{statement}\label{statement-5}
+
+For \(A\subset V_1\simeq K_{X_0}\) of dimension \(d\), let \(x_A\) be as
+in Proposition \texttt{prop:generic-normal-form}. Then \[
+\ker x_A=E\oplus A,
+\] \[
+\operatorname{Im} x_A=E\oplus \operatorname{Im} X_0\oplus S_A(E'),
+\] and \[
+\ker x_A\cap \operatorname{Im} x_A = E\oplus \operatorname{rad}(A).
+\]
+
+Consequently, \[
+\ker x_A/(\ker x_A\cap \operatorname{Im} x_A)\simeq A/\operatorname{rad}(A),
+\] and the induced form on this quotient is exactly the quotient of
+\(\langle\cdot,\cdot\rangle_K|_A\) by its radical.
+
+In particular, if \(A\in \mathscr A^{\mathrm{mr}}\) and either
+\(\epsilon=+1\) or \(d\) is even, then \(A\) is non-degenerate and \[
+\ker x_A\cap \operatorname{Im} x_A = E,
+\qquad
+\ker x_A/(\ker x_A\cap \operatorname{Im} x_A)\simeq A.
+\]
+
+\subsection{proof}\label{proof-5}
+
+Take \[
+y=e+v+e'\in E\oplus V_0\oplus E'.
+\] Then \[
+x_A(y)=S_A^\vee v+X_0v+S_Ae'.
+\] If \(x_A(y)=0\), then the \(V_0\)-component gives \[
+X_0v+S_Ae'=0.
+\] The class of \(S_Ae'\) in \(V_0/\operatorname{Im} X_0\) is zero only
+if \(e'=0\), so \(v\in \ker X_0\). Then the \(E\)-component gives \[
+S_A^\vee v=0,
+\] hence \(v\in A\) by Proposition \texttt{prop:generic-normal-form}(1).
+So \[
+\ker x_A=E\oplus A.
+\]
+
+The formula for the image is immediate from \[
+x_A(e+v+e')=S_A^\vee v+X_0v+S_Ae':
+\] the \(E\)-part is \(S_A^\vee(\ker X_0)=E\), the
+\(\operatorname{Im} X_0\)-part comes from \(X_0(V_0)\), and the
+remaining quotient part comes from \(S_A(E')\).
+
+Now let \[
+z=e+a\in E\oplus A=\ker x_A.
+\] Then \(z\in \operatorname{Im} x_A\) if and only if \[
+a\in A\cap (\operatorname{Im} X_0+S_A(E')).
+\] We claim that, for \(a\in A\), this is equivalent to the class \[
+\overline a\in V_0/\operatorname{Im} X_0
+\] belonging to \(W_A\). Indeed, if \[
+a=X_0v+S_Ae',
+\] then \(\overline a=\overline{S_Ae'}\in W_A\). Conversely, if
+\(\overline a\in W_A\), choose \(e'\in E'\) with \[
+\overline{S_Ae'}=\overline a;
+\] then \(a-S_Ae'\in \operatorname{Im} X_0\), so \[
+a\in \operatorname{Im} X_0+S_A(E').
+\]
+
+Now suppose first that \[
+a\in A\cap (\operatorname{Im} X_0+S_A(E')).
+\] Then \(\overline a\in W_A\). For every \(b\in A\), the definition of
+\(W_A\) gives \[
+0=\langle b,a\rangle_0.
+\] Since \(a,b\in V_1\subset \ker X_0\), this is the same as \[
+0=\langle b,a\rangle_K.
+\] Hence \(a\in A^\perp\cap A=\operatorname{rad}(A)\).
+
+Conversely, let \(a\in \operatorname{rad}(A)\). Then for every
+\(b\in A\), \[
+\langle b,a\rangle_K=0,
+\] so again \[
+\langle b,a\rangle_0=0.
+\] Thus the class \(\overline a\) annihilates \(A\), hence \[
+\overline a\in W_A.
+\] By the claim above this is equivalent to \[
+a\in \operatorname{Im} X_0+S_A(E').
+\] Therefore \[
+\ker x_A\cap \operatorname{Im} x_A = E\oplus \operatorname{rad}(A).
+\]
+
+Since \(E\) is orthogonal to \(V_0\), the form on \(\ker x_A=E\oplus A\)
+induces exactly the quotient form of \(\langle\cdot,\cdot\rangle_K|_A\)
+on \[
+(E\oplus A)/(E\oplus \operatorname{rad}(A))
+\simeq A/\operatorname{rad}(A).
+\] The final statement is immediate when \(A\) is non-degenerate.
+
+\section{proposition
+prop:induced-orbits}\label{proposition-propinduced-orbits}
+
+\subsection{statement}\label{statement-6}
+
+The maximal \(G\)-orbits in \[
+\operatorname{Ind}_P^G(\mathcal O_0)
+\] are exactly the \(G\)-orbits of the representatives \(x_A\) with \[
+A\in \mathscr A^{\mathrm{mr}},
+\] modulo isometry inside \((K_{X_0},\langle\cdot,\cdot\rangle_K)\).
+
+Equivalently, if \(A_1,\dots,A_N\) are representatives for the isometry
+classes in \(\mathscr A^{\mathrm{mr}}\), then the maximal induced
+\(G\)-orbits are exactly \[
+\mathcal O_i:=G\cdot x_{A_i}
+\qquad (1\le i\le N),
+\] and these orbits are pairwise distinct.
+
+\subsection{proof}\label{proof-6}
+
+Embed \(G_0\) into the Levi factor of \(P\) by \[
+\iota(g_0)(e+v+e'):=e+g_0v+e'.
+\] Then \[
+\iota(g_0)X_0\iota(g_0)^{-1}=g_0X_0g_0^{-1}.
+\] Also \(\mathfrak u\) is \(P\)-stable: if \(p\in P\), then \(p(E)=E\)
+and \(p(E^\perp)=E^\perp\), so the conditions \[
+Y(E)=0,\qquad Y(E^\perp)\subseteq E,\qquad Y(V)\subseteq E^\perp
+\] are preserved by \(\operatorname{Ad}(p)\). Therefore \[
+\mathcal O_0+\mathfrak u
+=\bigcup_{g_0\in G_0}\bigl(\iota(g_0)X_0\iota(g_0)^{-1}+\mathfrak u\bigr)
+=\iota(G_0)\cdot (X_0+\mathfrak u),
+\] and hence \[
+G\cdot(\mathcal O_0+\mathfrak u)=G\cdot(X_0+\mathfrak u).
+\] So \[
+\operatorname{Ind}_P^G(\mathcal O_0)=\overline{G\cdot(X_0+\mathfrak u)}.
+\]
+
+We next isolate an open dense subset of the slice. For \[
+x=X_{C,B}\in X_0+\mathfrak u
+\] define \[
+\phi_C:=C^\vee|_{\ker X_0}:\ker X_0\to E.
+\] Let \(\Omega\subset X_0+\mathfrak u\) be the subset of all
+\(X_{C,B}\) such that:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(\phi_C\) is surjective;
+\item
+  \(L:=\ker \phi_C\) satisfies \(L\cap R=0\);
+\item
+  the image \(A:=q(L)\subset K_{X_0}\) lies in
+  \(\mathscr A^{\mathrm{mr}}\).
+\end{enumerate}
+
+This set is open and dense.
+
+Indeed, under the parametrization of Lemma
+\texttt{lem:parametrize-x0-plus-u}, the slice is the product of the
+affine space \[
+\operatorname{Hom}(E',V_0)
+\] with the affine space of admissible \(B\)-blocks, and the defining
+conditions for \(\Omega\) depend only on \(C\).
+
+The assignment \[
+\rho:\operatorname{Hom}(E',V_0)\longrightarrow \operatorname{Hom}(\ker X_0,E),
+\qquad
+\rho(C)=\phi_C,
+\] is linear and surjective. Indeed, for \(k\in \ker X_0\) one has \[
+\lambda(\phi_C(k),e')=-\langle k,Ce'\rangle_0,
+\] so \(\phi_C\) depends only on the class of \(C\) in \[
+\operatorname{Hom}(E',V_0/\operatorname{Im} X_0).
+\] Using the perfect pairing \[
+(V_0/\operatorname{Im} X_0)\times \ker X_0\to F,
+\] one gets \[
+V_0/\operatorname{Im} X_0\simeq (\ker X_0)^\vee,
+\] and then the pairing \(\lambda:E\times E'\to F\) identifies \[
+\operatorname{Hom}(E',V_0/\operatorname{Im} X_0)
+\simeq
+\operatorname{Hom}(\ker X_0,E).
+\] Thus \(\rho\) is the quotient map to \[
+\operatorname{Hom}(E',V_0/\operatorname{Im} X_0)
+\] followed by that isomorphism.
+
+Let \[
+\operatorname{Surj}:=
+\{\phi\in \operatorname{Hom}(\ker X_0,E):\phi\ \text{surjective}\}.
+\] This is the usual open dense full-rank locus. Put \[
+\operatorname{Surj}_R:=
+\{\phi\in \operatorname{Surj}:\phi|_R\ \text{injective}\}.
+\] Since \[
+\ker \phi\cap R=0
+\iff
+\phi|_R\ \text{injective},
+\] condition (2) is exactly the requirement that
+\(\phi_C\in \operatorname{Surj}_R\). Because
+\(c_2=\dim R\le \kappa=\dim E\), injectivity on \(R\) is again a
+maximal-rank condition, hence open and dense. Therefore \[
+\rho^{-1}(\operatorname{Surj}_R)\times
+\{\text{admissible }B\}
+\] is an open dense subset of \(X_0+\mathfrak u\).
+
+Now define \[
+\alpha:\operatorname{Surj}_R\to \operatorname{Gr}_d(K_{X_0}),
+\qquad
+\alpha(\phi)=q(\ker \phi).
+\] This is well defined because for \(\phi\in \operatorname{Surj}_R\)
+one has \[
+\dim \ker \phi=c_1-\kappa=d
+\] and \[
+\ker \phi\cap R=0.
+\]
+
+We claim that \(\alpha\) is a surjective locally trivial map with affine
+fibers. First fix \[
+\phi_0\in \operatorname{Surj}_R,
+\qquad
+L_0:=\ker \phi_0,
+\] and choose a complement \(M_0\) to \(L_0\) in \(\ker X_0\). On the
+open neighborhood \[
+\mathcal U_0:=
+\{\phi\in \operatorname{Surj}_R:\phi|_{M_0}\ \text{is an isomorphism}\}
+\] every kernel is the graph of the unique linear map \[
+T_\phi:=-(\phi|_{M_0})^{-1}\circ \phi|_{L_0}:L_0\to M_0.
+\] Thus \[
+\phi\longmapsto \ker \phi
+\] is locally trivial on \(\operatorname{Surj}_R\).
+
+Next use \[
+\ker X_0=V_1\oplus R.
+\] If \(L\subset \ker X_0\) is \(d\)-dimensional and satisfies
+\(L\cap R=0\), then the projection \[
+\operatorname{pr}_{V_1}:L\to V_1
+\] is injective, hence identifies \(L\) with a unique \(d\)-plane \[
+A_L:=\operatorname{pr}_{V_1}(L)\subset V_1
+\] and a unique linear map \[
+\tau_L:A_L\to R
+\] such that \[
+L=\{a+\tau_L(a):a\in A_L\}.
+\] Under the isometric identification \[
+q|_{V_1}:V_1\xrightarrow{\sim} K_{X_0},
+\] one has \[
+q(L)=q(A_L)=A_L.
+\] Therefore the map \[
+L\longmapsto q(L)
+\] from the open subset \[
+\{L\in \operatorname{Gr}_d(\ker X_0):L\cap R=0\}
+\] to \(\operatorname{Gr}_d(K_{X_0})\simeq \operatorname{Gr}_d(V_1)\)
+is, in the usual graph charts, a trivial affine bundle with fiber
+\(\operatorname{Hom}(A,R)\). Composing this affine bundle with the
+locally trivial kernel map proves the claim about \(\alpha\).
+
+The map \(\alpha\) is surjective: given any \[
+A\in \operatorname{Gr}_d(K_{X_0}),
+\] view it inside \(V_1\) via \(q|_{V_1}^{-1}\) and choose a complement
+\(M\) to \(A\) in \(V_1\). Since \[
+\dim(M\oplus R)=\kappa=\dim E,
+\] there exists an isomorphism \[
+\psi:M\oplus R\xrightarrow{\sim} E.
+\] Extending \(\psi\) by \(0\) on \(A\) gives a surjective map \[
+\phi:\ker X_0=A\oplus M\oplus R\to E
+\] with \[
+\ker \phi=A
+\qquad\text{and}\qquad
+\phi|_R\ \text{injective}.
+\] Hence \(\phi\in \operatorname{Surj}_R\) and \(\alpha(\phi)=A\).
+
+Because \(\mathscr A^{\mathrm{mr}}\) is an open dense subset of \[
+\operatorname{Gr}_d(K_{X_0}),
+\] its pullback \[
+\alpha^{-1}(\mathscr A^{\mathrm{mr}})
+\] is open dense in \(\operatorname{Surj}_R\). Therefore \[
+\Omega
+=
+\{X_{C,B}:\phi_C\in \alpha^{-1}(\mathscr A^{\mathrm{mr}})\}
+\] is open dense in \(X_0+\mathfrak u\).
+
+On this locus the normalized slice datum may indeed be read, after the
+\(P\)-conjugations of Proposition \texttt{prop:generic-normal-form},
+from a map \[
+S:E'\to \ker X_0,
+\] not necessarily with image in \(V_1\), and the natural generic
+condition is that the Gram matrix of \(\langle\cdot,\cdot\rangle_0\) on
+\[
+\operatorname{im}(S)
+\] have maximal possible rank. The final orbit parameter, however, is
+not \[
+\operatorname{im}(S),
+\] but the quotient subspace \[
+A=q(\ker \phi_C)\subset K_{X_0},
+\] and condition (3) is exactly that intrinsic maximal-rank condition.
+
+By Proposition \texttt{prop:generic-normal-form}, every point of
+\(\Omega\) is \(P\)-conjugate to some \(x_A\) with
+\(A\in \mathscr A^{\mathrm{mr}}\). By Proposition
+\texttt{prop:generic-normal-form}(3), isometric subspaces give the same
+\(P\)-orbit. By Lemma \texttt{lem:maximal-rank-classes}, only finitely
+many isometry classes occur, and each class is open in
+\(\mathscr A^{\mathrm{mr}}\). Choose representatives \(A_1,\dots,A_N\)
+for these classes, and let \[
+\Omega_i:=P\cdot x_{A_i}.
+\] Then \[
+\Omega=\bigsqcup_{i=1}^N \Omega_i,
+\] and each \(\Omega_i\) is open in \(\Omega\).
+
+Set \[
+\mathcal O_i:=G\cdot x_{A_i}.
+\] Then \[
+G\cdot \Omega = \bigcup_{i=1}^N \mathcal O_i.
+\] Fix \(i\) and write \[
+x_i:=x_{A_i}.
+\] Because \[
+\Omega_i=P\cdot x_i
+\] is open in the affine slice \(X_0+\mathfrak u\), its tangent space at
+\(x_i\) is \[
+T_{x_i}(X_0+\mathfrak u)=T_{x_i}(P\cdot x_i)=[\mathfrak p,x_i]=\mathfrak u.
+\] Now consider the map \[
+f:G\times (X_0+\mathfrak u)\to \mathfrak g,
+\qquad
+f(g,z)=gzg^{-1}.
+\] Its differential at \((1,x_i)\) is \[
+df_{(1,x_i)}(\xi,v)=[\xi,x_i]+v
+\qquad
+(\xi\in \mathfrak g,\ v\in \mathfrak u).
+\] Since \[
+v\in \mathfrak u=[\mathfrak p,x_i]\subseteq [\mathfrak g,x_i],
+\] the image of this differential is exactly \[
+[\mathfrak g,x_i]=T_{x_i}(\mathcal O_i).
+\] Therefore \(G\cdot (X_0+\mathfrak u)\) has, near \(x_i\), the same
+local dimension as the orbit \(\mathcal O_i\), and the latter is open in
+\(G\cdot (X_0+\mathfrak u)\) near \(x_i\). Conjugating by elements of
+\(G\) shows that \(\mathcal O_i\) is open at each of its points, hence
+open in \[
+G\cdot (X_0+\mathfrak u).
+\]
+
+Since \(\Omega\) is dense in \(X_0+\mathfrak u\), the subset
+\(G\times \Omega\) is dense in \(G\times (X_0+\mathfrak u)\), so \[
+G\cdot \Omega
+\] is dense in \(G\cdot (X_0+\mathfrak u)\). Therefore each
+\(\mathcal O_i\) is an orbit of maximal dimension inside
+\(G\cdot (X_0+\mathfrak u)\).
+
+Because \[
+\operatorname{Ind}_P^G(\mathcal O_0)
+=\overline{G\cdot(X_0+\mathfrak u)}
+=\overline{G\cdot \Omega},
+\] and because \[
+G\cdot \Omega=\bigcup_{i=1}^N \mathcal O_i
+\] is a finite union, we get \[
+\operatorname{Ind}_P^G(\mathcal O_0)
+=\bigcup_{i=1}^N \overline{\mathcal O_i}.
+\] Thus if \(\mathcal O\) is any \(G\)-orbit in the induced set and \[
+x\in \mathcal O,
+\] then \[
+x\in \overline{\mathcal O_i}
+\] for some \(i\). Since \(\overline{\mathcal O_i}\) is \(G\)-stable,
+the whole orbit \(\mathcal O=G\cdot x\) is contained in
+\(\overline{\mathcal O_i}\). Therefore every orbit in the induced set is
+below at least one of the listed \(\mathcal O_i\) in the closure order.
+It remains to prove that each listed orbit is itself maximal.
+
+Set \[
+Y:=G\cdot(X_0+\mathfrak u).
+\] For fixed \(i\), the slice piece \[
+\Omega_i=P\cdot x_i
+\] is exactly the set of all \(x=X_{C,B}\in X_0+\mathfrak u\) such that:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(\phi_C=C^\vee|_{\ker X_0}\) is surjective;
+\item
+  \(L=\ker \phi_C\) satisfies \(L\cap R=0\);
+\item
+  the associated subspace \[
+  A(x):=q(L)\subset K_{X_0}
+  \] has maximal possible Gram-matrix rank and lies in the same real
+  isometry class as \(A_i\).
+\end{enumerate}
+
+Indeed, conditions (1) and (2) are the defining open conditions for the
+normalized slice, condition (3) is the intrinsic maximal-rank condition
+on the kernel quotient parameter \(A=q(L)\), and Proposition
+\texttt{prop:generic-normal-form} together with Lemma
+\texttt{lem:maximal-rank-classes} says precisely that the resulting
+points form the single \(P\)-orbit \(P\cdot x_i\). Since real isometry
+class is locally constant on the maximal-rank locus, each \(\Omega_i\)
+is open in \(X_0+\mathfrak u\). By the differential argument above, the
+corresponding \(G\)-orbit \[
+\mathcal O_i=G\cdot \Omega_i
+\] is therefore open in \(Y\).
+
+Now let \(\mathcal O\) be a \(G\)-orbit in \[
+\operatorname{Ind}_P^G(\mathcal O_0)=\overline Y
+\] such that \[
+\mathcal O_i\subseteq \overline{\mathcal O}.
+\] Since \(\mathcal O_i\) is open in \(Y\), it has the same dimension as
+\(Y\): \[
+\dim \mathcal O_i=\dim Y.
+\] Because \(Y\) is dense in \[
+\operatorname{Ind}_P^G(\mathcal O_0)=\overline Y,
+\] the ambient induced set has the same dimension: \[
+\dim \operatorname{Ind}_P^G(\mathcal O_0)=\dim Y.
+\] Every \(G\)-orbit in \(\mathfrak g\) is a smooth locally closed
+submanifold, so any orbit contained in the induced set has dimension at
+most \[
+\dim \operatorname{Ind}_P^G(\mathcal O_0)=\dim Y.
+\] Hence \[
+\dim \mathcal O\le \dim Y=\dim \mathcal O_i.
+\] On the other hand, \[
+\mathcal O_i\subseteq \overline{\mathcal O}
+\] forces \[
+\dim \mathcal O_i\le \dim \mathcal O.
+\] Indeed, \(\mathcal O\) is locally closed, hence open in its closure
+\(\overline{\mathcal O}\); therefore every orbit contained in the
+boundary \[
+\overline{\mathcal O}\setminus \mathcal O
+\] has strictly smaller dimension than \(\mathcal O\).
+
+Combining the two inequalities gives \[
+\dim \mathcal O=\dim \mathcal O_i.
+\] If \(\mathcal O\neq \mathcal O_i\), then \[
+\mathcal O_i\subseteq \overline{\mathcal O}\setminus \mathcal O,
+\] so the preceding boundary-dimension statement would imply \[
+\dim \mathcal O_i<\dim \mathcal O,
+\] contrary to the equality above. Therefore \[
+\mathcal O=\mathcal O_i.
+\] So each listed orbit \(\mathcal O_i\) is maximal.
+
+It remains only to show that the \(\mathcal O_i\) are pairwise distinct
+exactly according to the isometry class of \(A_i\). Suppose \[
+G\cdot x_A = G\cdot x_{A'}
+\] with \(A,A'\in \mathscr A^{\mathrm{mr}}\). The quotient \[
+Q_x:=\ker x/(\ker x\cap \operatorname{Im} x)
+\] is a \(G\)-orbit invariant bilinear space. By Proposition
+\texttt{prop:kernel-image-quotient}, \[
+Q_{x_A}\simeq A/\operatorname{rad}(A),
+\qquad
+Q_{x_{A'}}\simeq A'/\operatorname{rad}(A').
+\]
+
+If \(\epsilon=+1\), then every element of \(\mathscr A^{\mathrm{mr}}\)
+is non-degenerate, so \(Q_{x_A}\simeq A\) and \(Q_{x_{A'}}\simeq A'\).
+Hence \(A\) and \(A'\) are isometric.
+
+If \(\epsilon=-1\) and \(d\) is even, the same conclusion holds because
+maximal rank again means non-degenerate.
+
+If \(\epsilon=-1\) and \(d\) is odd, Lemma
+\texttt{lem:maximal-rank-classes} already says that all elements of
+\(\mathscr A^{\mathrm{mr}}\) are isometric. So again the orbit depends
+only on the isometry class of \(A\).
+
+Therefore the maximal induced \(G\)-orbits are parametrized exactly by
+the isometry classes in \(\mathscr A^{\mathrm{mr}}\).
+
+\section{proposition
+prop:multiplicity}\label{proposition-propmultiplicity}
+
+\subsection{statement}\label{statement-7}
+
+For every maximal induced orbit \(\mathcal O=G\cdot x_A\) with
+\(A\in \mathscr A^{\mathrm{mr}}\), one has \[
+m(\mathcal O,P)=
+\begin{cases}
+1,& \epsilon=+1,\\[0.4ex]
+1,& \epsilon=-1\ \text{and}\ d\ \text{even},\\[0.4ex]
+2,& \epsilon=-1\ \text{and}\ d\ \text{odd}.
+\end{cases}
+\]
+
+\subsection{proof}\label{proof-7}
+
+We treat first the case where \(A\) is non-degenerate. Then by
+Proposition \texttt{prop:kernel-image-quotient}, \[
+\ker x_A=E\oplus A,
+\qquad
+\ker x_A\cap \operatorname{Im} x_A=E.
+\] Because \(A\) is non-degenerate and \(E\) is orthogonal to all of
+\(\ker x_A\), the radical of the bilinear space \(\ker x_A\) is exactly
+\(E\).
+
+Any element of \(Z_G(x_A)\) preserves \(\ker x_A\), hence preserves its
+radical. Therefore every element of \(Z_G(x_A)\) preserves \(E\), so \[
+Z_G(x_A)\subseteq P.
+\] Consequently \[
+m(G\cdot x_A,P)=1.
+\]
+
+It remains to consider the case \(\epsilon=-1\) and \(d\) odd. Then
+every \(A\in \mathscr A^{\mathrm{mr}}\) has one-dimensional radical.
+Choose a symplectic decomposition \[
+A=A_0\oplus Fr,
+\] where \(A_0\) is non-degenerate symplectic and
+\(Fr=\operatorname{rad}(A)\). We now construct a convenient
+representative for this same \(A\) and then invoke the
+choice-independence statement from Proposition
+\texttt{prop:generic-normal-form}.
+
+Choose \[
+V_1=A_0\oplus Fr\oplus Fs\oplus B_0
+\] with \[
+\langle r,s\rangle_K=1
+\] and \(B_0\) symplectic. Choose decompositions \[
+E=Fe\oplus E_0,
+\qquad
+E'=Fe'\oplus E_0',
+\] with \[
+\lambda(e,e')=1
+\] and \(E_0,E_0'\) paired perfectly. Let \[
+W_0\subset V_0/\operatorname{Im} X_0
+\] be the annihilator of \[
+A\oplus Fs.
+\] Then \[
+\dim W_0=\kappa-1.
+\] Choose a lift \[
+V_0'\subset V_0
+\] of \(W_0\) and an isomorphism \[
+S_0:E_0'\xrightarrow{\sim} V_0'.
+\] Let \(\overline r\) denote the class of \(r\) in
+\(V_0/\operatorname{Im} X_0\). Since \(r\in \operatorname{rad}(A)\), one
+has \[
+\langle a,r\rangle_K=0
+\qquad \forall a\in A,
+\] so \[
+\overline r\in W_A.
+\] On the other hand, \[
+\langle r,s\rangle_K=1,
+\] so \(\overline r\) does not annihilate \(Fs\) and therefore \[
+\overline r\notin W_0.
+\] Because \[
+\dim W_A=\kappa
+\qquad\text{and}\qquad
+\dim W_0=\kappa-1,
+\] it follows that \[
+W_A=W_0\oplus F\overline r.
+\] Hence the subspace \[
+\widetilde V_A:=Fr\oplus V_0'
+\] maps isomorphically onto \(W_A\).
+
+Define \[
+\widetilde S_A:E'\xrightarrow{\sim} \widetilde V_A
+\] by \[
+\widetilde S_A(e')=r,
+\qquad
+\widetilde S_A|_{E_0'}=S_0.
+\] and put \[
+\widetilde x_A:=X_{\widetilde S_A,0}.
+\] This is again a representative attached to the same subspace \(A\) in
+Proposition \texttt{prop:generic-normal-form}. Therefore
+\(\widetilde x_A\) is \(P\)-conjugate to the original \(x_A\), and \[
+m(G\cdot x_A,P)=m(G\cdot \widetilde x_A,P).
+\]
+
+Set \[
+U:=Fe\oplus Fr\oplus Fs\oplus Fe'.
+\] Then \(U\) is non-degenerate symplectic,
+\(\widetilde x_A(U)\subseteq U\), and in the ordered basis \[
+e,\ r,\ s,\ e'
+\] one has \[
+\widetilde x_A(e)=0,\qquad \widetilde x_A(r)=0,\qquad \widetilde x_A(s)=e,\qquad \widetilde x_A(e')=r.
+\] Because \(U\) is non-degenerate and \(\widetilde x_A\) is
+skew-adjoint, the orthogonal complement \[
+W:=U^\perp
+\] is \(\widetilde x_A\)-stable. On \(U^\perp\) the kernel quotient is
+\(A_0\), which is non-degenerate symplectic. Let \[
+y:=\widetilde x_A|_W.
+\] The first part of the present proof therefore applies to \(y\): every
+element of its centralizer preserves the radical of \(\ker y\), namely
+\[
+E_0=E\cap W.
+\] Thus \[
+Z_{G(W)}(y)\subseteq P(W):=\{h\in G(W):h(E_0)=E_0\}.
+\]
+
+We now compute the residual \(4\times 4\) model on \(U\) correctly. Put
+\[
+U_0:=Fe\oplus Fr,
+\qquad
+U_1:=Fs\oplus Fe',
+\qquad
+U=U_0\oplus U_1.
+\] Relative to the ordered basis \[
+e,\ r,\ s,\ e',
+\] the operator \(\widetilde x_A|_U\) is \[
+\widetilde x_A|_U=
+\begin{pmatrix}
+0&I_2\\
+0&0
+\end{pmatrix},
+\] and the symplectic form on \(U\) is represented by \[
+J_U=
+\begin{pmatrix}
+0&S_2\\
+-S_2&0
+\end{pmatrix},
+\qquad
+S_2:=
+\begin{pmatrix}
+0&1\\
+1&0
+\end{pmatrix}.
+\]
+
+Let \[
+G(U)=\operatorname{Sp}(U),
+\qquad
+P(U):=\{g\in G(U):g(Fe)=Fe\}.
+\] Write an element of \(G(U)\) in \(2\times 2\) block form relative to
+\[
+U=U_0\oplus U_1
+\] as \[
+g=
+\begin{pmatrix}
+A&B\\
+C&D
+\end{pmatrix}.
+\] The commutation relation \[
+g\widetilde x_A|_U=\widetilde x_A|_Ug
+\] is equivalent to \[
+C=0,
+\qquad
+D=A.
+\] So every element of \(Z_{G(U)}(\widetilde x_A|_U)\) has the form \[
+g=
+\begin{pmatrix}
+A&B\\
+0&A
+\end{pmatrix}.
+\] Now impose the symplectic condition \[
+g^T J_U g=J_U.
+\] Since \[
+g=\begin{pmatrix}A&B\\0&A\end{pmatrix},
+\qquad
+J_U=\begin{pmatrix}0&S_2\\-S_2&0\end{pmatrix},
+\] we first compute \[
+J_U g
+=
+\begin{pmatrix}0&S_2\\-S_2&0\end{pmatrix}
+\begin{pmatrix}A&B\\0&A\end{pmatrix}
+=
+\begin{pmatrix}0&S_2A\\-S_2A&-S_2B\end{pmatrix}.
+\] Hence \[
+g^T J_U g
+=
+\begin{pmatrix}A^T&0\\B^T&A^T\end{pmatrix}
+\begin{pmatrix}0&S_2A\\-S_2A&-S_2B\end{pmatrix}
+=
+\begin{pmatrix}
+0&A^T S_2A\\
+-A^T S_2A&B^T S_2A-A^T S_2B
+\end{pmatrix}.
+\] Equating this with \[
+J_U=\begin{pmatrix}0&S_2\\-S_2&0\end{pmatrix}
+\] gives \[
+A^T S_2 A=S_2
+\] and \[
+B^T S_2A=A^T S_2B.
+\] If we write \[
+M:=A^{-1}B,
+\] then the second relation becomes \[
+(AM)^T S_2A=A^T S_2(AM),
+\] that is, \[
+M^T A^T S_2A=A^T S_2A\,M.
+\] Using \(A^T S_2A=S_2\), this is equivalent to \[
+M^T S_2=S_2M.
+\] Thus \(A\) lies in the orthogonal group \[
+O(S_2):=\{A\in \operatorname{GL}_2(\mathbb R):A^T S_2 A=S_2\},
+\] and for each fixed \(A\) the possible \(B\) form the affine space \[
+A\cdot \{M\in M_2(\mathbb R):M^T S_2=S_2M\}.
+\] Therefore projection to the diagonal block induces a surjective map
+\[
+Z_{G(U)}(\widetilde x_A|_U)\to O(S_2)
+\] with affine fibers that are connected in the usual real topology, and
+a section \[
+A\longmapsto
+\begin{pmatrix}
+A&0\\
+0&A
+\end{pmatrix}.
+\] Hence \[
+\pi_0\bigl(Z_{G(U)}(\widetilde x_A|_U)\bigr)\simeq \pi_0(O(S_2)).
+\]
+
+Over \(\mathbb R\), the group \(O(S_2)\) admits the explicit
+parametrization \[
+O(S_2)=
+\left\{
+\begin{pmatrix}
+a&0\\
+0&a^{-1}
+\end{pmatrix}:a\in \mathbb R^\times
+\right\}
+\sqcup
+\left\{
+\begin{pmatrix}
+0&a\\
+a^{-1}&0
+\end{pmatrix}:a\in \mathbb R^\times
+\right\}.
+\] Thus there are two diagonal branches and two off-diagonal branches.
+Each of the two diagonal branches lies in a different connected
+component according to the sign of \(a\), and the two off-diagonal
+branches also lies in a different connected component according to the
+sign of \(a\). Hence there are four connected components in all, so \[
+|\pi_0(O(S_2))|=4,
+\] and hence \[
+|\pi_0(Z_{G(U)}(\widetilde x_A|_U))|=4.
+\]
+
+If, in addition, \(g\) lies in \(P(U)\), then \(g\) preserves the line
+\(Fe\subset U_0\). Because \(g\) acts on \(U_0\) by the block \(A\),
+this means that \(A\) itself preserves \(Fe\). An element of \(O(S_2)\)
+preserves \(Fe\) if and only if it has the form \[
+\begin{pmatrix}
+a&0\\
+0&a^{-1}
+\end{pmatrix}
+\qquad (a\in \mathbb R^\times).
+\] So projection to \(A\) induces a surjective map \[
+Z_{G(U)}(\widetilde x_A|_U)\cap P(U)\to \mathbb R^\times
+\] with the same real-topologically connected affine fibers as above and
+with a section. Consequently \[
+|\pi_0\bigl(Z_{G(U)}(\widetilde x_A|_U)\cap P(U)\bigr)|=2.
+\] Indeed, inside the \(Fe\)-stabilizer only the diagonal branches
+occur, with the two connected components given by \[
+a>0
+\qquad\text{and}\qquad
+a<0.
+\]
+
+Finally, write an element of \(Z_G(\widetilde x_A)\), or of
+\(Z_G(\widetilde x_A)\cap P\), in block form relative to the orthogonal
+decomposition \[
+V=U\oplus W.
+\] Since \[
+\widetilde x_A=\widetilde x_A|_U\oplus y,
+\] write \[
+g=
+\begin{pmatrix}
+a&b\\
+c&d
+\end{pmatrix},
+\] where \[
+a:U\to U,\qquad b:W\to U,\qquad c:U\to W,\qquad d:W\to W.
+\] Projection to the diagonal blocks gives maps \[
+Z_G(\widetilde x_A)\to Z_{G(U)}(\widetilde x_A|_U)\times Z_{G(W)}(y)
+\] and \[
+Z_G(\widetilde x_A)\cap P
+\to
+\bigl(Z_{G(U)}(\widetilde x_A|_U)\cap P(U)\bigr)\times Z_{G(W)}(y)
+\] which are surjective because every pair in either base defines a
+block-diagonal centralizing element. The second base has the same
+\(W\)-factor as the first because \[
+Z_{G(W)}(y)\subseteq P(W).
+\] Indeed, relative to \[
+E=Fe\oplus E_0
+\] with \[
+Fe\subset U,
+\qquad
+E_0\subset W,
+\] a block-diagonal element \[
+\operatorname{diag}(a,d)
+\] lies in \(P\) exactly when \[
+a\in P(U)
+\qquad\text{and}\qquad
+d\in P(W).
+\] Since every \[
+d\in Z_{G(W)}(y)
+\] already lies in \(P(W)\), intersecting with \(P\) imposes no extra
+condition on the \(W\)-factor and only cuts the \(U\)-factor down to \[
+Z_{G(U)}(\widetilde x_A|_U)\cap P(U).
+\]
+
+Fix \((a,d)\) in the base of the first map. The fiber over \((a,d)\)
+consists of all pairs \((b,c)\) such that \[
+\begin{pmatrix}
+a&b\\
+c&d
+\end{pmatrix}
+\] lies in \(Z_G(\widetilde x_A)\). The commutation relation with
+\(\widetilde x_A\) is equivalent to the linear equations \[
+by=\widetilde x_A|_U\,b,
+\qquad
+c\widetilde x_A|_U=yc.
+\] Let \((-)^*\) denote the adjoint relative to the forms on \(U\) and
+\(W\). Because \(U\) and \(W\) are orthogonal, the condition \(g\in G\)
+is equivalent to \[
+a^*a+c^*c=1_U,
+\qquad
+a^*b+c^*d=0,
+\qquad
+b^*b+d^*d=1_W.
+\] Since \(a\in G(U)\) and \(d\in G(W)\), this reduces to \[
+c^*c=0,
+\qquad
+a^*b+c^*d=0,
+\qquad
+b^*b=0.
+\] Therefore, if \((b,c)\) lies in the fiber, then for every
+\(t\in[0,1]\) the pair \((tb,tc)\) satisfies the same equations. So each
+fiber is star-shaped with center \((0,0)\), hence connected. The same
+argument applies to the fibers of the second map.
+
+Because both projections are surjective and admit the block-diagonal
+section, they induce bijections on connected components. Thus \[
+\pi_0(Z_G(\widetilde x_A))
+\simeq
+\pi_0\!\bigl(Z_{G(U)}(\widetilde x_A|_U)\times Z_{G(W)}(y)\bigr),
+\] \[
+\pi_0(Z_G(\widetilde x_A)\cap P)
+\simeq
+\pi_0\!\bigl((Z_{G(U)}(\widetilde x_A|_U)\cap P(U))\times Z_{G(W)}(y)\bigr).
+\] Hence \[
+|\pi_0(Z_G(\widetilde x_A))|
+=
+|\pi_0(Z_{G(U)}(\widetilde x_A|_U))|\cdot |\pi_0(Z_{G(W)}(y))|,
+\] \[
+|\pi_0(Z_G(\widetilde x_A)\cap P)|
+=
+|\pi_0(Z_{G(U)}(\widetilde x_A|_U)\cap P(U))|\cdot |\pi_0(Z_{G(W)}(y))|.
+\] Since \[
+|\pi_0(Z_{G(U)}(\widetilde x_A|_U))|=4
+\qquad\text{and}\qquad
+|\pi_0(Z_{G(U)}(\widetilde x_A|_U)\cap P(U))|=2,
+\] the common \(W\)-factor cancels and yields \[
+m(G\cdot \widetilde x_A,P)=2.
+\] Because \(\widetilde x_A\) is \(P\)-conjugate to \(x_A\), this is
+exactly \[
+m(G\cdot x_A,P)=2.
+\]
+
+This completes the case \(\epsilon=-1\) and \(d\) odd, and hence the
+proof.
+
+\section{theorem thm:main}\label{theorem-thmmain}
+
+\subsection{statement}\label{statement-8}
+
+\section{Short-Kappa Branch of Maximal-Parabolic Induction - Computation
+Problem}\label{short-kappa-branch-of-maximal-parabolic-induction---computation-problem}
+
+Let \[
+F=\mathbb R.
+\] Let \[
+\epsilon\in\{+1,-1\}.
+\]
+
+\subsection{Setup}\label{setup}
+
+Let \((V_0,\langle\cdot,\cdot\rangle_0)\) be a finite-dimensional
+\(F\)-vector space with a non-degenerate bilinear form satisfying \[
+\langle v,w\rangle_0=\epsilon\langle w,v\rangle_0
+\qquad \forall v,w\in V_0.
+\] Set \[
+G_0:=\{g\in \mathrm{GL}(V_0):\langle gv,gw\rangle_0=\langle v,w\rangle_0\},
+\] and \[
+\mathfrak g_0:=\{Y\in\mathrm{End}_F(V_0):
+\langle Yv,w\rangle_0+\langle v,Yw\rangle_0=0\ \forall v,w\in V_0\}.
+\]
+
+Let \(X_0\in\mathfrak g_0\) be nilpotent, and let \[
+\mathcal O_0:=G_0\cdot X_0.
+\] Put \[
+c_1:=\dim_F\ker X_0,
+\qquad
+c_2:=\dim_F(\ker X_0\cap\operatorname{Im}X_0).
+\] Equivalently, \[
+c_2=\dim_F(\ker X_0^2/\ker X_0).
+\]
+
+Fix an integer \(\kappa\), and let \(E,E'\) be \(\kappa\)-dimensional
+\(F\)-vector spaces with a non-degenerate pairing \[
+\lambda:E\times E'\to F.
+\] Assume \[
+\dim_F\ker X_0>\dim_F E=\kappa\ge \dim_F(\ker X_0^2/\ker X_0).
+\] Equivalently, \[
+c_2\le \kappa<c_1.
+\] Put \[
+d:=c_1-\kappa.
+\] Set \[
+V:=E\oplus V_0\oplus E',
+\] and define a bilinear form on \(V\) by \[
+\langle e+v+e',\ f+w+f'\rangle
+:=\lambda(e,f')+\epsilon\lambda(f,e')+\langle v,w\rangle_0.
+\] Let \[
+G:=\{g\in\mathrm{GL}(V):\langle gx,gy\rangle=\langle x,y\rangle\},
+\] and \[
+\mathfrak g:=\{Y\in\mathrm{End}_F(V):
+\langle Yx,y\rangle+\langle x,Yy\rangle=0\ \forall x,y\in V\}.
+\]
+
+Let \[
+P:=\{g\in G:g(E)=E\}.
+\] Since \(E^\perp=E\oplus V_0\), define \[
+\mathfrak u:=\{Y\in\mathfrak g:
+Y(E)=0,\quad
+Y(E^\perp)\subseteq E,\quad
+Y(V)\subseteq E^\perp
+\}.
+\] Regard \(\mathcal O_0\) as a subset of \(\mathfrak g\) by letting
+each operator in \(\mathcal O_0\) act on the \(V_0\)-summand and act as
+\(0\) on \(E\oplus E'\).
+
+Define the induced set \[
+\operatorname{Ind}_P^G(\mathcal O_0)
+:=\overline{G\cdot(\mathcal O_0+\mathfrak u)}\subseteq\mathfrak g,
+\] where the closure is taken in the usual real topology on the
+finite-dimensional real vector space \(\mathfrak g\).
+
+A \(G\)-orbit
+\(\mathcal O\subseteq\operatorname{Ind}_P^G(\mathcal O_0)\) is called
+induced from \(\mathcal O_0\) via \(P\) if it is maximal, among the
+\(G\)-orbits contained in \(\operatorname{Ind}_P^G(\mathcal O_0)\), for
+the closure order \[
+\mathcal O_1\preceq \mathcal O_2
+\iff
+\mathcal O_1\subseteq\overline{\mathcal O_2}.
+\]
+
+For \(x\in\mathfrak g\), write \[
+Z_G(x):=\{g\in G:gxg^{-1}=x\}.
+\] For a subgroup \(H\) of \(G\), let \(H^\circ_{\mathrm{top}}\) denote
+its identity component for the usual real topology, and set \[
+\pi_0(H):=H/H^\circ_{\mathrm{top}}.
+\] For \(x\in\mathcal O_0+\mathfrak u\), define the multiplicity by \[
+m(G\cdot x,P):=
+\frac{|\pi_0(Z_G(x))|}{|\pi_0(Z_G(x)\cap P)|}.
+\]
+
+\subsection{The kernel quotient}\label{the-kernel-quotient}
+
+Since \(X_0\) is skew-adjoint, one has \[
+(\operatorname{Im}X_0)^\perp=\ker X_0.
+\] Therefore the restriction of \(\langle\cdot,\cdot\rangle_0\) to
+\(\ker X_0\) has radical \[
+\ker X_0\cap\operatorname{Im}X_0.
+\] Define the kernel quotient \[
+K_{X_0}:=\ker X_0/(\ker X_0\cap\operatorname{Im}X_0).
+\] The restriction of \(\langle\cdot,\cdot\rangle_0\) to \(\ker X_0\)
+descends to a bilinear form on \(K_{X_0}\), denoted by \[
+\langle\cdot,\cdot\rangle_K.
+\] Its dimension is \[
+\dim_F K_{X_0}=c_1-c_2.
+\] The assumption \(c_2\le\kappa<c_1\) is equivalent to \[
+0<d\le \dim_F K_{X_0}.
+\]
+
+Let \(\mathscr A\) be the set of \(d\)-dimensional subspaces \[
+A\subset K_{X_0}.
+\] For \(A\in\mathscr A\), write \(\operatorname{rad}(A)\) for the
+radical of the restricted form \(\langle\cdot,\cdot\rangle_K|_A\). Let
+\(\mathscr A^{\mathrm{mr}}\subseteq\mathscr A\) be the maximal-rank
+locus: this is the set of all \(A\) for which the restricted form on
+\(A\) has the largest possible rank among \(d\)-dimensional subspaces of
+\(K_{X_0}\).
+
+Two elements \(A_1,A_2\in\mathscr A^{\mathrm{mr}}\) are called isometric
+inside \(K_{X_0}\) if there is an isometry \[
+h\in\operatorname{Isom}(K_{X_0},\langle\cdot,\cdot\rangle_K)
+\] such that \[
+h(A_1)=A_2.
+\]
+
+\subsection{\texorpdfstring{The slice
+\(X_0+\mathfrak u\)}{The slice X\_0+\textbackslash mathfrak u}}\label{the-slice-x_0mathfrak-u}
+
+With respect to \[
+V=E\oplus V_0\oplus E',
+\] every element of \(X_0+\mathfrak u\) has the form \[
+X_{C,B}:=
+\begin{bmatrix}
+0&C^\vee&B\\
+0&X_0&C\\
+0&0&0
+\end{bmatrix}.
+\] Here \[
+C:E'\to V_0,
+\qquad
+B:E'\to E,
+\] and \(C^\vee:V_0\to E\) is determined by \[
+\lambda(C^\vee v,a')=-\langle v,Ca'\rangle_0
+\qquad \forall v\in V_0,\ a'\in E'.
+\] The condition on \(B\) is \[
+\lambda(Ba',b')+\epsilon\lambda(Bb',a')=0
+\qquad \forall a',b'\in E'.
+\]
+
+\subsection{Problem}\label{problem}
+
+Compute the maximal \(G\)-orbits in \[
+\operatorname{Ind}_P^G(\mathcal O_0)
+\] and compute their multiplicities with respect to the maximal
+parabolic subgroup \(P\).
+
+The final answer should give a parametrization of the maximal induced
+orbits in terms of the isometry classes of the \(d\)-dimensional forms
+obtained from subspaces of \[
+K_{X_0}=\ker X_0/(\ker X_0\cap\operatorname{Im}X_0).
+\] For each such orbit \(\mathcal O\), compute \[
+m(\mathcal O,P)
+=
+\frac{|\pi_0(Z_G(x))|}
+{|\pi_0(Z_G(x)\cap P)|},
+\] where \(x\in\mathcal O\cap(\mathcal O_0+\mathfrak u)\) is any
+representative used in the calculation.
+
+Give a self-contained proof from the maximal parabolic action on the
+slice \(X_0+\mathfrak u\). Do not use any diagram parametrization.
+
+\subsection{proof}\label{proof-8}
+
+Lemmas \texttt{lem:x0-geometry-and-k},
+\texttt{lem:parametrize-x0-plus-u}, and
+\texttt{lem:unipotent-conjugation} identify the slice and isolate the
+intrinsic kernel-quotient datum carried by the surjective map \[
+\phi_C=C^\vee|_{\ker X_0}:\ker X_0\to E.
+\] Proposition \texttt{prop:generic-normal-form} shows that on the open
+dense locus where \(\phi_C\) is surjective and its kernel is transverse
+to \(R=\ker X_0\cap \operatorname{Im} X_0\), every slice point is
+\(P\)-conjugate to a normal form \(x_A\) indexed by a \(d\)-dimensional
+subspace \[
+A\subset K_{X_0}\simeq V_1.
+\]
+
+Among these subspaces, the open dense maximal-rank locus \[
+\mathscr A^{\mathrm{mr}}
+\] is exactly the one that survives as the maximal part of the induced
+set. Lemma \texttt{lem:maximal-rank-classes} shows that only finitely
+many isometry classes occur there. Proposition
+\texttt{prop:induced-orbits} proves that the corresponding \(G\)-orbits
+\[
+G\cdot x_A \qquad (A\in \mathscr A^{\mathrm{mr}})
+\] are precisely the maximal \(G\)-orbits in \[
+\operatorname{Ind}_P^G(\mathcal O_0),
+\] and that two such maximal orbits coincide exactly when the
+corresponding subspaces are isometric inside
+\((K_{X_0},\langle\cdot,\cdot\rangle_K)\).
+
+Finally, Proposition \texttt{prop:multiplicity} computes the
+component-group quotient for every maximal representative and gives \[
+m(G\cdot x_A,P)=
+\begin{cases}
+1,& \epsilon=+1,\\[0.4ex]
+1,& \epsilon=-1\ \text{and}\ d\ \text{even},\\[0.4ex]
+2,& \epsilon=-1\ \text{and}\ d\ \text{odd}.
+\end{cases}
+\]
+
+Therefore:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The maximal \(G\)-orbits in \(\operatorname{Ind}_P^G(\mathcal O_0)\)
+  are parametrized by the isometry classes inside \(K_{X_0}\) of the
+  maximal-rank \(d\)-dimensional subspaces \(A\subset K_{X_0}\).
+\item
+  If \(A\) is such a subspace and \(x_A\in \mathcal O_0+\mathfrak u\) is
+  the normal representative constructed above, then \[
+  \mathcal O_A:=G\cdot x_A
+  \] is maximal in the induced set, and every maximal induced orbit is
+  obtained in this way.
+\item
+  For every maximal induced orbit, \[
+  m(\mathcal O_A,P)=
+  \begin{cases}
+  1,& \epsilon=+1,\\[0.4ex]
+  1,& \epsilon=-1\ \text{and}\ d\ \text{even},\\[0.4ex]
+  2,& \epsilon=-1\ \text{and}\ d\ \text{odd}.
+  \end{cases}
+  \]
+\end{enumerate}
+
+This proves the problem.
+
+\end{document}

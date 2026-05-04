@@ -1,0 +1,32 @@
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\setlist{nosep}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+\setlength{\headheight}{14pt}
+\emergencystretch=4em
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Short-Kappa Branch}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {\thesection}
+  {0.75em}
+  {}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection}
+  {0.75em}
+  {}
+
+\newcommand{\rethlaslabel}[1]{\textnormal{\small\texttt{#1}}}
