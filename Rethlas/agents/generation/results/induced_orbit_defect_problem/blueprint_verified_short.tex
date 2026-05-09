@@ -123,8 +123,62 @@ u_DX_{C,B}u_D^{-1}
 \tag{1}
 \]
 
-For \(A\in\operatorname{Gr}_d(\K)\), let \(W_A\subset V_0/\im X_0\) be the
-annihilator of \(A\) under
+The open part is best read directly from the \(C\)-block.  Put
+\[
+\phi_C:=C^\vee|_{\ker X_0}:\ker X_0\to E .
+\]
+The map \(C\mapsto \phi_C\) from \(\Hom(E',V_0)\) to
+\(\Hom(\ker X_0,E)\) is surjective: modulo \(\im X_0\), it is exactly the
+identification
+\[
+\Hom(E',V_0/\im X_0)\simeq \Hom(\ker X_0,E)
+\]
+coming from the two perfect pairings.  The first rank-open condition is
+\(\phi_C\) surjective.  Then
+\[
+L_C:=\ker\phi_C
+\]
+has dimension \(c_1-\kappa=d\).  The second rank-open condition is
+\(\phi_C|_R:R\to E\) injective, equivalently \(L_C\cap R=0\).  Hence the
+quotient map \(q:\ker X_0\to\K\) sends \(L_C\) isomorphically onto a
+\(d\)-plane
+\[
+A_C:=q(L_C)\subset\K .
+\]
+The last rank-open condition is \(A_C\in\Amr\).  Thus the desired open subset
+is
+\[
+\Omega=\{X_{C,B}:\phi_C\text{ is surjective},\
+\phi_C|_R\text{ is injective},\ A_C\in\Amr\}.
+\tag{2}
+\]
+
+To see this is a nonempty polynomial open set, choose \(V_+\subset V_0\) with
+\[
+V_0=V_+\oplus\im X_0,\qquad V_+\cap\ker X_0=V_1.
+\]
+For \(C:E'\to V_0\), write \(S_C:E'\to V_+\) for its quotient modulo
+\(\im X_0\).  Then \(\phi_C\) is the transpose of \(S_C\), so
+\[
+\phi_C\text{ surjective}\iff S_C\text{ injective},
+\]
+and \(\phi_C|_R\) is injective iff
+\[
+\overline S_C:E'\to V_+/(V_+\cap\ker X_0)
+\]
+is surjective.  Thus the first generic locus is represented by injective maps
+\(S:E'\to V_+\).  The further condition \(q(\ker\phi_C)\in\Amr\) can be read as
+maximal possible rank of the Gram matrix
+\[
+(u,v)\mapsto \langle S(u),S(v)\rangle_0
+\]
+among such \(S\) with \(\overline S\) surjective.  These are exactly
+nonvanishing-minor conditions, and they are nonempty by choosing \(S\) with
+maximal possible Gram rank.
+
+Now define the normal forms only after \(A\) has appeared from the open
+conditions.  For \(A\in\operatorname{Gr}_d(\K)\), let
+\(W_A\subset V_0/\im X_0\) be the annihilator of \(A\) under
 \((V_0/\im X_0)\times\ker X_0\to\mathbb R\).  Then \(\dim W_A=\kappa\).
 Choose a lift \(V_A\subset V_0\) mapping isomorphically to \(W_A\), choose
 \(S_A:E'\xrightarrow{\sim}V_A\), and put
@@ -135,38 +189,29 @@ The defining annihilator property gives
 \[
 \ker(S_A^\vee|_{\ker X_0})=A,
 \qquad S_A^\vee|_{\ker X_0}:\ker X_0\to E\text{ is surjective}.
-\tag{2}
+\tag{3}
 \]
 
-Conversely, take \(x=X_{C,B}\) and set
-\(\phi_C=C^\vee|_{\ker X_0}\).  On the generic set where \(\phi_C\) is
-surjective and \(L:=\ker\phi_C\) satisfies \(L\cap R=0\), the quotient
+Take \(x=X_{C,B}\in\Omega\), and put \(A=A_C\).  A Levi conjugation first makes
+\(\phi_C=S_A^\vee|_{\ker X_0}\).  Then \(C-S_A\) has image in \(\im X_0\), so
+(1) makes \(C=S_A\).  A second conjugation by some \(u_D\) with
+\(D(E')\subset\ker X_0\) kills the remaining \(B\)-block.  Thus every point of
+\(\Omega\) is \(P\)-conjugate to \(x_{A_C}\).  Conversely each
+\(x_A\) with \(A\in\Amr\) lies in \(\Omega\), so the normal-form conjugations
+give
 \[
-A:=q(L)\subset\K
+\Omega=P\cdot\{x_A:A\in\Amr\}.
+\tag{4}
 \]
-has dimension \(d\).  A Levi conjugation first makes
-\(\phi_C=S_A^\vee|_{\ker X_0}\).  Then \(C-S_A\) has image in
-\(\im X_0\), so (1) makes \(C=S_A\).  A second conjugation by some
-\(u_D\) with \(D(E')\subset\ker X_0\) kills the remaining \(B\)-block.
-Thus every generic slice point is \(P\)-conjugate to \(x_A\).  The same
-argument shows that \(x_A\) is independent, up to \(P\)-conjugacy, of the
-choices of \(V_A,S_A\).  If two subspaces \(A,A'\subset\K\) are related by an
-ambient isometry of \(\K\), that isometry lifts to an element of
+The same argument shows that \(x_A\) is independent, up to \(P\)-conjugacy, of
+the choices of \(V_A,S_A\).  If two subspaces \(A,A'\subset\K\) are related by
+an ambient isometry of \(\K\), that isometry lifts to an element of
 \(Z_{G_0}(X_0)\), hence \(x_A\) and \(x_{A'}\) are \(P\)-conjugate.
 
-The map \(C\mapsto \phi_C\) from \(\Hom(E',V_0)\) to
-\(\Hom(\ker X_0,E)\) is surjective: modulo \(\im X_0\), it is exactly the
-identification
-\[
-\Hom(E',V_0/\im X_0)\simeq \Hom(\ker X_0,E)
-\]
-coming from the two perfect pairings.  Therefore surjectivity of \(\phi_C\),
-injectivity of \(\phi_C|_R\), and the condition \(q(\ker\phi_C)\in\Amr\) define
-a dense subset \(\Omega\subset X_0+\uP\).  Moreover \(\Omega\) is a finite
-disjoint union
+Moreover \(\Omega\) is a finite disjoint union
 \[
 \Omega=\bigsqcup_i P\cdot x_{A_i},
-\tag{3}
+\tag{5}
 \]
 where \(A_i\) run over the isometry classes in \(\Amr\).  These classes are:
 non-degenerate symmetric \(d\)-planes classified by signature if
@@ -191,7 +236,7 @@ so \(G\cdot x_i\) is open in \(Y\).  Since \(\Omega\) is dense in the slice,
 \operatorname{Ind}_P^G(\OO_0)=\overline{Y}
 =\overline{G\cdot\Omega}
 =\bigcup_i \overline{G\cdot x_i}.
-\tag{4}
+\tag{6}
 \]
 Thus every orbit in the induced set lies below one of the listed orbits.
 Because each \(G\cdot x_i\) is open in \(Y\), it has the dimension of
@@ -205,19 +250,19 @@ They are distinct precisely as stated.  For the normal form one computes
 \ker x_A=E\oplus A,\qquad
 \im x_A=E\oplus\im X_0\oplus S_A(E'),\qquad
 \ker x_A\cap\im x_A=E\oplus\rad(A).
-\tag{5}
+\tag{7}
 \]
 Therefore
 \[
 \ker x_A/(\ker x_A\cap\im x_A)\simeq A/\rad(A)
-\tag{6}
+\tag{8}
 \]
 as bilinear spaces.  This invariant recovers the signature in the symmetric
 case and gives no further splitting in the two alternating cases, exactly as
 the classification above says.
 
 It remains to compute the multiplicity.  If \(A\) is non-degenerate, then by
-(5)
+(7)
 \[
 \ker x_A=E\oplus A,\qquad \ker x_A\cap\im x_A=E.
 \]
@@ -242,7 +287,7 @@ U=\mathbb Re\oplus\mathbb Rr\oplus\mathbb Rs\oplus\mathbb Re'
 is stable and
 \[
 x_A(e)=x_A(r)=0,\qquad x_A(s)=e,\qquad x_A(e')=r.
-\tag{7}
+\tag{9}
 \]
 On \(W=U^\perp\), the kernel quotient is \(A_0\), so the non-degenerate case
 gives \(Z_{G(W)}(x_A|_W)\subset P(W)\).
@@ -280,14 +325,14 @@ diagonal branch, hence two real components.  Therefore
 \[
 |\pi_0(Z_{G(U)}(x_A|_U))|=4,\qquad
 |\pi_0(Z_{G(U)}(x_A|_U)\cap P(U))|=2.
-\tag{8}
+\tag{10}
 \]
 
 Finally, relative to \(V=U\oplus W\), block projection from \(Z_G(x_A)\) to the
 product of the \(U\)- and \(W\)-centralizers, and the analogous projection after
 intersecting with \(P\), are surjective with connected fibers.  The same
 \(W\)-factor occurs in numerator and denominator because
-\(Z_{G(W)}(x_A|_W)\subset P(W)\).  By (8),
+\(Z_{G(W)}(x_A|_W)\subset P(W)\).  By (10),
 \[
 m(G\cdot x_A,P)=4/2=2.
 \]

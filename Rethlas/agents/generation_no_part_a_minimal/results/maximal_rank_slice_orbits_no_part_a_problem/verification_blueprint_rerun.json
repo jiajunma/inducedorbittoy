@@ -1,0 +1,20 @@
+{
+  "verification_report": {
+    "summary": "Sequential verification of the markdown proof found no critical errors and no gaps. The proof correctly reduces the Γ-orbit problem to the action on λ = S^*|_K, handles the two dimension cases, and proves the needed centralizer lemma internally. No external-paper references were used.",
+    "critical_errors": [],
+    "gaps": [],
+    "notes": "The hypotheses dim E ≥ dim R and, when ε = -1 with dim K > dim E, the parity condition are not explicitly used in the proof; for the orbit statements as written they appear stronger than necessary rather than omitted necessities.",
+    "checked_items": [
+      "1. Two basic facts about X_0",
+      "Lemma (centralizer lemma)",
+      "2. Reduction from S to λ_S",
+      "3. The case dim E ≥ dim K",
+      "4. The case dim K > dim E"
+    ],
+    "external_reference_checks": [
+      "proof: checked"
+    ]
+  },
+  "verdict": "correct",
+  "repair_hints": ""
+}

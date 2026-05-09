@@ -979,25 +979,99 @@ $$
 $$
 is open dense in $X_0+\mathfrak u$.
 
-On this locus the normalized slice datum may indeed be read, after the
-$P$-conjugations of Proposition `prop:generic-normal-form`, from a map
+We now record the same open dense locus in the more concrete $S$-language used
+for the exhaustion argument. Choose a complement
 $$
-S:E'\to \ker X_0,
+V_+\subset V_0,\qquad V_0=V_+\oplus \operatorname{Im}X_0.
 $$
-not necessarily with image in $V_1$, and the natural generic condition is that
-the Gram matrix of $\langle\cdot,\cdot\rangle_0$ on
+We choose it so that it contains the fixed lift $V_1\subset\ker X_0$ and
 $$
-\operatorname{im}(S)
+V_+\cap\ker X_0=V_1.
 $$
-have maximal possible rank. The final orbit parameter, however, is not
+This is possible because $V_1\cap\operatorname{Im}X_0=0$.
+The quotient map identifies $V_+$ with $V_0/\operatorname{Im}X_0$, and the
+perfect pairing
 $$
-\operatorname{im}(S),
+(V_0/\operatorname{Im}X_0)\times \ker X_0\to F
 $$
-but the quotient subspace
+identifies $V_+$ with $(\ker X_0)^\vee$. For $C:E'\to V_0$, let
 $$
-A=q(\ker \phi_C)\subset K_{X_0},
+S_C:E'\to V_+
 $$
-and condition (3) is exactly that intrinsic maximal-rank condition.
+be the composition of $C$ with the quotient map, followed by this fixed
+identification with $V_+$. Under the above duality, the map
+$$
+\phi_C=C^\vee|_{\ker X_0}
+$$
+is the transpose of $S_C$. Hence
+$$
+\phi_C\text{ is surjective}\iff S_C\text{ is injective}.
+$$
+Also
+$$
+V_+\cap\ker X_0
+$$
+is the annihilator, inside $V_+$ for this perfect pairing, of
+$$
+R=\ker X_0\cap\operatorname{Im}X_0
+$$
+so
+$$
+\phi_C|_R\text{ is injective}
+\iff
+\overline S_C:E'\to V_+/(V_+\cap\ker X_0)
+\text{ is surjective}.
+$$
+Here
+$$
+d':=\dim V_+/(V_+\cap\ker X_0)
+=\dim R
+=\dim(\ker X_0^2/\ker X_0)
+\le \dim E'.
+$$
+
+Thus the first generic locus may be viewed as the locus of injective maps
+$S:E'\to V_+$. By Proposition `prop:generic-normal-form`, or equivalently by
+the explicit Levi and unipotent formulas in Lemma `lem:unipotent-conjugation`,
+every point on this first locus is $P$-conjugate to a point of the form
+$$
+X_{S,0}:=X_{C_S,0}
+$$
+with $S:E'\to V_+$ injective. Namely, the unipotent action subtracts the
+$\operatorname{Im}X_0$-part of $C$, and then a further unipotent with image in
+$\ker X_0$ kills the $B$-block.
+
+For such an injective $S$, put
+$$
+L_S:=\{k\in\ker X_0:\langle k,S(E')\rangle_0=0\}.
+$$
+If $\overline S$ is surjective, then $L_S\cap R=0$, and hence
+$$
+A(S):=q(L_S)\subset K_{X_0}
+$$
+is a $d$-dimensional subspace. The condition
+$$
+A(S)\in\mathscr A^{\mathrm{mr}}
+$$
+can be tested, in this $S$-model, by requiring that the Gram matrix of the
+pulled-back form
+$$
+(u,v)\longmapsto \langle S(u),S(v)\rangle_0
+$$
+has maximal possible rank among injective $S$ with $\overline S$ surjective.
+Let $\mathcal U_2$ be the set of all such $X_{S,0}$.
+
+This set is nonempty: choose a splitting
+$$
+V_+= (V_+\cap\ker X_0)\oplus Q
+$$
+with $\dim Q=d'$, map a $d'$-dimensional summand of $E'$ isomorphically onto
+$Q$, and inject the remaining summand of $E'$ into $V_+\cap\ker X_0$; then
+choose the injection in the nonempty maximal-Gram-rank locus. The conditions
+defining $\mathcal U_2$ are rank conditions, equivalently the nonvanishing of
+suitable minors of polynomial Gram matrices. Therefore the $P$-saturation of
+$\mathcal U_2$ is open dense in the first generic locus. In the notation above,
+this $P$-saturation is exactly $\Omega$.
 
 By Proposition `prop:generic-normal-form`, every point of $\Omega$ is
 $P$-conjugate to some $x_A$ with $A\in \mathscr A^{\mathrm{mr}}$. By

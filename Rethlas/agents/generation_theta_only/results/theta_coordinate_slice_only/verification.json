@@ -1,0 +1,9 @@
+{
+  "verification_report": {
+    "summary": "The proof is logically sound. It correctly derives the unipotent conjugation formula, proves the independence of the theta correction from the choice of P, reduces the problem to the normal-form case ker S = ker \\overline S, and shows that H-orbit equivalence is exactly congruence of the induced theta forms on N. No missing assumptions, theorem misuses, or unjustified inference steps were found.",
+    "critical_errors": [],
+    "gaps": []
+  },
+  "verdict": "correct",
+  "repair_hints": ""
+}
