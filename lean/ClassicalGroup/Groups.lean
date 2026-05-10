@@ -53,6 +53,72 @@ def ComplexFormIsometryCentralizerJ {eps : Sign}
     (J : JStructure eps V jSign) : Type u :=
   { g : ComplexFormIsometry eps V // CommutesWithJ J g }
 
+namespace ComplexFormIsometryCentralizerJ
+
+variable {eps : Sign} {V : Type u} [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V]
+    [FormedSpace eps V] {jSign : Sign}
+
+/-- The centralizer of `J`, viewed as a subgroup of the full linear automorphism
+group.  This gives the current abstract group-identification layer an honest
+group object while postponing the later identification with concrete real Lie
+groups such as `O(p,q)` or `Sp(a,b)`. -/
+def asLinearSubgroup (J : JStructure eps V jSign) : Subgroup (V ≃ₗ[ℂ] V) where
+  carrier :=
+    { g | (∀ u v : V, FormedSpace.B eps V (g u) (g v) = FormedSpace.B eps V u v) ∧
+        ∀ v : V, g (J v) = J (g v) }
+  one_mem' := by
+    constructor
+    · intro u v
+      simp
+    · intro v
+      simp
+  mul_mem' := by
+    intro g h hg hh
+    constructor
+    · intro u v
+      calc
+        FormedSpace.B eps V ((g * h) u) ((g * h) v)
+            = FormedSpace.B eps V (g (h u)) (g (h v)) := by simp [LinearEquiv.mul_apply]
+        _ = FormedSpace.B eps V (h u) (h v) := hg.1 (h u) (h v)
+        _ = FormedSpace.B eps V u v := hh.1 u v
+    · intro v
+      calc
+        (g * h) (J v) = g (h (J v)) := by simp [LinearEquiv.mul_apply]
+        _ = g (J (h v)) := by rw [hh.2 v]
+        _ = J (g (h v)) := hg.2 (h v)
+        _ = J ((g * h) v) := by simp [LinearEquiv.mul_apply]
+  inv_mem' := by
+    intro g hg
+    constructor
+    · intro u v
+      calc
+        FormedSpace.B eps V (g⁻¹ u) (g⁻¹ v)
+            = FormedSpace.B eps V (g (g⁻¹ u)) (g (g⁻¹ v)) := by
+              exact (hg.1 (g⁻¹ u) (g⁻¹ v)).symm
+        _ = FormedSpace.B eps V u v := by simp
+    · intro v
+      apply g.injective
+      calc
+        g (g⁻¹ (J v)) = J v := by simp
+        _ = J (g (g⁻¹ v)) := by simp
+        _ = g (J (g⁻¹ v)) := by rw [hg.2 (g⁻¹ v)]
+
+/-- Repackage the structure-defined centralizer as the subgroup-defined
+centralizer.  The two versions carry the same data; the subgroup version
+inherits its `Group` instance from `Subgroup`. -/
+def equivAsLinearSubgroup (J : JStructure eps V jSign) :
+    ComplexFormIsometryCentralizerJ V J ≃ asLinearSubgroup J where
+  toFun g := ⟨g.1.toLinearEquiv, g.1.preserves_form, g.2⟩
+  invFun g := ⟨⟨g.1, g.2.1⟩, g.2.2⟩
+  left_inv := by
+    rintro ⟨⟨g, hgform⟩, hgJ⟩
+    rfl
+  right_inv := by
+    rintro ⟨g, hgform, hgJ⟩
+    rfl
+
+end ComplexFormIsometryCentralizerJ
+
 /-- Labels for the expected real classical groups in the statement. -/
 inductive ExpectedRealGroupKind where
   | orthogonal_pq
@@ -100,7 +166,7 @@ theorem group_identification_of_classical_space (star : ClassicalStar) (p q : �
     [FormedSpace star.eps V]
     (J : JStructure star.eps V star.jSign)
     (L : LStructure star.eps V star.dotEps)
-    (h : IsClassicalSpace star p q V J L) :
+    (_h : IsClassicalSpace star p q V J L) :
     HasExpectedGroupIdentification star p q V J := by
   /-
   Blueprint proof: compute the centralizer of `J` in each standard model.
@@ -112,11 +178,16 @@ theorem group_identification_of_classical_space (star : ClassicalStar) (p q : �
   * `D*`: the same construction gives the quaternionic skew-Hermitian group
     `O*(2p)`.
   -/
-  sorry
+  exact
+    ⟨{ carrier := ComplexFormIsometryCentralizerJ.asLinearSubgroup J
+       group := inferInstance
+       kind := expectedRealGroupKind star
+       kind_eq := rfl },
+      ⟨ComplexFormIsometryCentralizerJ.equivAsLinearSubgroup J⟩⟩
 
 /-- Existence package strengthened by the abstract group-identification layer. -/
 def HasClassicalSpaceWithGroupIdentification (star : ClassicalStar) (p q : ℕ) : Prop :=
-  ∃ (V : Type u) (_ : AddCommGroup V) (_ : Module ℂ V) (_ : Module.Finite ℂ V),
+  ∃ (V : Type) (_ : AddCommGroup V) (_ : Module ℂ V) (_ : Module.Finite ℂ V),
     ∃ (_ : FormedSpace star.eps V),
       ∃ (J : JStructure star.eps V star.jSign)
         (L : LStructure star.eps V star.dotEps),
@@ -125,11 +196,14 @@ def HasClassicalSpaceWithGroupIdentification (star : ClassicalStar) (p q : ℕ) 
 /-- Existence plus group-identification theorem statement. -/
 theorem exists_classical_space_with_group_identification (star : ClassicalStar) (p q : ℕ)
     (hsig : IsClassicalSignature star p q) :
-    HasClassicalSpaceWithGroupIdentification.{u} star p q := by
-  /-
-  Use `exists_classical_space` to get a classical space and then apply
-  `group_identification_of_classical_space` to that witness.
-  -/
-  sorry
+    HasClassicalSpaceWithGroupIdentification star p q := by
+  rcases exists_classical_space star p q hsig with
+    ⟨V, hAdd, hModule, hFinite, hFormed, J, L, hClassical⟩
+  letI : AddCommGroup V := hAdd
+  letI : Module ℂ V := hModule
+  letI : Module.Finite ℂ V := hFinite
+  letI : FormedSpace star.eps V := hFormed
+  exact ⟨V, inferInstance, inferInstance, inferInstance, inferInstance, J, L, hClassical,
+    group_identification_of_classical_space star p q J L hClassical⟩
 
 end ClassicalGroup

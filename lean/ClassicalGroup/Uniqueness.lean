@@ -1,4 +1,5 @@
 import ClassicalGroup.Existence
+import ClassicalGroup.NormalForms
 
 /-!
 # Uniqueness theorem statements for the ClassicalGroup task
@@ -27,29 +28,26 @@ def UniqueClassicalSpacesFor (star : ClassicalStar) (p q : ℕ) : Prop :=
 /-- Pairwise uniqueness in the `B` case. -/
 theorem unique_B_model (p q : ℕ) (hOdd : Odd (p + q)) :
     UniqueClassicalSpacesFor.{u} ClassicalStar.B p q := by
-  /-
-  Blueprint proof: pass to the `J`-fixed real form, decompose into the real
-  `L=+1` and `L=-1` eigenspaces, choose orthonormal bases for the positive and
-  negative parts, and compare with the `S_{p,q}` model.
-  -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  rcases normalForm_B p q hOdd V JV LV hV with ⟨eV⟩
+  rcases normalForm_B p q hOdd W JW LW hW with ⟨eW⟩
+  exact ⟨eV.trans eW.symm⟩
 
 /-- Pairwise uniqueness in the `D` case. -/
 theorem unique_D_model (p q : ℕ) (hEven : Even (p + q)) :
     UniqueClassicalSpacesFor.{u} ClassicalStar.D p q := by
-  /-
-  Same normal-form argument as the `B` case; only the parity condition differs.
-  -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  rcases normalForm_D p q hEven V JV LV hV with ⟨eV⟩
+  rcases normalForm_D p q hEven W JW LW hW with ⟨eW⟩
+  exact ⟨eV.trans eW.symm⟩
 
 /-- Pairwise uniqueness in the `C` case. -/
 theorem unique_C_model (r : ℕ) :
     UniqueClassicalSpacesFor.{u} ClassicalStar.C r r := by
-  /-
-  Blueprint proof: pass to the `J`-fixed real symplectic space with positive
-  metric `H`; construct an adapted symplectic basis by Gram-Schmidt.
-  -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  rcases normalForm_C r V JV LV hV with ⟨eV⟩
+  rcases normalForm_C r W JW LW hW with ⟨eW⟩
+  exact ⟨eV.trans eW.symm⟩
 
 /-- Pairwise uniqueness in the `Ctilda` case. -/
 theorem unique_Ctilda_model (r : ℕ) :
@@ -58,36 +56,58 @@ theorem unique_Ctilda_model (r : ℕ) :
   Same linear normal form as in the `C` case.  The metaplectic cover is not part
   of the `J,L` data.
   -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  have hVC : IsClassicalSpace ClassicalStar.C r r V JV LV := by
+    simpa [IsClassicalSpace, IsClassicalSignature, LSignatureCondition] using hV
+  have hWC : IsClassicalSpace ClassicalStar.C r r W JW LW := by
+    simpa [IsClassicalSpace, IsClassicalSignature, LSignatureCondition] using hW
+  rcases unique_C_model r V W JV LV JW LW hVC hWC with ⟨e⟩
+  exact ⟨{ toFormedSpaceIso := e.toFormedSpaceIso
+           intertwines_J := e.intertwines_J
+           intertwines_L := e.intertwines_L }⟩
 
 /-- Pairwise uniqueness in the `C*` case with `p=2a`, `q=2b`. -/
 theorem unique_Cstar_model (a b : ℕ) :
     UniqueClassicalSpacesFor.{u} ClassicalStar.Cstar (2 * a) (2 * b) := by
-  /-
-  Blueprint proof: use the quaternionic structure induced by `J²=-1`; the
-  `L=±1` eigenspaces are quaternionic subspaces, and quaternionic orthonormal
-  bases reduce the form to the standard `Sp(a,b)` model.
-  -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  rcases normalForm_Cstar a b V JV LV hV with ⟨eV⟩
+  rcases normalForm_Cstar a b W JW LW hW with ⟨eW⟩
+  exact ⟨eV.trans eW.symm⟩
 
 /-- Pairwise uniqueness in the `D*` case. -/
 theorem unique_Dstar_model (r : ℕ) :
     UniqueClassicalSpacesFor.{u} ClassicalStar.Dstar r r := by
-  /-
-  Blueprint proof: set `A=-iL`; choose an `H`-orthonormal basis of the `A=+1`
-  eigenspace and pair it with its image under `J`.
-  -/
-  sorry
+  intro V W _ _ _ _ _ _ _ _ JV LV JW LW hV hW
+  rcases normalForm_Dstar r V JV LV hV with ⟨eV⟩
+  rcases normalForm_Dstar r W JW LW hW with ⟨eW⟩
+  exact ⟨eV.trans eW.symm⟩
 
 /-- Uniqueness obtained by dispatching to the blueprint cases. -/
 theorem unique_classical_spaces_by_cases (star : ClassicalStar) (p q : ℕ)
     (hsig : IsClassicalSignature star p q) :
     UniqueClassicalSpacesFor.{u} star p q := by
-  /-
-  Case split on `star`.  In the `C*` case use evenness to write `p=2a`,
-  `q=2b`, then call `unique_Cstar_model`.
-  -/
-  sorry
+  cases star with
+  | B =>
+      exact unique_B_model p q hsig
+  | C =>
+      subst q
+      exact unique_C_model p
+  | D =>
+      exact unique_D_model p q hsig
+  | Ctilda =>
+      subst q
+      exact unique_Ctilda_model p
+  | Cstar =>
+      rcases hsig with ⟨hp, hq⟩
+      rcases hp with ⟨a, ha⟩
+      rcases hq with ⟨b, hb⟩
+      have hp' : p = 2 * a := by omega
+      have hq' : q = 2 * b := by omega
+      rw [hp', hq']
+      exact unique_Cstar_model a b
+  | Dstar =>
+      subst q
+      exact unique_Dstar_model p
 
 /-- Main uniqueness theorem, raw interface. -/
 theorem classical_space_unique (star : ClassicalStar) (p q : ℕ)

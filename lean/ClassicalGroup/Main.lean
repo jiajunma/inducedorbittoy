@@ -16,7 +16,7 @@ universe u
 /-- The core linear-algebra theorem: existence and uniqueness, excluding the
 separate group-identification layer. -/
 def ClassicalSpaceExistenceAndUniqueness (star : ClassicalStar) (p q : ℕ) : Prop :=
-  HasClassicalSpace.{u} star p q ∧ UniqueClassicalSpacesFor.{u} star p q
+  HasClassicalSpace star p q ∧ UniqueClassicalSpacesFor.{u} star p q
 
 /-- Main core theorem statement from `classicalgroup.md`, with group
 identification isolated in `Groups.lean`. -/
@@ -28,7 +28,7 @@ theorem classical_space_existence_and_uniqueness (star : ClassicalStar) (p q : �
 
 /-- Main theorem statement including the abstract group-identification layer. -/
 def ClassicalGroupTheorem (star : ClassicalStar) (p q : ℕ) : Prop :=
-  HasClassicalSpaceWithGroupIdentification.{u} star p q ∧
+  HasClassicalSpaceWithGroupIdentification star p q ∧
     UniqueClassicalSpacesFor.{u} star p q
 
 /-- Full theorem statement, with property (10) represented by

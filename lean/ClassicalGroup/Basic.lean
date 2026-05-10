@@ -363,6 +363,115 @@ structure ClassicalSpaceIso (star : ClassicalStar)
     ∀ v : V, toFormedSpaceIso.toLinearEquiv (LV v) =
       LW (toFormedSpaceIso.toLinearEquiv v)
 
+namespace FormedSpaceIso
+
+variable {eps : Sign}
+variable {U V W : Type*}
+variable [AddCommGroup U] [Module ℂ U] [Module.Finite ℂ U] [FormedSpace eps U]
+variable [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V] [FormedSpace eps V]
+variable [AddCommGroup W] [Module ℂ W] [Module.Finite ℂ W] [FormedSpace eps W]
+
+/-- Identity isomorphism of a formed space. -/
+protected def refl (V : Type*) [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V]
+    [FormedSpace eps V] : FormedSpaceIso eps V V where
+  toLinearEquiv := LinearEquiv.refl ℂ V
+  preserves_form := by intro _ _; rfl
+
+/-- Inverse of an isomorphism of formed spaces. -/
+protected def symm (e : FormedSpaceIso eps V W) : FormedSpaceIso eps W V where
+  toLinearEquiv := e.toLinearEquiv.symm
+  preserves_form := by
+    intro u v
+    have h := e.preserves_form (e.toLinearEquiv.symm u) (e.toLinearEquiv.symm v)
+    simpa using h.symm
+
+/-- Composition of isomorphisms of formed spaces. -/
+protected def trans (e₁ : FormedSpaceIso eps U V)
+    (e₂ : FormedSpaceIso eps V W) : FormedSpaceIso eps U W where
+  toLinearEquiv := e₁.toLinearEquiv.trans e₂.toLinearEquiv
+  preserves_form := by
+    intro u v
+    calc
+      FormedSpace.B eps W (e₂.toLinearEquiv (e₁.toLinearEquiv u))
+          (e₂.toLinearEquiv (e₁.toLinearEquiv v))
+          = FormedSpace.B eps V (e₁.toLinearEquiv u) (e₁.toLinearEquiv v) :=
+            e₂.preserves_form (e₁.toLinearEquiv u) (e₁.toLinearEquiv v)
+      _ = FormedSpace.B eps U u v := e₁.preserves_form u v
+
+end FormedSpaceIso
+
+namespace ClassicalSpaceIso
+
+variable {star : ClassicalStar}
+variable {U V W : Type*}
+variable [AddCommGroup U] [Module ℂ U] [Module.Finite ℂ U] [FormedSpace star.eps U]
+variable [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V] [FormedSpace star.eps V]
+variable [AddCommGroup W] [Module ℂ W] [Module.Finite ℂ W] [FormedSpace star.eps W]
+variable {JU : JStructure star.eps U star.jSign} {LU : LStructure star.eps U star.dotEps}
+variable {JV : JStructure star.eps V star.jSign} {LV : LStructure star.eps V star.dotEps}
+variable {JW : JStructure star.eps W star.jSign} {LW : LStructure star.eps W star.dotEps}
+
+/-- Identity isomorphism of classical-space data. -/
+protected def refl (V : Type*) [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V]
+    [FormedSpace star.eps V] (J : JStructure star.eps V star.jSign)
+    (L : LStructure star.eps V star.dotEps) : ClassicalSpaceIso star V V J L J L where
+  toFormedSpaceIso := FormedSpaceIso.refl (eps := star.eps) V
+  intertwines_J := by intro _; rfl
+  intertwines_L := by intro _; rfl
+
+/-- Inverse of an isomorphism of classical-space data. -/
+protected def symm (e : ClassicalSpaceIso star V W JV LV JW LW) :
+    ClassicalSpaceIso star W V JW LW JV LV where
+  toFormedSpaceIso := e.toFormedSpaceIso.symm
+  intertwines_J := by
+    intro w
+    apply e.toFormedSpaceIso.toLinearEquiv.injective
+    calc
+      e.toFormedSpaceIso.toLinearEquiv (e.toFormedSpaceIso.toLinearEquiv.symm (JW w))
+          = JW w := by simp
+      _ = JW (e.toFormedSpaceIso.toLinearEquiv (e.toFormedSpaceIso.toLinearEquiv.symm w)) := by
+            simp
+      _ = e.toFormedSpaceIso.toLinearEquiv
+            (JV (e.toFormedSpaceIso.toLinearEquiv.symm w)) := by
+            exact (e.intertwines_J (e.toFormedSpaceIso.toLinearEquiv.symm w)).symm
+  intertwines_L := by
+    intro w
+    apply e.toFormedSpaceIso.toLinearEquiv.injective
+    calc
+      e.toFormedSpaceIso.toLinearEquiv (e.toFormedSpaceIso.toLinearEquiv.symm (LW w))
+          = LW w := by simp
+      _ = LW (e.toFormedSpaceIso.toLinearEquiv (e.toFormedSpaceIso.toLinearEquiv.symm w)) := by
+            simp
+      _ = e.toFormedSpaceIso.toLinearEquiv
+            (LV (e.toFormedSpaceIso.toLinearEquiv.symm w)) := by
+            exact (e.intertwines_L (e.toFormedSpaceIso.toLinearEquiv.symm w)).symm
+
+/-- Composition of isomorphisms of classical-space data. -/
+protected def trans (e₁ : ClassicalSpaceIso star U V JU LU JV LV)
+    (e₂ : ClassicalSpaceIso star V W JV LV JW LW) :
+    ClassicalSpaceIso star U W JU LU JW LW where
+  toFormedSpaceIso := e₁.toFormedSpaceIso.trans e₂.toFormedSpaceIso
+  intertwines_J := by
+    intro u
+    calc
+      e₂.toFormedSpaceIso.toLinearEquiv
+          (e₁.toFormedSpaceIso.toLinearEquiv (JU u))
+          = e₂.toFormedSpaceIso.toLinearEquiv (JV (e₁.toFormedSpaceIso.toLinearEquiv u)) := by
+            rw [e₁.intertwines_J]
+      _ = JW (e₂.toFormedSpaceIso.toLinearEquiv (e₁.toFormedSpaceIso.toLinearEquiv u)) := by
+            rw [e₂.intertwines_J]
+  intertwines_L := by
+    intro u
+    calc
+      e₂.toFormedSpaceIso.toLinearEquiv
+          (e₁.toFormedSpaceIso.toLinearEquiv (LU u))
+          = e₂.toFormedSpaceIso.toLinearEquiv (LV (e₁.toFormedSpaceIso.toLinearEquiv u)) := by
+            rw [e₁.intertwines_L]
+      _ = LW (e₂.toFormedSpaceIso.toLinearEquiv (e₁.toFormedSpaceIso.toLinearEquiv u)) := by
+            rw [e₂.intertwines_L]
+
+end ClassicalSpaceIso
+
 /-- Packed-signature alias for `ClassicalSpaceIso`. -/
 abbrev ClassicalSpaceIsoFor (s : ClassicalSignature)
     (V W : Type*) [AddCommGroup V] [Module ℂ V] [Module.Finite ℂ V]
